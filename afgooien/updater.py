@@ -209,10 +209,18 @@ class Updater:
         if not self.latest or vtuple(self.latest["version"]) <= vtuple(self.current):
             self.check()
         if not self.latest or vtuple(self.latest["version"]) <= vtuple(self.current):
+            self.status = {"state": "error", "error": "no_update"}
             raise UpdateError("no_update")
-        data = self.fetch(self.latest["url"], self.cfg["token"], accept="application/octet-stream", limit=MAX_ZIP)
-        if self.latest.get("sha256") and hashlib.sha256(data).hexdigest() != self.latest["sha256"]:
-            raise UpdateError("bad_hash")
+        self.status = {"state": "installing"}
+        try:
+            # release-bestand: octet-stream; zip van de hoofdtak (zipball): gewone API-aanvraag
+            accept = "application/vnd.github+json" if "/zipball/" in str(self.latest["url"]) else "application/octet-stream"
+            data = self.fetch(self.latest["url"], self.cfg["token"], accept=accept, limit=MAX_ZIP)
+            if self.latest.get("sha256") and hashlib.sha256(data).hexdigest() != self.latest["sha256"]:
+                raise UpdateError("bad_hash")
+        except UpdateError as e:
+            self.status = {"state": "error", "error": str(e)}      # niet eeuwig op 'installeren…' blijven staan
+            raise
         return self.install(data)
 
     # ------------------------------------------------------------------ installeren

@@ -1,2 +1,2 @@
 """Afgooien: een eigen dartspel bovenop de Autodarts-detectie."""
-__version__ = "1.30"
+__version__ = "1.31"

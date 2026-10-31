@@ -350,6 +350,8 @@ class App:
                     u.rollback()
             except UpdateError:
                 pass
+            except Exception as e:  # noqa: BLE001 - nooit blijven hangen op 'bezig'
+                u.status = {"state": "error", "error": type(e).__name__}
             self.bump()
 
         if action == "install" or action == "upload" or action == "rollback":

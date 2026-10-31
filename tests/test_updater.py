@@ -115,6 +115,7 @@ class InstallTests(unittest.TestCase):
         self.u.current = "1.30"
         with self.assertRaises(UpdateError):
             self.u.install_latest()
+        self.assertEqual(self.u.status, {"state": "error", "error": "bad_hash"})   # niet blijven hangen
         with self.assertRaises(UpdateError):
             self.u.update_config({"repo": "geen geldige naam!"})
 
@@ -124,6 +125,8 @@ class InstallTests(unittest.TestCase):
         init = base64.b64encode(b'__version__ = "1.31"\n').decode()
 
         def fetch(url, token="", accept="", limit=0):
+            if "/zipball/" in url:
+                assert accept != "application/octet-stream", "GitHub geeft 415 op zipball met octet-stream"
             if url.endswith("/releases/latest"):
                 raise UpdateError("not_found")
             if url.endswith("/repos/eloy/afgooien"):

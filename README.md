@@ -313,6 +313,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.31**: updaten via GitHub bleef hangen op "Installeren…" (GitHub weigerde de download door een verkeerd
+  verzoektype); opgelost, en bij een mislukte download staat er nu een foutmelding
 - **1.30**: nieuwe pagina **Spelers**: per speler potjes, overwinningen, win %, gemiddelde plaats, langste
   winreeks, cijfers per spel, een grafiek van het verloop en alle potjes (sorteren op datum of plaats, filteren
   per spel); periode kiezen (vandaag, 7/30 dagen, jaar, alles of eigen datums). Stats mailen: e-mailadres bij een
