@@ -313,6 +313,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.32**: e-mail: duidelijkere foutmeldingen (met de technische reden erbij), eerst IPv4 proberen (sommige
+  netwerken hebben geen werkend IPv6), GMX toegevoegd, betere uitleg voor Gmail (eerst tweestapsverificatie)
 - **1.31**: updaten via GitHub bleef hangen op "Installeren…" (GitHub weigerde de download door een verkeerd
   verzoektype); opgelost, en bij een mislukte download staat er nu een foutmelding
 - **1.30**: nieuwe pagina **Spelers**: per speler potjes, overwinningen, win %, gemiddelde plaats, langste

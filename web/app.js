@@ -1589,7 +1589,7 @@ async function mailPlayer(name, games, period) {
     body: JSON.stringify({ name, subject: t("mail_subject", { name, period }), html: mailHtml(name, games, period), text: mailText(name, games, period) }) })).json();
   return r;
 }
-const mlErr = (code) => { const k = "ml_e_" + code, tx = t(k); return tx && tx !== k ? tx : t("ml_e_other", { code }); };
+const mlErr = (code, detail) => { const k = "ml_e_" + code, tx = t(k); return (tx && tx !== k ? tx : t("ml_e_other", { code })) + (detail ? ` (${detail})` : ""); };
 
 // ---- e-mailinstellingen
 function fillMail() {
@@ -1605,7 +1605,7 @@ function fillMail() {
   if (document.activeElement !== $("ml_port")) $("ml_port").value = m.port || 587;
   if (document.activeElement !== $("ml_user")) $("ml_user").value = m.user || "";
   $("ml_pass").placeholder = m.has_password ? t("ml_pass_saved") : "";
-  $("ml_help").textContent = m.preset === "gmail" ? t("ml_help_gmail") : t("ml_help_other");
+  $("ml_help").textContent = t("ml_help_" + m.preset) !== "ml_help_" + m.preset && t("ml_help_" + m.preset) ? t("ml_help_" + m.preset) : t("ml_help_other");
 }
 
 function updateTodayLine() {
@@ -2130,7 +2130,7 @@ function bind() {
       $("plmailmsg").textContent = t("pl_mail_busy");
       try {
         const res = await mailPlayer(plSel, games, periodName());
-        $("plmailmsg").textContent = res.ok ? t("pl_mail_sent", { to: res.to }) : mlErr(res.error);
+        $("plmailmsg").textContent = res.ok ? t("pl_mail_sent", { to: res.to }) : mlErr(res.error, res.detail);
       } catch (err) { $("plmailmsg").textContent = mlErr("connect"); }
     }
   });
@@ -2145,15 +2145,15 @@ function bind() {
     const who = (H.players || []).filter((p) => p.email && today.some((g) => g.players.some((q) => nkey(q.name) === nkey(p.name))));
     if (!who.length) { $("plmailallmsg").textContent = t("pl_mailall_none"); return; }
     $("plmailallmsg").textContent = t("pl_mail_busy");
-    let n = 0, err = null;
+    let n = 0, err = null, errDetail = "";
     const per = t("pr_today").toLowerCase() + " (" + dayTxt(isoDay(new Date())) + ")";
     for (const p of who) {
       try {
         const res = await mailPlayer(p.name, playerGames(p.name).filter((g) => inRange(g, "today")), per);
-        if (res.ok) n++; else err = res.error;
+        if (res.ok) n++; else err = res.error, errDetail = res.detail;
       } catch (e2) { err = "connect"; }
     }
-    $("plmailallmsg").textContent = t("pl_mailall_done", { n }) + (err ? " " + mlErr(err) : "");
+    $("plmailallmsg").textContent = t("pl_mailall_done", { n }) + (err ? " " + mlErr(err, errDetail) : "");
   };
   $("statsbody").addEventListener("change", (e) => {
     if (e.target.id === "gorder") { gamesOrder = e.target.value; store.set("afgooien.gamesOrder", gamesOrder); renderStats(); }
@@ -2177,7 +2177,7 @@ function bind() {
     try {
       const r = await (await fetch("/api/mail", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ test: true, subject: "Afgooien test", html: "<p>Het werkt! 🎯</p>", text: "Het werkt!" }) })).json();
-      $("ml_msg").textContent = r.ok ? t("ml_sent", { to: r.to }) : mlErr(r.error);
+      $("ml_msg").textContent = r.ok ? t("ml_sent", { to: r.to }) : mlErr(r.error, r.detail);
     } catch (e) { $("ml_msg").textContent = mlErr("connect"); }
   };
   $("statsclose").onclick = () => $("stats").classList.add("hidden");

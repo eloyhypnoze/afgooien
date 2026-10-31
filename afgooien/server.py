@@ -513,7 +513,7 @@ def make_handler(app: App):
             try:
                 app.mailer.send(to, str(body.get("subject") or "Afgooien"), str(body.get("html") or ""), str(body.get("text") or ""))
             except MailError as e:
-                return self._json({"ok": False, "error": str(e)})
+                return self._json({"ok": False, "error": e.code, "detail": e.detail})
             return self._json({"ok": True, "to": to})
 
         def _update(self):

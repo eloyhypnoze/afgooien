@@ -20,13 +20,49 @@ PRESETS = {
     "icloud": ("smtp.mail.me.com", 587),
     "ziggo": ("smtp.ziggo.nl", 587),
     "kpn": ("smtp.kpnmail.nl", 587),
+    "gmx": ("mail.gmx.net", 587),
 }
 DEFAULTS = {"preset": "gmail", "host": "smtp.gmail.com", "port": 587, "user": "", "password": "", "sender": "",
             "sender_name": "Afgooien"}
 
 
 class MailError(Exception):
-    """Code voor de foutmelding (zie i18n 'ml_e_*'); nooit met het wachtwoord erin."""
+    """Code voor de foutmelding (zie i18n 'ml_e_*'), met een korte technische uitleg; nooit met het wachtwoord erin."""
+
+    def __init__(self, code: str, detail: str = "") -> None:
+        super().__init__(code)
+        self.code, self.detail = code, detail[:160]
+
+
+def _connect(host: str, port: int, timeout: float, source_address=None) -> socket.socket:
+    """Eerst IPv4 proberen: veel thuisnetwerken (en Pi's op wifi) hebben geen werkend IPv6,
+    en dan blijft een IPv6-poging soms lang hangen."""
+    infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    infos.sort(key=lambda i: 0 if i[0] == socket.AF_INET else 1)
+    last = None
+    for fam, typ, proto, _, addr in infos:
+        s = socket.socket(fam, typ, proto)
+        s.settimeout(timeout)
+        try:
+            if source_address:
+                s.bind(source_address)
+            s.connect(addr)
+            return s
+        except OSError as e:
+            last = e
+            s.close()
+    raise last or OSError("geen adres")
+
+
+class _SMTP(smtplib.SMTP):
+    def _get_socket(self, host, port, timeout):
+        return _connect(host, port, timeout, self.source_address)
+
+
+class _SMTP_SSL(smtplib.SMTP_SSL):
+    def _get_socket(self, host, port, timeout):
+        sock = _connect(host, port, timeout, self.source_address)
+        return self.context.wrap_socket(sock, server_hostname=self._host)
 
 
 class Mailer:
@@ -85,26 +121,39 @@ class Mailer:
         msg["Message-ID"] = make_msgid(domain="afgooien.local")
         msg.set_content(text or "")
         msg.add_alternative(html, subtype="html")
+        ssl_mode = int(c["port"]) == 465
         try:
-            factory = self.smtp_factory or (smtplib.SMTP_SSL if int(c["port"]) == 465 else smtplib.SMTP)
+            factory = self.smtp_factory or (_SMTP_SSL if ssl_mode else _SMTP)
             ctx = ssl.create_default_context()
-            if factory is smtplib.SMTP_SSL:
-                server = factory(c["host"], int(c["port"]), timeout=20, context=ctx)
-            else:
-                server = factory(c["host"], int(c["port"]), timeout=20)
+            server = factory(c["host"], int(c["port"]), timeout=20, context=ctx) if ssl_mode else factory(c["host"], int(c["port"]), timeout=20)
             with server as s:
-                if factory is not smtplib.SMTP_SSL:
+                if not ssl_mode:
                     s.ehlo()
                     if s.has_extn("starttls"):
                         s.starttls(context=ctx)
                         s.ehlo()
                 s.login(c["user"], c["password"])
                 s.send_message(msg)
-        except smtplib.SMTPAuthenticationError:
-            raise MailError("auth") from None
+        except smtplib.SMTPAuthenticationError as e:
+            raise MailError("auth", _short(e)) from None
         except smtplib.SMTPRecipientsRefused:
             raise MailError("recipient") from None
-        except (socket.gaierror, ConnectionError, TimeoutError, socket.timeout, OSError):
-            raise MailError("connect") from None
-        except smtplib.SMTPException:
-            raise MailError("smtp") from None
+        except socket.gaierror as e:
+            raise MailError("dns", f"{c['host']}: {e}") from None
+        except ssl.SSLError as e:
+            raise MailError("tls", _short(e)) from None
+        except (TimeoutError, socket.timeout):
+            raise MailError("timeout", f"{c['host']}:{c['port']}") from None
+        except ConnectionRefusedError:
+            raise MailError("refused", f"{c['host']}:{c['port']}") from None
+        except smtplib.SMTPException as e:
+            raise MailError("smtp", _short(e)) from None
+        except OSError as e:
+            raise MailError("connect", f"{c['host']}:{c['port']} – {e}") from None
+
+
+def _short(e: Exception) -> str:
+    if isinstance(e, smtplib.SMTPResponseException):
+        msg = e.smtp_error.decode("utf-8", "replace") if isinstance(e.smtp_error, bytes) else str(e.smtp_error)
+        return f"{e.smtp_code} {' '.join(msg.split())}"
+    return " ".join(str(e).split())
