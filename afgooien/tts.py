@@ -194,7 +194,7 @@ AZURE_VOICES = {
 }
 PROVIDERS = ("auto", "piper", "elevenlabs", "azure", "browser")
 COMMENTARY = ("off", "some", "lots")
-DEFAULTS = {"on": True, "rate": 1.0, "commentary": "some", "provider": "auto",
+DEFAULTS = {"on": True, "rate": 1.0, "volume": 1.0, "commentary": "some", "provider": "auto",
             "eleven_key": "", "eleven_voice": "", "eleven_voice_name": "", "eleven_model": "eleven_multilingual_v2",
             "azure_key": "", "azure_region": "westeurope",
             "azure_voice_nl": "nl-NL-MaartenNeural", "azure_voice_en": "en-GB-RyanNeural"}
@@ -205,17 +205,39 @@ class CloudError(Exception):
     """Fout van een cloudstem; de tekst bevat nooit de sleutel."""
 
 
+def _err_detail(e: urllib.error.HTTPError) -> tuple[str, str]:
+    """(code, uitleg) uit het foutantwoord van ElevenLabs/Azure."""
+    try:
+        body = json.loads(e.read(4000).decode("utf-8", "replace"))
+        d = body.get("detail") if isinstance(body, dict) else None
+        if isinstance(d, dict):
+            return str(d.get("code") or d.get("status") or ""), str(d.get("message") or "")[:200]
+        if isinstance(d, str):
+            return "", d[:200]
+    except Exception:  # noqa: BLE001
+        pass
+    return "", ""
+
+
 def _http(req: urllib.request.Request, timeout: float = 15.0) -> bytes:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read()
     except urllib.error.HTTPError as e:
+        code, msg = _err_detail(e)
+        low = (code + " " + msg).lower()
+        if e.code == 402 or "paid_plan" in low or "not available for free" in low or "library voices" in low:
+            raise CloudError("paid_plan") from None
+        if "unusual_activity" in low or "unusual activity" in low:
+            raise CloudError("blocked") from None
+        if "voice_not_found" in low or (e.code == 404 and "voice" in low):
+            raise CloudError("voice_not_found") from None
+        if "quota" in low or "credits" in low:
+            raise CloudError("quota") from None
         if e.code in (401, 403):
             raise CloudError("bad_key") from None
         if e.code == 429:
-            raise CloudError("quota") from None
-        if e.code == 402:
-            raise CloudError("quota") from None
+            raise CloudError("busy") from None
         raise CloudError(f"http_{e.code}") from None
     except (urllib.error.URLError, OSError, TimeoutError):
         raise CloudError("offline") from None
@@ -242,7 +264,8 @@ def eleven_voices(key: str) -> list[dict]:
         lab = v.get("labels") or {}
         extra = ", ".join(x for x in (lab.get("gender"), lab.get("accent"), lab.get("description") or lab.get("descriptive"),
                                       lab.get("use_case") or lab.get("use case")) if x)
-        out.append({"id": v.get("voice_id"), "name": v.get("name"), "info": extra})
+        out.append({"id": v.get("voice_id"), "name": v.get("name"), "info": extra,
+                    "premade": v.get("category") == "premade", "category": v.get("category") or ""})
     return [v for v in out if v["id"]]
 
 
@@ -332,6 +355,11 @@ class VoiceManager:
         c = self.cfg
         if "on" in cmd:
             c["on"] = bool(cmd["on"])
+        if "volume" in cmd:
+            try:
+                c["volume"] = round(min(1.0, max(0.0, float(cmd["volume"]))), 2)
+            except (TypeError, ValueError):
+                pass
         if "rate" in cmd:
             try:
                 c["rate"] = round(min(1.4, max(0.6, float(cmd["rate"]))), 2)

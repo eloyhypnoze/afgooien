@@ -69,6 +69,8 @@
         <label id="v_voice_row"><span data-i18n="v_voice"></span> <select id="v_voice"></select></label>
         <label id="v_pitch_row"><span><span data-i18n="v_pitch"></span> <span id="v_pitch_val"></span></span>
           <input id="v_pitch" type="range" min="0.5" max="1.5" step="0.05"></label>
+        <label><span><span data-i18n="v_volume"></span> <span id="v_volume_val"></span></span>
+          <input id="v_volume" type="range" min="0" max="1" step="0.05"></label>
         <label><span><span data-i18n="v_rate"></span> <span id="v_rate_val"></span></span>
           <input id="v_rate" type="range" min="0.6" max="1.4" step="0.05"></label>
         <label><span data-i18n="v_comm"></span> <select id="v_comm">
@@ -268,6 +270,7 @@
           <button id="addbot" class="bigbtn" data-i18n="add_bot"></button>
         </div>
         <p class="sub small" id="lobbyorder" data-i18n="lobby_order"></p>
+        <label class="switch" id="randrow"><input id="randorder" type="checkbox" checked><span class="sl"></span><span data-i18n="lobby_random"></span></label>
       </div>
       <div class="lobbyside">
         <div class="card rulescard x01card hidden" id="x01card">

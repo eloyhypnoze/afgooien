@@ -169,5 +169,36 @@ class VoiceManagerTests(unittest.TestCase):
         self.assertFalse(self.vm.info()["has_eleven_key"])
 
 
+class CloudErrorTests(unittest.TestCase):
+    def check(self, status, body, want):
+        import io
+        import urllib.error
+        from unittest import mock
+        from afgooien import tts
+        err = urllib.error.HTTPError("https://x", status, "err", {}, io.BytesIO(json.dumps(body).encode()))
+        with mock.patch.object(tts.urllib.request, "urlopen", side_effect=err):
+            with self.assertRaises(tts.CloudError) as cm:
+                tts._http(urllib.request.Request("https://x"))
+        self.assertEqual(str(cm.exception), want)
+
+    def test_mapping(self):
+        self.check(402, {"detail": {"type": "payment_required", "code": "paid_plan_required",
+                                    "message": "Free users cannot use library voices via the API."}}, "paid_plan")
+        self.check(401, {"detail": {"status": "detected_unusual_activity", "message": "Unusual activity detected"}}, "blocked")
+        self.check(401, {"detail": {"status": "invalid_api_key", "message": "Invalid API key"}}, "bad_key")
+        self.check(400, {"detail": {"status": "voice_not_found", "message": "A voice with the voice_id x was not found."}}, "voice_not_found")
+        self.check(401, {"detail": {"status": "quota_exceeded", "message": "This request exceeds your quota."}}, "quota")
+        self.check(500, {}, "http_500")
+
+    def test_volume(self):
+        from afgooien.tts import VoiceManager
+        cfg = {}
+        vm = VoiceManager(None, cfg)
+        vm.update({"volume": 0.4})
+        self.assertEqual(vm.info()["volume"], 0.4)
+        vm.update({"volume": 7})
+        self.assertEqual(cfg["voice"]["volume"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

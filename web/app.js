@@ -496,7 +496,7 @@ function confirmDialog(text, onYes) {
 // De stem komt uit de browser (Web Speech). Beste resultaat: Microsoft Edge, die
 // natuurlijke stemmen heeft zoals "Microsoft Maarten Online (Natural)".
 // De gekozen stem wordt per taal bewaard; bij Engels kiest hij automatisch een Engelse stem.
-const voiceCfg = Object.assign({ on: true, engine: "browser", commentary: "some", name: "", names: {}, pitch: 0.8, rate: 0.95 }, store.get("afgooien.voice", {}));
+const voiceCfg = Object.assign({ on: true, engine: "browser", commentary: "some", volume: 1, name: "", names: {}, pitch: 0.8, rate: 0.95 }, store.get("afgooien.voice", {}));
 if (voiceCfg.name && !voiceCfg.names.nl) voiceCfg.names.nl = voiceCfg.name;   // oude instelling
 delete voiceCfg.name;
 const VOICE_PREF = {
@@ -586,6 +586,7 @@ async function serverSay(list) {
     const src = URL.createObjectURL(blob);
     try {
       ttsAudio.src = src;
+      ttsAudio.volume = Math.min(1, Math.max(0, vset().volume ?? 1));
       await new Promise((res) => { ttsAudio.onended = res; ttsAudio.onerror = res; ttsAudio.play().catch(res); });
     } finally { URL.revokeObjectURL(src); }
     if (run !== ttsRun) return;
@@ -611,7 +612,7 @@ function sayPhrases(list, force) {
         const last = i === parts.length - 1;
         u.pitch = Math.max(0.1, voiceCfg.pitch * (big && last ? 0.9 : 1));
         u.rate = rate * (big ? (last ? 0.78 : 0.9) : 1);
-        u.volume = 1;
+        u.volume = Math.min(1, Math.max(0, vs.volume ?? 1));
         speechSynthesis.speak(u);
       });
     }
@@ -673,7 +674,8 @@ let elevenList = null;
 const errText = (code) => {
   if (!code) return "";
   const c = String(code).split(":").pop();
-  return { bad_key: t("v_err_bad_key"), quota: t("v_err_quota"), offline: t("v_err_offline"), no_key: t("v_err_no_key") }[c] ||
+  return { bad_key: t("v_err_bad_key"), quota: t("v_err_quota"), offline: t("v_err_offline"), no_key: t("v_err_no_key"),
+    paid_plan: t("v_err_paid_plan"), blocked: t("v_err_blocked"), voice_not_found: t("v_err_voice_not_found"), busy: t("v_err_busy") }[c] ||
     t("v_err_other", { code: c });
 };
 function fillAzure(sel, lang, cur) {
@@ -688,6 +690,8 @@ function fillVoices() {
   $("v_on").checked = !!vs.on;
   setSoundIcon(vs.on);
   $("v_rate").value = vs.rate; $("v_rate_val").textContent = (+vs.rate).toFixed(2);
+  const vol = vs.volume ?? 1;
+  $("v_volume").value = vol; $("v_volume_val").textContent = Math.round(vol * 100) + "%";
   $("v_comm").value = vs.commentary || "off";
   const prov = server ? vs.provider : (voiceCfg.engine === "browser" ? "browser" : "browser");
   $("v_prov").value = prov;
@@ -705,7 +709,7 @@ function fillVoices() {
     const k = list.map((v) => v.id).join(",");
     if (es.dataset.k !== k) {
       es.innerHTML = `<option value="">${esc(t("v_pickvoice"))}</option>` +
-        list.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}${v.info ? " · " + esc(v.info) : ""}</option>`).join("");
+        list.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}${v.premade === undefined ? "" : " (" + (v.premade ? t("v_free") : t("v_paid")) + ")"}${v.info ? " · " + esc(v.info) : ""}</option>`).join("");
       es.dataset.k = k;
     }
     es.value = vs.eleven_voice || "";
@@ -1843,13 +1847,13 @@ function x01Chips(st) {
   return c;
 }
 function renderLobbyMode() {
+  updateOrderHint();
   $("afgcard").classList.toggle("hidden", lobbyMode !== "afgooien");
   $("x01card").classList.toggle("hidden", lobbyMode !== "x01");
   $("cucard").classList.toggle("hidden", lobbyMode !== "countup");
   $("gencard").classList.toggle("hidden", !PARTY.includes(lobbyMode));
   renderGenCard();
   $("lobbytitle").textContent = modeTitle(lobbyMode);
-  $("lobbyorder").classList.toggle("hidden", lobbyMode !== "afgooien");
   const s = x01Set;
   $("x01title").textContent = s.start;
   $("x_start").textContent = s.start;
@@ -1958,6 +1962,22 @@ function fillSetup() {
     $("r_miss").checked = st.miss_penalty !== false; $("r_bull").checked = st.bull_bonus !== false; $("r_ton").checked = st.ton_bonus !== false;
   }
 }
+// Gooivolgorde: bij Afgooien en bij X01 met bull-off beslist de bull; anders mag hij geloot worden.
+const bullDecides = (mode, st) => mode === "afgooien" || (mode === "x01" && st && st.bulloff && st.bulloff !== "off");
+const randomOrderUsed = (mode, st) => !bullDecides(mode, st) && store.get("afgooien.randomOrder", true);
+function shuffled(list) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function updateOrderHint() {
+  const st = lobbyMode === "x01" ? x01Set : {};
+  const bull = bullDecides(lobbyMode, st);
+  $("lobbyorder").textContent = bull ? t("lobby_order") : t("lobby_order_list");
+  $("lobbyorder").classList.toggle("hidden", !bull && store.get("afgooien.randomOrder", true));
+  $("randrow").classList.toggle("hidden", bull);
+  $("randorder").checked = store.get("afgooien.randomOrder", true);
+}
 function startGame() {
   $("setuperr").textContent = "";
   const rows = [...$("names").children].map((li) => ({ name: li.querySelector("input").value.trim(), bot: +li.querySelector("select").value }))
@@ -1969,12 +1989,14 @@ function startGame() {
   store.set("afgooien.players", rows);
   if (lobbyMode === "afgooien") store.set("afgooien.settings", settings);
   const st = lobbyMode === "x01" ? { ...x01Set } : lobbyMode === "countup" ? { ...cuSet } : PARTY.includes(lobbyMode) ? { ...partySet[lobbyMode] } : settings;
-  send({ type: "new_game", mode: lobbyMode, players: rows.map((r) => r.name), bots: rows.map((r) => r.bot), settings: st });
+  const order = randomOrderUsed(lobbyMode, st) ? shuffled(rows) : rows;
+  send({ type: "new_game", mode: lobbyMode, players: order.map((r) => r.name), bots: order.map((r) => r.bot), settings: st });
 }
 
 // ------------------------------------------------------------------ events
 function bind() {
   $("addname").onclick = () => addName();
+  $("randorder").onchange = (e) => { store.set("afgooien.randomOrder", e.target.checked); updateOrderHint(); };
   applyI18n();
   applyScale();
   $("zoomin").onclick = () => { uiScale = Math.min(2.4, Math.round((uiScale + 0.1) * 10) / 10); applyScale(); };
@@ -2023,7 +2045,8 @@ function bind() {
   $("again").onclick = () => {
     const st = { ...S.settings };
     delete st.seed;                       // nieuwe willekeurige doubles / finishes / nummers
-    send({ type: "new_game", mode: S.mode || "afgooien", players: S.players.map((p) => p.name), bots: S.players.map((p) => p.bot || 0), settings: st });
+    const ps = randomOrderUsed(S.mode || "afgooien", st) ? shuffled(S.players) : S.players;
+    send({ type: "new_game", mode: S.mode || "afgooien", players: ps.map((p) => p.name), bots: ps.map((p) => p.bot || 0), settings: st });
   };
   $("newplayers").onclick = () => leaveGame(() => setView("lobby"));
   $("up_upload").onclick = uploadUpdate;
@@ -2217,6 +2240,8 @@ function bind() {
   $("v_pitch").oninput = (e) => { voiceCfg.pitch = +e.target.value; store.set("afgooien.voice", voiceCfg); $("v_pitch_val").textContent = (+voiceCfg.pitch).toFixed(2); };
   $("v_rate").oninput = (e) => { $("v_rate_val").textContent = (+e.target.value).toFixed(2); };
   $("v_rate").onchange = (e) => voiceSave({ rate: +e.target.value });
+  $("v_volume").oninput = (e) => { $("v_volume_val").textContent = Math.round(+e.target.value * 100) + "%"; ttsAudio && (ttsAudio.volume = +e.target.value); };
+  $("v_volume").onchange = (e) => voiceSave({ volume: +e.target.value });
   $("v_comm").onchange = (e) => voiceSave({ commentary: e.target.value });
   $("v_esave").onclick = async () => { const k = $("v_ekey").value.trim(); if (k) { await voiceSave({ eleven_key: k }); $("v_ekey").value = ""; } loadEleven(); };
   $("v_eload").onclick = async () => { const k = $("v_ekey").value.trim(); if (k) { await voiceSave({ eleven_key: k }); $("v_ekey").value = ""; } loadEleven(); };

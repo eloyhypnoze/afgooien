@@ -313,6 +313,9 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.33**: volumeknop bij de stem; willekeurige gooivolgorde (behalve bij Afgooien en X01 met bull-off, daar
+  beslist de bull); ElevenLabs: duidelijke melding als een stem een betaald abonnement nodig heeft, en in de
+  stemmenlijst staat welke stemmen gratis werken
 - **1.32**: e-mail: duidelijkere foutmeldingen (met de technische reden erbij), eerst IPv4 proberen (sommige
   netwerken hebben geen werkend IPv6), GMX toegevoegd, betere uitleg voor Gmail (eerst tweestapsverificatie)
 - **1.31**: updaten via GitHub bleef hangen op "Installeren…" (GitHub weigerde de download door een verkeerd
