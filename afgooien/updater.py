@@ -150,6 +150,8 @@ class Updater:
             raw = self.fetch(f"{GITHUB_API}/repos/{repo}/releases/latest", self.cfg["token"], accept="application/vnd.github+json")
             rel = json.loads(raw.decode("utf-8"))
         except UpdateError as e:
+            if str(e) == "not_found":               # geen releases: dan de nieuwste code uit de hoofdtak
+                return self._check_branch(repo)
             self.status = {"state": "error", "error": str(e)}
             raise
         except ValueError:
@@ -165,6 +167,40 @@ class Updater:
         self.latest = {"version": ver, "notes": str(rel.get("body") or "")[:1500],
                        "url": asset.get("url") or asset.get("browser_download_url"),
                        "sha256": digest.split(":", 1)[1] if digest.startswith("sha256:") else None}
+        newer = vtuple(ver) > vtuple(self.current)
+        self.status = {"state": "available" if newer else "latest"}
+        return {"newer": newer, "version": ver}
+
+    def _api(self, path: str) -> dict:
+        raw = self.fetch(f"{GITHUB_API}/repos/{path}", self.cfg["token"], accept="application/vnd.github+json")
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except ValueError:
+            raise UpdateError("bad_answer") from None
+
+    def _check_branch(self, repo: str) -> dict:
+        """Zonder releases: versie uit afgooien/__init__.py van de hoofdtak, download als zip van die commit."""
+        import base64
+        try:
+            branch = self._api(repo).get("default_branch") or "main"
+            commit = self._api(f"{repo}/commits/{branch}")
+            sha = commit.get("sha") or branch
+            meta = self._api(f"{repo}/contents/afgooien/__init__.py?ref={sha}")
+            ver = _version_of(base64.b64decode(meta.get("content") or "").decode("utf-8", "replace"))
+        except UpdateError as e:
+            self.status = {"state": "error", "error": str(e)}
+            raise
+        except (ValueError, TypeError):
+            self.status = {"state": "error", "error": "bad_answer"}
+            raise UpdateError("bad_answer") from None
+        if not ver:
+            self.status = {"state": "error", "error": "no_zip"}
+            raise UpdateError("no_zip")
+        self._last_check = time.time()
+        msg = str((commit.get("commit") or {}).get("message") or "")
+        msg = "\n".join(line for line in msg.splitlines() if not line.startswith(("Co-Authored-By", "Claude-Session")))
+        self.latest = {"version": ver, "notes": msg.strip()[:1500],
+                       "url": f"{GITHUB_API}/repos/{repo}/zipball/{sha}", "sha256": None}
         newer = vtuple(ver) > vtuple(self.current)
         self.status = {"state": "available" if newer else "latest"}
         return {"newer": newer, "version": ver}

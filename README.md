@@ -313,6 +313,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.29**: updates via GitHub werken ook zonder releases: Afgooien pakt dan de nieuwste versie uit de
+  hoofdtak van de repository (bijv. `eloyhypnoze/afgooien`)
 - **1.28**: updates vanuit de app (Instellingen → Updates): zip-bestand uploaden vanaf je telefoon/pc, of
   automatisch ophalen uit een GitHub-release; vorige versie blijft als reserve (terugzetten kan met één knop).
   De app meldt het als een update ook `install_pi.sh` opnieuw nodig heeft

@@ -118,6 +118,30 @@ class InstallTests(unittest.TestCase):
         with self.assertRaises(UpdateError):
             self.u.update_config({"repo": "geen geldige naam!"})
 
+    def test_branch_without_releases(self):
+        import base64
+        z = make_zip("1.31", prefix="eloyhypnoze-afgooien-abc123/")
+        init = base64.b64encode(b'__version__ = "1.31"\n').decode()
+
+        def fetch(url, token="", accept="", limit=0):
+            if url.endswith("/releases/latest"):
+                raise UpdateError("not_found")
+            if url.endswith("/repos/eloy/afgooien"):
+                return json.dumps({"default_branch": "main"}).encode()
+            if url.endswith("/commits/main"):
+                return json.dumps({"sha": "abc123", "commit": {"message": "Afgooien v1.31\n\nCo-Authored-By: x"}}).encode()
+            if "/contents/afgooien/__init__.py?ref=abc123" in url:
+                return json.dumps({"content": init}).encode()
+            if url.endswith("/zipball/abc123"):
+                return z
+            raise AssertionError(url)
+        self.u.fetch = fetch
+        self.u.update_config({"repo": "eloy/afgooien"})
+        self.assertEqual(self.u.check(), {"newer": True, "version": "1.31"})
+        self.assertEqual(self.u.info()["latest"]["notes"], "Afgooien v1.31")
+        self.u.install_latest()
+        self.assertIn("1.31", (self.root / "afgooien" / "__init__.py").read_text())
+
 
 if __name__ == "__main__":
     unittest.main()
