@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 
 from .engine import GameError
 
 MAX_PLAYERS = 200
+EMAIL_RE = re.compile(r"[^@\s<>,;]+@[^@\s<>,;]+\.[A-Za-z]{2,}")
 
 
 def _key(name: str) -> str:
@@ -81,6 +83,20 @@ class PlayerStore:
             raise GameError("err_no_player")
         self.players.remove(p)
         self.since[_key(name)] = _now()        # oude potjes tellen niet meer mee
+        self._save()
+
+    def set_email(self, name: str, email: str) -> None:
+        """E-mailadres voor het mailen van statistieken (leeg = weghalen)."""
+        p = self.find(name)
+        if not p:
+            raise GameError("err_no_player")
+        e = str(email or "").strip()[:120]
+        if e and not EMAIL_RE.fullmatch(e):
+            raise GameError("err_email", email=e)
+        if e:
+            p["email"] = e
+        else:
+            p.pop("email", None)
         self._save()
 
     def reset(self, name: str) -> None:

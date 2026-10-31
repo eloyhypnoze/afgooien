@@ -26,6 +26,7 @@ from .history import DartLog, History, new_game_id
 from .players import PlayerStore
 from .tts import CloudError, VoiceManager
 from .updater import Updater, UpdateError
+from .mailer import Mailer, MailError
 
 mimetypes.add_type("font/woff", ".woff")
 mimetypes.add_type("font/woff2", ".woff2")
@@ -52,6 +53,7 @@ class App:
         self.config_file = (data_dir / "instellingen.json") if data_dir else None
         self.config = self._load_config()
         self.tts = VoiceManager(data_dir, self.config, self._save_config)
+        self.mailer = Mailer(self.config, self._save_config)
         self.updater = Updater(self.web_dir.parent, __version__, self.config, self._save_config, data_dir=data_dir)
         self.say: dict = {"n": 0, "phrases": []}
         self.power_enabled = False        # aan/uit-knop (alleen op de Pi, via run.py --power)     # testzinnen (bijv. vanaf de telefoon) voor het grote scherm
@@ -120,6 +122,7 @@ class App:
             s["say"] = self.say
             s["power"] = self.power_enabled
             s["update"] = self.updater.info()
+            s["mail"] = self.mailer.info()
             if self.extra_notice and not s["notice"]:
                 s["notice"] = tr(self.lang, *self.extra_notice)
             s["key"] = "%d.%d" % self.key()
@@ -232,6 +235,11 @@ class App:
         elif t == "say":
             phrases = [str(x)[:200] for x in (cmd.get("phrases") or [])][:4]
             self.say = {"n": self.say["n"] + 1, "phrases": phrases}
+        elif t == "player_email":
+            self.players.set_email(cmd.get("name"), cmd.get("email"))
+            self.history.version += 1
+        elif t == "mail_config":
+            self.mailer.update(cmd)
         elif t == "update_config":
             try:
                 self.updater.update_config(cmd)
@@ -445,6 +453,8 @@ def make_handler(app: App):
                 return self._power()
             if self.path.startswith("/api/update"):
                 return self._update()
+            if self.path == "/api/mail":
+                return self._mail()
             if self.path != "/api/cmd":
                 return self.send_error(HTTPStatus.NOT_FOUND)
             try:
@@ -471,6 +481,38 @@ def make_handler(app: App):
                 return self._json({"ok": False, "error": "onbekend"}, 400)
             err = power_action(action)
             return self._json({"ok": err is None, "error": err}, 200 if err is None else 500)
+
+        def _local(self) -> bool:
+            import ipaddress
+            try:
+                ip = ipaddress.ip_address(self.client_address[0])
+                return ip.is_private or ip.is_loopback
+            except ValueError:
+                return False
+
+        def _mail(self):
+            """Statistieken mailen. Alleen naar het adres dat bij de speler is opgeslagen (of een testmail naar jezelf)."""
+            if not self._local():
+                return self._json({"ok": False, "error": "not_local"}, 403)
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(min(n, 400_000)) or b"{}")
+                assert isinstance(body, dict)
+            except (ValueError, AssertionError):
+                return self._json({"ok": False, "error": "bad_request"}, 400)
+            if body.get("test"):
+                to = app.mailer.cfg["sender"] or app.mailer.cfg["user"]
+            else:
+                with app.lock:
+                    p = app.players.find(body.get("name") or "")
+                to = (p or {}).get("email")
+            if not to:
+                return self._json({"ok": False, "error": "no_email"}, 400)
+            try:
+                app.mailer.send(to, str(body.get("subject") or "Afgooien"), str(body.get("html") or ""), str(body.get("text") or ""))
+            except MailError as e:
+                return self._json({"ok": False, "error": str(e)})
+            return self._json({"ok": True, "to": to})
 
         def _update(self):
             """Updates: alleen vanaf apparaten in je eigen netwerk."""

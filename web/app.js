@@ -220,7 +220,9 @@ function render(state) {
     lastSayN = S.say.n;
   }
   refreshVoiceUi();
-  if (view === "settings") fillUpdate();
+  if (view === "settings") { fillUpdate(); fillMail(); }
+  const mk = JSON.stringify(S.mail || {});
+  if (mk !== lastMailKey) { lastMailKey = mk; if (view === "players" && S.phase === "setup") renderPlayerMain(); }
   const localScreen = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
   $("powerbtn").classList.toggle("hidden", !(S.power && localScreen && !LOCAL));
   if (S.app_version) $("appversion").textContent = "v" + S.app_version + (LOCAL ? " · " + t("testversion") : "");
@@ -1051,13 +1053,19 @@ async function loadHistory(force) {
     if (S && S.phase === "setup" && view === "home") updateHome();
     if (S && S.phase === "setup" && view === "settings") renderSettings();
     if (S && S.phase === "setup" && view === "lobby") renderChips();
+    if (S && S.phase === "setup" && view === "players") renderPlayers();
   } catch (e) { /* geen geschiedenis beschikbaar */ }
 }
-function inRange(g, range) {
+function inRange(g, range, from, to) {
   if (range === "all") return true;
   const t = new Date(g.ended), now = new Date();
   if (range === "today") return t.toDateString() === now.toDateString();
-  return now - t <= 7 * 864e5;
+  if (range === "custom") {
+    const d = g.ended.slice(0, 10);
+    return (!from || d >= from) && (!to || d <= to);
+  }
+  const days = { week: 7, month: 30, year: 365 }[range] || 7;
+  return now - t <= days * 864e5;
 }
 const gmode = (g) => g.mode || "afgooien";
 const SUMS = {
@@ -1297,12 +1305,23 @@ function h2hHtml(games) {
     <p class="h2hnote">${t("h2h_note")}</p>`;
 }
 
+let gamesOrder = store.get("afgooien.gamesOrder", "new");
+const whenTxt = (g) => { const d = new Date(g.ended); const p = (x) => String(x).padStart(2, "0"); return `${p(d.getDate())}-${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const byDate = (a, b) => (a.ended < b.ended ? -1 : a.ended > b.ended ? 1 : 0);
 function gamesHtml(games) {
-  const when = (g) => { const d = new Date(g.ended); const p = (x) => String(x).padStart(2, "0"); return `${p(d.getDate())}-${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
-  return `<div class="gamelist">` + games.slice().reverse().map((g) => {
+  const list = games.slice().sort(byDate);
+  if (gamesOrder !== "old") list.reverse();
+  const tools = `<div class="listtools"><label>${t("g_sort")} <select id="gorder">
+    <option value="new" ${gamesOrder !== "old" ? "selected" : ""}>${t("pl_order_new")}</option>
+    <option value="old" ${gamesOrder === "old" ? "selected" : ""}>${t("pl_order_old")}</option></select></label></div>`;
+  return tools + `<div class="gamelist">` + list.map((g) => gameRowHtml(g)).join("") + `</div>`;
+}
+function gameRowHtml(g, me) {
+  {
     const [w, ...rest] = g.players;
-    if (gmode(g) !== "afgooien") return otherGameRow(g, when(g));
-    const detail = g.players.map((p) => `<tr><td class="l">${p.place}.</td><td class="l name">${esc(p.name)}</td><td>${p.number}</td><td>${p.kills}</td>
+    if (gmode(g) !== "afgooien") return otherGameRow(g, whenTxt(g), me);
+    const when = whenTxt;
+    const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${esc(p.name)}</td><td>${p.number}</td><td>${p.kills}</td>
       <td>${fmt2(p.turns ? (p.gained + p.knocked) / p.turns : 0)}</td><td>${p.triples}</td><td>${p.doubles}</td>
       <td>${pct(p.darts ? p.useful / p.darts : 0)}</td><td>${p.darts}</td><td>${p.darts_to_target == null ? "–" : p.darts_to_target}</td>
       <td class="l">${p.out_by ? t("g_outby", { by: esc(p.out_by) }) : t("g_winner")}</td></tr>`).join("");
@@ -1312,12 +1331,12 @@ function gamesHtml(games) {
       <span class="rest">· ${t("g_rounds", { n: g.rounds })}</span></summary>
       <table class="stats"><thead><tr><th class="l"></th><th class="l">${t("c_player")}</th><th>${t("g_num")}</th><th>${t("c_kills")}</th><th>${t("c_ppt")}</th>
       <th>${t("c_triples")}</th><th>${t("c_doubles")}</th><th>${t("c_hit")}</th><th>${t("g_darts")}</th><th>${t("g_to5")}</th><th class="l"></th></tr></thead><tbody>${detail}</tbody></table></details>`;
-  }).join("") + `</div>`;
+  }
 }
 
-function partyGameRow(g, when) {
+function partyGameRow(g, when, me) {
   const [w, ...rest] = g.players;
-  const detail = g.players.map((p) => `<tr><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
+  const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     [p.score, p.hits, pct(p.darts ? p.hits / p.darts : 0), p.darts].map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
   return `<details class="gamerow"><summary><span class="when">${when}</span>
     <span class="gwin">🏆 ${esc(g.winner)} (${w.score})</span>
@@ -1326,8 +1345,8 @@ function partyGameRow(g, when) {
     <tbody>${detail}</tbody></table></details>`;
 }
 
-function otherGameRow(g, when) {
-  if (PARTY.includes(gmode(g))) return partyGameRow(g, when);
+function otherGameRow(g, when, me) {
+  if (PARTY.includes(gmode(g))) return partyGameRow(g, when, me);
   const x = gmode(g) === "x01";
   const [w, ...rest] = g.players;
   const head = x ? ["c_avg", "c_f9", "c_legs", "c_hico", "c_bestleg", "c_180", "c_140", "c_100", "g_darts"]
@@ -1335,7 +1354,7 @@ function otherGameRow(g, when) {
   const cells = (p) => (x ? [fmt2(avg3(p.points, p.darts)), fmt2(avg3(p.f9_points, p.f9_darts)), p.legs_total, p.hi_checkout || "–",
     p.best_leg == null ? "–" : p.best_leg, p.n180, p.n140, p.n100, p.darts]
     : [p.score, fmt2(avg3(p.points, p.darts)), p.best_round, p.n180, p.n140, p.n100, p.darts]);
-  const detail = g.players.map((p) => `<tr><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
+  const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     cells(p).map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
   const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out` : t("chip_rounds", { n: g.rounds });
   const wtxt = x ? `${esc(w.name)} (${fmt2(avg3(w.points, w.darts))})` : `${esc(g.winner)} (${w.score})`;
@@ -1345,6 +1364,248 @@ function otherGameRow(g, when) {
     <span class="rest">· ${esc(what)}</span></summary>
     <table class="stats"><thead><tr><th class="l"></th><th class="l">${t("c_player")}</th>${head.map((h) => `<th>${t(h)}</th>`).join("")}</tr></thead>
     <tbody>${detail}</tbody></table></details>`;
+}
+
+// ============================================================ spelerspagina
+let plSel = store.get("afgooien.plSel", "");
+let lastMailKey = "";
+let plRange = store.get("afgooien.plRange", "month");
+let plFrom = "", plTo = "";
+let plMode = "all";
+let plOrder = "new";
+let plSort = store.get("afgooien.plSort", "recent");
+const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dayTxt = (iso) => { const [y, m, d] = iso.slice(0, 10).split("-"); return `${d}-${m}-${y}`; };
+function playerGames(name) {        // alle potjes van deze speler (na een eventuele stats-reset)
+  const k = nkey(name), since = (H.since || {})[k];
+  return (H.games || []).filter((g) => g.players.some((p) => nkey(p.name) === k) && !(since && g.ended < since));
+}
+function periodName() {
+  if (plRange === "custom") return `${plFrom ? dayTxt(plFrom) : "…"} ${t("pl_to")} ${plTo ? dayTxt(plTo) : "…"}`;
+  if (plRange === "today") return t("pr_today").toLowerCase() + " (" + dayTxt(isoDay(new Date())) + ")";
+  return t("pr_" + plRange).toLowerCase();
+}
+// hoofdcijfer van één speler in één potje: [label, waarde-tekst, getal]
+function keyStat(g, p) {
+  const m = gmode(g);
+  if (m === "afgooien") return [t("c_kills"), String(p.kills || 0), p.kills || 0];
+  if (m === "x01") { const a = avg3(p.points, p.darts); return [t("c_avg"), fmt2(a), a]; }
+  if (m === "countup") return [t("c_score"), String(p.score), p.score];
+  return [t("c_score2"), String(p.score), p.score];
+}
+// per spel samenvatten voor deze speler (zelfde berekening als het scorebord)
+function playerModes(name, games) {
+  const k = nkey(name), out = [];
+  const modes = [...new Set(games.map(gmode))];
+  for (const m of modes) {
+    const gs = games.filter((g) => gmode(g) === m);
+    const a = aggregate(gs, m).find((r) => nkey(r.name) === k);
+    if (!a) continue;
+    let key, best;
+    if (m === "afgooien") { key = [t("c_kills"), String(a.kills)]; best = [t("c_ppt"), fmt2(a.ppt)]; }
+    else if (m === "x01") { key = [t("c_avg"), fmt2(a.avg)]; best = [t("c_hico"), a.hico || "–"]; }
+    else if (m === "countup") { key = [t("c_score"), fmt1(a.avgScore)]; best = [t("c_hiscore"), a.hiscore]; }
+    else { key = [m === "atc" ? t("c_targets") : t("c_avgscore"), fmt1(a.avgScore)]; best = [t("c_bestscore"), a.bestScore == null ? "–" : a.bestScore]; }
+    out.push({ mode: m, a, key, best });
+  }
+  return out.sort((x, y) => y.a.games - x.a.games);
+}
+function playerSummary(name, games) {
+  const k = nkey(name);
+  let wins = 0, placeSum = 0, streak = 0, bestStreak = 0;
+  for (const g of games.slice().sort(byDate)) {
+    const p = g.players.find((q) => nkey(q.name) === k);
+    placeSum += p.place || g.players.length;
+    if (p.place === 1 && g.players.length > 1) { wins++; streak++; bestStreak = Math.max(bestStreak, streak); }
+    else if (p.place === 1) { wins++; streak++; bestStreak = Math.max(bestStreak, streak); }
+    else streak = 0;
+  }
+  const n = games.length;
+  return { games: n, wins, winPct: n ? wins / n : 0, avgPlace: n ? placeSum / n : 0, bestStreak };
+}
+function renderPlayers() {
+  const all = H.games || [];
+  const reg = H.players || [];
+  // iedereen die geregistreerd is of ooit gespeeld heeft (geen bots)
+  const names = new Map();
+  reg.forEach((p) => names.set(nkey(p.name), p.name));
+  for (const g of all) for (const p of g.players) if (!p.bot && !names.has(nkey(p.name))) names.set(nkey(p.name), p.name);
+  const q = nkey($("plsearch").value || "");
+  let list = [...names.values()].map((n) => {
+    const gs = playerGames(n);
+    const sm = playerSummary(n, gs);
+    const last = gs.length ? gs.reduce((a, g) => (g.ended > a ? g.ended : a), "") : "";
+    return { name: n, ...sm, last };
+  }).filter((r) => !q || nkey(r.name).includes(q));
+  const srt = { recent: (a, b) => (b.last > a.last ? 1 : b.last < a.last ? -1 : 0), wins: (a, b) => b.wins - a.wins || b.games - a.games,
+    games: (a, b) => b.games - a.games, name: (a, b) => a.name.localeCompare(b.name) }[plSort];
+  list.sort(srt);
+  if (!plSel || !names.has(nkey(plSel))) plSel = list.length ? list[0].name : "";
+  $("plsort").value = plSort;
+  $("plitems").innerHTML = list.length ? list.map((r, i) => {
+    const c = COLORS[i % COLORS.length];
+    return `<button class="plitem ${nkey(r.name) === nkey(plSel) ? "on" : ""}" data-name="${esc(r.name)}">
+      <span class="av" style="background:${c}">${esc(r.name.slice(0, 1).toUpperCase())}</span>
+      <span class="plin"><b>${esc(r.name)}</b><small>${r.games ? `${t("games_n", { n: r.games })} · ${r.wins} 🏆 · ${pct(r.winPct)}` : t("pl_never")}</small></span></button>`;
+  }).join("") : `<div class="statsempty">${t("pl_none")}</div>`;
+  renderPlayerMain();
+}
+function rangeButtons() {
+  const rs = ["today", "week", "month", "year", "all", "custom"];
+  return `<div class="seg plrange">${rs.map((r) => `<button data-r="${r}" class="${plRange === r ? "on" : ""}">${t("pr_" + r)}</button>`).join("")}</div>` +
+    (plRange === "custom" ? `<div class="pldates">${t("pl_from")} <input type="date" id="plfrom" value="${plFrom}"> ${t("pl_to")} <input type="date" id="plto" value="${plTo}"></div>` : "");
+}
+function chartSvg(games) {
+  // potjes en overwinningen per dag (of per week/maand bij een lange periode)
+  if (!games.length) return "";
+  const k = nkey(plSel);
+  const days = games.map((g) => g.ended.slice(0, 10)).sort();
+  const span = (new Date(days[days.length - 1]) - new Date(days[0])) / 864e5;
+  const bucket = (iso) => (span > 400 ? iso.slice(0, 7) : span > 60 ? isoDay(new Date(new Date(iso).getTime() - ((new Date(iso).getDay() + 6) % 7) * 864e5)) : iso);
+  const map = new Map();
+  for (const g of games) {
+    const b = bucket(g.ended.slice(0, 10));
+    const v = map.get(b) || { g: 0, w: 0 };
+    v.g++;
+    if ((g.players.find((p) => nkey(p.name) === k) || {}).place === 1) v.w++;
+    map.set(b, v);
+  }
+  const keys = [...map.keys()].sort().slice(-40);
+  const max = Math.max(...keys.map((x) => map.get(x).g));
+  const W = 640, Hh = 150, bw = Math.max(6, Math.min(34, (W - 20) / keys.length - 4));
+  const step = (W - 20) / keys.length;
+  const bars = keys.map((x, i) => {
+    const v = map.get(x), hx = 10 + i * step + (step - bw) / 2;
+    const hg = (v.g / max) * (Hh - 30), hw = (v.w / max) * (Hh - 30);
+    const lab = x.length === 7 ? x.slice(5) + "-" + x.slice(2, 4) : x.slice(8, 10) + "-" + x.slice(5, 7);
+    return `<g><title>${lab}: ${v.g} ${t("pl_chart_games")}, ${v.w} ${t("pl_chart_wins")}</title>
+      <rect x="${hx}" y="${Hh - 18 - hg}" width="${bw}" height="${hg}" rx="3" class="cg"/>
+      <rect x="${hx}" y="${Hh - 18 - hw}" width="${bw}" height="${hw}" rx="3" class="cw"/>
+      ${keys.length <= 16 || i % Math.ceil(keys.length / 12) === 0 ? `<text x="${hx + bw / 2}" y="${Hh - 4}" class="cl">${lab}</text>` : ""}</g>`;
+  }).join("");
+  return `<svg class="plchart" viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none">${bars}</svg>
+    <div class="plleg"><span class="lg"></span>${t("pl_chart_games")} <span class="lw"></span>${t("pl_chart_wins")}</div>`;
+}
+function renderPlayerMain() {
+  const box = $("plmain");
+  if (!plSel) { box.innerHTML = `<div class="card"><div class="statsempty">${t("pl_none")}</div></div>`; return; }
+  const k = nkey(plSel);
+  const allG = playerGames(plSel);
+  const games = allG.filter((g) => inRange(g, plRange, plFrom, plTo));
+  const sm = playerSummary(plSel, games);
+  const modes = playerModes(plSel, games);
+  const reg = (H.players || []).find((p) => nkey(p.name) === k);
+  const last = allG.length ? allG.reduce((a, g) => (g.ended > a ? g.ended : a), "") : "";
+  const idx = [...(H.players || [])].findIndex((p) => nkey(p.name) === k);
+  const color = COLORS[(idx < 0 ? 0 : idx) % COLORS.length];
+  const mail = S && S.mail;
+  const canMail = !!(reg && reg.email && mail && mail.ready && !LOCAL);
+  const mailHint = LOCAL ? "" : !reg || !reg.email ? t("pl_mail_noaddr") : !mail || !mail.ready ? t("pl_mail_nosetup") : "";
+  const kpi = (v, l) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
+  const fav = modes.length ? t("gm_" + modes[0].mode) : "–";
+  let shown = games.filter((g) => plMode === "all" || gmode(g) === plMode).sort(byDate);
+  if (plOrder === "new") shown.reverse();
+  if (plOrder === "place") shown.sort((a, b) => (a.players.find((p) => nkey(p.name) === k).place || 9) - (b.players.find((p) => nkey(p.name) === k).place || 9) || byDate(b, a));
+  const medal = (pl) => ({ 1: "🥇", 2: "🥈", 3: "🥉" }[pl] || pl + ".");
+  const rows = shown.slice(0, 300).map((g) => {
+    const p = g.players.find((q) => nkey(q.name) === k);
+    const [kl, kv] = keyStat(g, p);
+    const others = g.players.filter((q) => nkey(q.name) !== k).map((q) => esc(q.name));
+    return `<details class="plgame"><summary>
+      <span class="pgplace">${medal(p.place)}</span>
+      <span class="pgwhen">${whenTxt(g)}</span>
+      <span class="pgmode">${t("gm_" + gmode(g))}</span>
+      <span class="pgkey"><small>${kl}</small> ${kv}</span>
+      <span class="pgvs">${others.length ? t("pl_vs", { names: others.join(", ") }) : t("pl_solo")}</span></summary>
+      ${gameRowHtml(g, k).replace(/^<details class="gamerow"><summary>[\s\S]*?<\/summary>/, "").replace(/<\/details>$/, "")}</details>`;
+  }).join("");
+  const modeOpts = [`<option value="all">${t("pl_allmodes")}</option>`].concat([...new Set(allG.map(gmode))].map((m) => `<option value="${m}" ${plMode === m ? "selected" : ""}>${t("gm_" + m)}</option>`)).join("");
+  box.innerHTML = `
+    <div class="card plhead">
+      <div class="plwho"><span class="av big" style="background:${color}">${esc(plSel.slice(0, 1).toUpperCase())}</span>
+        <div><h2>${esc(plSel)}</h2><span class="sub">${last ? t("pl_last", { when: whenTxt({ ended: last }) }) : t("pl_never")}${reg && reg.email ? " · ✉ " + esc(reg.email) : ""}</span></div>
+        ${LOCAL ? "" : `<button id="plmail" class="ghost" ${canMail ? "" : "disabled"}>✉ ${t("pl_mail")}</button>`}</div>
+      ${mailHint ? `<p class="hint">${mailHint}</p>` : ""}<p id="plmailmsg" class="hint"></p>
+      ${rangeButtons()}
+    </div>
+    ${games.length ? `
+    <div class="kpis">${kpi(sm.games, t("k_games"))}${kpi(sm.wins, t("k_wins"))}${kpi(pct(sm.winPct), t("k_winpct"))}${kpi(fmt1(sm.avgPlace), t("k_place"))}${kpi(sm.bestStreak, t("k_streak"))}${kpi(fav, t("k_fav"))}</div>
+    <div class="plcols">
+      <div class="card"><h3>${t("pl_permode")}</h3>
+        <table class="stats plmodes"><thead><tr><th class="l">${t("pl_mode")}</th><th>${t("k_games")}</th><th>${t("k_wins")}</th><th>${t("k_winpct")}</th><th>${t("pl_key")}</th><th>${t("pl_best")}</th></tr></thead>
+        <tbody>${modes.map((r) => `<tr><td class="l name">${t("gm_" + r.mode)}</td><td>${r.a.games}</td><td class="big">${r.a.wins}</td><td>${pct(r.a.winPct)}</td>
+          <td><small>${r.key[0]}</small> ${r.key[1]}</td><td><small>${r.best[0]}</small> ${r.best[1]}</td></tr>`).join("")}</tbody></table></div>
+      <div class="card"><h3>${t("pl_chart")}</h3>${chartSvg(games)}</div>
+    </div>
+    <div class="card"><div class="cardhead"><h3>${t("pl_games")}</h3>
+      <div class="listtools"><select id="plmode">${modeOpts}</select>
+      <select id="plorder"><option value="new" ${plOrder === "new" ? "selected" : ""}>${t("pl_order_new")}</option>
+        <option value="old" ${plOrder === "old" ? "selected" : ""}>${t("pl_order_old")}</option>
+        <option value="place" ${plOrder === "place" ? "selected" : ""}>${t("pl_order_place")}</option></select></div></div>
+      <div class="plgames">${rows || `<div class="statsempty">${t("pl_empty_range")}</div>`}</div></div>`
+    : `<div class="card"><div class="statsempty">${t("pl_empty_range")}</div></div>`}`;
+}
+
+// ---- e-mail met stats (opgemaakt met inline-stijlen, zodat het in elke mailapp goed oogt)
+function mailHtml(name, games, period) {
+  const k = nkey(name);
+  const sm = playerSummary(name, games);
+  const modes = playerModes(name, games);
+  const td = "padding:8px 10px;border-bottom:1px solid #e6e9f0;text-align:center;font-size:14px;";
+  const th = "padding:8px 10px;background:#f2f5fb;color:#56607a;font-size:12px;text-transform:uppercase;text-align:center;";
+  const kpi = (v, l) => `<td style="padding:10px;text-align:center;background:#f6f8fc;border-radius:10px;">
+      <div style="font:800 24px/1.1 Arial,sans-serif;color:#1d4ed8;">${v}</div><div style="font-size:12px;color:#6b7280;">${l}</div></td>`;
+  const list = games.slice().sort(byDate).reverse().slice(0, 50).map((g) => {
+    const p = g.players.find((q) => nkey(q.name) === k);
+    const [kl, kv] = keyStat(g, p);
+    const others = g.players.filter((q) => nkey(q.name) !== k).map((q) => esc(q.name)).join(", ");
+    return `<tr><td style="${td}">${whenTxt(g)}</td><td style="${td}">${t("gm_" + gmode(g))}</td><td style="${td}font-weight:700;">${p.place === 1 ? "🏆 1" : p.place}</td>
+      <td style="${td}">${kl}: <b>${kv}</b></td><td style="${td}color:#6b7280;">${others || "–"}</td></tr>`;
+  }).join("");
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:640px;margin:0 auto;">
+  <div style="background:linear-gradient(90deg,#1d4ed8,#e8336f);color:#fff;padding:18px 20px;border-radius:14px 14px 0 0;">
+    <div style="font:900 italic 22px Arial,sans-serif;letter-spacing:.5px;">AFGOOIEN</div><div style="font-size:13px;opacity:.9;">Darts · Party</div></div>
+  <div style="border:1px solid #e6e9f0;border-top:0;padding:18px 20px;border-radius:0 0 14px 14px;">
+  <p style="font-size:15px;">${esc(t("mail_hi", { name }))}</p><p style="font-size:15px;">${esc(t("mail_intro", { period }))}</p>
+  <table style="width:100%;border-spacing:8px;"><tr>${kpi(sm.games, t("k_games"))}${kpi(sm.wins, t("k_wins"))}${kpi(pct(sm.winPct), t("k_winpct"))}${kpi(fmt1(sm.avgPlace), t("k_place"))}</tr></table>
+  <h3 style="margin:18px 0 6px;font-size:16px;">${t("pl_permode")}</h3>
+  <table style="width:100%;border-collapse:collapse;"><tr><th style="${th}text-align:left;">${t("pl_mode")}</th><th style="${th}">${t("k_games")}</th><th style="${th}">${t("k_wins")}</th><th style="${th}">${t("pl_key")}</th><th style="${th}">${t("pl_best")}</th></tr>
+  ${modes.map((r) => `<tr><td style="${td}text-align:left;font-weight:700;">${t("gm_" + r.mode)}</td><td style="${td}">${r.a.games}</td><td style="${td}">${r.a.wins}</td>
+    <td style="${td}">${r.key[0]}: <b>${r.key[1]}</b></td><td style="${td}">${r.best[0]}: <b>${r.best[1]}</b></td></tr>`).join("")}</table>
+  <h3 style="margin:18px 0 6px;font-size:16px;">${t("pl_games")}</h3>
+  <table style="width:100%;border-collapse:collapse;">${list}</table>
+  <p style="margin-top:18px;font-size:13px;color:#6b7280;">${esc(t("mail_foot"))}</p></div></div>`;
+}
+function mailText(name, games, period) {
+  const sm = playerSummary(name, games);
+  const lines = [t("mail_hi", { name }), "", t("mail_intro", { period }), "",
+    `${t("k_games")}: ${sm.games}   ${t("k_wins")}: ${sm.wins}   ${t("k_winpct")}: ${pct(sm.winPct)}   ${t("k_place")}: ${fmt1(sm.avgPlace)}`, ""];
+  for (const r of playerModes(name, games)) lines.push(`${t("gm_" + r.mode)}: ${r.a.games} ${t("k_games").toLowerCase()}, ${r.a.wins} ${t("k_wins").toLowerCase()}, ${r.key[0]} ${r.key[1]}`);
+  lines.push("", t("mail_foot"));
+  return lines.join("\n");
+}
+async function mailPlayer(name, games, period) {
+  const r = await (await fetch("/api/mail", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, subject: t("mail_subject", { name, period }), html: mailHtml(name, games, period), text: mailText(name, games, period) }) })).json();
+  return r;
+}
+const mlErr = (code) => { const k = "ml_e_" + code, tx = t(k); return tx && tx !== k ? tx : t("ml_e_other", { code }); };
+
+// ---- e-mailinstellingen
+function fillMail() {
+  const m = S && S.mail;
+  const card = $("mailcard");
+  card.classList.toggle("hidden", !m || LOCAL);
+  if (!m) return;
+  $("ml_state").textContent = m.ready ? t("ml_ready") : t("ml_notready");
+  $("ml_state").classList.toggle("ok", !!m.ready);
+  if (document.activeElement !== $("ml_preset")) $("ml_preset").value = m.preset;
+  $("ml_custom").classList.toggle("hidden", m.preset !== "other");
+  if (document.activeElement !== $("ml_host")) $("ml_host").value = m.host || "";
+  if (document.activeElement !== $("ml_port")) $("ml_port").value = m.port || 587;
+  if (document.activeElement !== $("ml_user")) $("ml_user").value = m.user || "";
+  $("ml_pass").placeholder = m.has_password ? t("ml_pass_saved") : "";
+  $("ml_help").textContent = m.preset === "gmail" ? t("ml_help_gmail") : t("ml_help_other");
 }
 
 function updateTodayLine() {
@@ -1377,6 +1638,8 @@ function showView() {
   $("view-modes").classList.toggle("hidden", inGame || view !== "modes");
   $("setup").classList.toggle("hidden", inGame || view !== "lobby");
   $("view-settings").classList.toggle("hidden", inGame || view !== "settings");
+  $("view-players").classList.toggle("hidden", inGame || view !== "players");
+  $("nav-players").classList.toggle("active", !inGame && view === "players");
   $("game").classList.toggle("hidden", !inGame);
   $("nav-home").classList.toggle("active", !inGame && view === "home");
   $("nav-settings").classList.toggle("active", !inGame && view === "settings");
@@ -1386,11 +1649,13 @@ function showView() {
     fillVoices();
     renderSettings();
     fillUpdate();
+    fillMail();
   }
   if (!inGame && view === "lobby") { renderChips(); renderLobbyMode(); }
   $("nav-play").classList.toggle("active", inGame || view === "modes" || view === "lobby");
   if (!inGame && view === "lobby" && !$("names").children.length) fillSetup();
   if (!inGame && view === "home") updateHome();
+  if (!inGame && view === "players") renderPlayers();
 }
 function leaveGame(then) {
   const go = () => { $("names").innerHTML = ""; then(); send({ type: "reset" }); };
@@ -1436,6 +1701,7 @@ function renderSettings() {
     const c = COLORS[i % COLORS.length];
     return `<div class="preg"><div class="av" style="background:${c}">${esc(p.name.slice(0, 1).toUpperCase())}</div>
       <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div></div>
+      <input class="pmail" type="email" data-name="${esc(p.name)}" value="${esc(p.email || "")}" placeholder="${esc(t("pl_email_ph"))}" spellcheck="false">
       <div class="pa"><button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
       <button class="ghost danger" data-act="player_delete" data-name="${esc(p.name)}">${t("set_delete")}</button></div></div>`;
   }).join("") : `<div class="statsempty">${t("set_noplayers")}</div>`;
@@ -1842,6 +2108,78 @@ function bind() {
   $("confirmno").onclick = () => $("confirm").classList.add("hidden");
   // scorebord
   $("winstats").onclick = openStats;
+  $("nav-players").onclick = () => leaveGame(() => setView("players"));
+  $("plsearch").oninput = renderPlayers;
+  $("plsort").onchange = (e) => { plSort = e.target.value; store.set("afgooien.plSort", plSort); renderPlayers(); };
+  $("plitems").addEventListener("click", (e) => {
+    const b = e.target.closest(".plitem");
+    if (!b) return;
+    plSel = b.dataset.name; store.set("afgooien.plSel", plSel); plMode = "all";
+    renderPlayers();
+    if (innerWidth < 980) $("plmain").scrollIntoView({ behavior: "smooth" });
+  });
+  $("plmain").addEventListener("click", async (e) => {
+    const r = e.target.closest(".plrange button");
+    if (r) {
+      plRange = r.dataset.r; store.set("afgooien.plRange", plRange);
+      if (plRange === "custom" && !plFrom) { plTo = isoDay(new Date()); plFrom = isoDay(new Date(Date.now() - 30 * 864e5)); }
+      renderPlayerMain(); return;
+    }
+    if (e.target.closest("#plmail")) {
+      const games = playerGames(plSel).filter((g) => inRange(g, plRange, plFrom, plTo));
+      $("plmailmsg").textContent = t("pl_mail_busy");
+      try {
+        const res = await mailPlayer(plSel, games, periodName());
+        $("plmailmsg").textContent = res.ok ? t("pl_mail_sent", { to: res.to }) : mlErr(res.error);
+      } catch (err) { $("plmailmsg").textContent = mlErr("connect"); }
+    }
+  });
+  $("plmain").addEventListener("change", (e) => {
+    if (e.target.id === "plfrom") { plFrom = e.target.value; renderPlayerMain(); }
+    if (e.target.id === "plto") { plTo = e.target.value; renderPlayerMain(); }
+    if (e.target.id === "plmode") { plMode = e.target.value; renderPlayerMain(); }
+    if (e.target.id === "plorder") { plOrder = e.target.value; renderPlayerMain(); }
+  });
+  $("plmailall").onclick = async () => {
+    const today = (H.games || []).filter((g) => inRange(g, "today"));
+    const who = (H.players || []).filter((p) => p.email && today.some((g) => g.players.some((q) => nkey(q.name) === nkey(p.name))));
+    if (!who.length) { $("plmailallmsg").textContent = t("pl_mailall_none"); return; }
+    $("plmailallmsg").textContent = t("pl_mail_busy");
+    let n = 0, err = null;
+    const per = t("pr_today").toLowerCase() + " (" + dayTxt(isoDay(new Date())) + ")";
+    for (const p of who) {
+      try {
+        const res = await mailPlayer(p.name, playerGames(p.name).filter((g) => inRange(g, "today")), per);
+        if (res.ok) n++; else err = res.error;
+      } catch (e2) { err = "connect"; }
+    }
+    $("plmailallmsg").textContent = t("pl_mailall_done", { n }) + (err ? " " + mlErr(err) : "");
+  };
+  $("statsbody").addEventListener("change", (e) => {
+    if (e.target.id === "gorder") { gamesOrder = e.target.value; store.set("afgooien.gamesOrder", gamesOrder); renderStats(); }
+  });
+  // e-mailadressen bij spelers
+  $("playerlist").addEventListener("change", async (e) => {
+    const inp = e.target.closest(".pmail");
+    if (!inp) return;
+    if (await send({ type: "player_email", name: inp.dataset.name, email: inp.value })) { loadHistory(true); }
+  });
+  // e-mailinstellingen
+  $("ml_preset").onchange = (e) => send({ type: "mail_config", preset: e.target.value });
+  $("ml_save").onclick = async () => {
+    const m = { type: "mail_config", preset: $("ml_preset").value, user: $("ml_user").value, sender: $("ml_user").value,
+      host: $("ml_host").value, port: +$("ml_port").value || 587 };
+    if ($("ml_pass").value.trim()) m.password = $("ml_pass").value;
+    if (await send(m)) { $("ml_pass").value = ""; $("ml_msg").textContent = t("pl_email_saved"); }
+  };
+  $("ml_test").onclick = async () => {
+    $("ml_msg").textContent = t("pl_mail_busy");
+    try {
+      const r = await (await fetch("/api/mail", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test: true, subject: "Afgooien test", html: "<p>Het werkt! 🎯</p>", text: "Het werkt!" }) })).json();
+      $("ml_msg").textContent = r.ok ? t("ml_sent", { to: r.to }) : mlErr(r.error);
+    } catch (e) { $("ml_msg").textContent = mlErr("connect"); }
+  };
   $("statsclose").onclick = () => $("stats").classList.add("hidden");
   $("stats").addEventListener("click", (e) => { if (e.target.id === "stats") $("stats").classList.add("hidden"); });
   document.querySelectorAll("#stats .tab").forEach((t) => (t.onclick = () => { statsTab = t.dataset.tab; store.set("afgooien.statsTab", statsTab); renderStats(); }));

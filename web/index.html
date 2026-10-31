@@ -28,6 +28,7 @@
     <button id="nav-home" class="navlink" data-i18n="nav_home"></button>
     <button id="nav-play" class="navlink" data-i18n="nav_play"></button>
     <button id="nav-stats" class="navlink" data-i18n="nav_stats"></button>
+    <button id="nav-players" class="navlink" data-i18n="nav_players"></button>
     <button id="nav-settings" class="navlink" data-i18n="nav_settings"></button>
   </nav>
   <div class="status">
@@ -126,6 +127,27 @@
   </section>
 
   <!-- Instellingen -->
+  <section id="view-players" class="page hidden">
+    <h1 class="pagetitle"><span class="pt-mark"></span><span data-i18n="pl_title"></span></h1>
+    <div class="plgrid">
+      <aside class="card pllist">
+        <input id="plsearch" data-i18n-ph="pl_search" autocomplete="off">
+        <div class="plsortrow">
+          <select id="plsort">
+            <option value="recent" data-i18n="pl_s_recent"></option>
+            <option value="wins" data-i18n="pl_s_wins"></option>
+            <option value="games" data-i18n="pl_s_games"></option>
+            <option value="name" data-i18n="pl_s_name"></option>
+          </select>
+        </div>
+        <div id="plitems" class="plitems"></div>
+        <button id="plmailall" class="ghost small" data-i18n="pl_mailall"></button>
+        <p id="plmailallmsg" class="hint"></p>
+      </aside>
+      <div id="plmain" class="plmain"></div>
+    </div>
+  </section>
+
   <section id="view-settings" class="page hidden">
     <h1 class="pagetitle"><span class="pt-mark"></span><span data-i18n="set_title"></span></h1>
     <div class="settingsgrid">
@@ -139,6 +161,26 @@
           </form>
           <div id="regerr" class="err"></div>
           <div id="playerlist" class="playerlist"></div>
+        </div>
+        <div class="card" id="mailcard">
+          <div class="cardhead"><h2 data-i18n="ml_title"></h2><span id="ml_state" class="pill"></span></div>
+          <p class="sub small" data-i18n="ml_sub"></p>
+          <label class="setrange2"><span data-i18n="ml_preset"></span><select id="ml_preset">
+            <option value="gmail">Gmail</option><option value="outlook">Outlook / Hotmail / Live</option>
+            <option value="icloud">iCloud</option><option value="ziggo">Ziggo</option><option value="kpn">KPN</option>
+            <option value="other" data-i18n="ml_other"></option></select></label>
+          <div id="ml_custom" class="mlrow hidden">
+            <label class="setrange2"><span data-i18n="ml_host"></span><input id="ml_host" spellcheck="false"></label>
+            <label class="setrange2"><span data-i18n="ml_port"></span><input id="ml_port" type="number" min="1" max="65535"></label>
+          </div>
+          <label class="setrange2"><span data-i18n="ml_user"></span><input id="ml_user" type="email" spellcheck="false" autocomplete="off"></label>
+          <label class="setrange2"><span data-i18n="ml_pass"></span><input id="ml_pass" type="password" autocomplete="off"></label>
+          <p class="hint" id="ml_help"></p>
+          <div class="row left">
+            <button id="ml_save" class="primary" data-i18n="ml_save"></button>
+            <button id="ml_test" class="ghost" data-i18n="ml_test"></button>
+          </div>
+          <p id="ml_msg" class="hint"></p>
         </div>
         <div class="card">
           <div class="cardhead"><h2 data-i18n="set_data"></h2></div>

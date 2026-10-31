@@ -238,7 +238,8 @@
     "gt_v_left": "nog {n}",
     "l_bonus_lost": "{name}: {reason}, maar niemand heeft punten om te verliezen",
     "l_bonus_new_killer": "{name}: {reason} telt niet om af te gooien: je staat pas net op 5 en begint bij je volgende pijl",
-    "err_update": "Update-instelling klopt niet ({code})"
+    "err_update": "Update-instelling klopt niet ({code})",
+    "err_email": "Ongeldig e-mailadres: {email}"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -479,6 +480,7 @@
     "gt_v_left": "{n} left",
     "l_bonus_lost": "{name}: {reason}, but nobody has points to lose",
     "l_bonus_new_killer": "{name}: {reason} can't take points: you only just reached 5 and start knocking out with your next dart",
-    "err_update": "Update setting not valid ({code})"
+    "err_update": "Update setting not valid ({code})",
+    "err_email": "Invalid e-mail address: {email}"
   }
 }
