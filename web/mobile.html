@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Afgooien · telefoon</title>
+<link rel="manifest" href="/static/manifest.json">
+<link rel="icon" type="image/png" href="/static/icon.png">
+<link rel="apple-touch-icon" href="/static/icon.png">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/mobile.css">
+</head>
+<body class="mob">
+<div class="bgfx" aria-hidden="true"></div>
+<header class="mhead">
+  <div class="mtitle"><span class="mdot" id="mconn"></span><b id="mgame">Afgooien</b></div>
+  <span class="roundpill" id="mround"></span>
+  <a id="mmenu" class="mmenu" href="/?remote=1">☰ <span data-i18n="mob_menu"></span></a>
+</header>
+<div id="mbanner" class="mbanner"></div>
+
+<section id="malloc" class="mcard hidden">
+  <h3 id="malloctitle"></h3>
+  <div id="malloclist" class="alloclist"></div>
+  <button id="mallocok" class="primary wide" data-i18n="confirm"></button>
+</section>
+
+<section id="mplay">
+  <div class="mslots">
+    <div id="mslots" class="mslotrow"></div>
+    <div class="mturn"><span id="mturnlbl"></span><b id="mturn">0</b></div>
+  </div>
+  <div id="mhint" class="mhint"></div>
+  <div class="mboardwrap" id="mboardwrap">
+    <svg id="mboard" class="mboard" viewBox="-240 -240 480 480"></svg>
+    <div class="mzoom">
+      <button id="mzin" aria-label="+">＋</button>
+      <button id="mzout" aria-label="−">−</button>
+    </div>
+    <div id="mzlvl" class="mzlvl hidden"></div>
+    <div id="mloupe" class="mloupe hidden"><div class="mlcross"></div><div id="mllabel" class="mllabel"></div></div>
+  </div>
+  <div id="mkeys" class="mkeys hidden">
+    <div class="seg mmult" id="mmult">
+      <button data-m="1">Single</button><button data-m="2">Double</button><button data-m="3">Triple</button>
+    </div>
+    <div class="mgrid" id="mgrid"></div>
+  </div>
+  <div class="mctrl">
+    <button id="mundo" class="ctrl">↶ <span data-i18n="undo"></span></button>
+    <button id="mtoggle" class="ctrl"></button>
+    <button id="mmiss" class="ctrl"><span data-i18n="miss"></span></button>
+    <button id="mnext" class="ctrl primary"><span data-i18n="next"></span></button>
+  </div>
+  <div id="mnotice" class="mnotice"></div>
+</section>
+
+
+<section id="mfinish" class="mcard hidden">
+  <div class="trophy">🏆</div>
+  <h2 id="mwin"></h2>
+  <button id="magain" class="primary wide" data-i18n="again"></button>
+  <button id="mundowin" class="ghost wide" data-i18n="undo_full"></button>
+  <a class="ghost wide mbtn" href="/?remote=1" data-i18n="mob_newgame"></a>
+</section>
+
+<section id="midle" class="mcard hidden">
+  <h2 data-i18n="mob_idle_t"></h2>
+  <p class="sub" data-i18n="mob_idle"></p>
+  <a class="primary wide mbtn" href="/?remote=1" data-i18n="mob_newgame"></a>
+</section>
+
+<section class="mscore">
+  <div class="mscorehead" data-i18n="mob_score"></div>
+  <div id="mplayers"></div>
+</section>
+<div id="moffline" class="offline hidden" data-i18n="mob_offline"></div>
+
+<script src="/static/i18n.js"></script>
+<script src="/static/mobile.js"></script>
+</body>
+</html>

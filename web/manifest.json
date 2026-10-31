@@ -1,0 +1,10 @@
+{
+  "name": "Afgooien",
+  "short_name": "Afgooien",
+  "start_url": "/m",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050a1a",
+  "theme_color": "#050a1a",
+  "icons": [{ "src": "/static/icon.png", "sizes": "128x128", "type": "image/png" }]
+}

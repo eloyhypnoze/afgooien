@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afgooien</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" type="image/png" href="/static/icon.png">
+</head>
+<body>
+<div class="bgfx" aria-hidden="true"></div>
+
+<header class="topnav">
+  <a class="brand" id="brand" href="#" data-i18n-title="tip_home">
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb648"/><stop offset="1" stop-color="#ff3d7f"/></linearGradient>
+      </defs>
+      <circle cx="22" cy="26" r="18" fill="none" stroke="url(#lg)" stroke-width="4"/>
+      <circle cx="22" cy="26" r="10" fill="none" stroke="url(#lg)" stroke-width="4"/>
+      <circle cx="22" cy="26" r="3.2" fill="url(#lg)"/>
+      <path d="M23.5 24.5 L41 7" stroke="#e9eef7" stroke-width="3" stroke-linecap="round"/>
+      <path d="M38 4 l6 0 l-3 3 z M44 4 l0 6 l-3 -3 z" fill="#4f8cff"/>
+    </svg>
+    <span class="wordmark">AFGOOIEN<small>DARTS · PARTY</small></span>
+  </a>
+  <nav class="mainnav">
+    <button id="nav-home" class="navlink" data-i18n="nav_home"></button>
+    <button id="nav-play" class="navlink" data-i18n="nav_play"></button>
+    <button id="nav-stats" class="navlink" data-i18n="nav_stats"></button>
+    <button id="nav-settings" class="navlink" data-i18n="nav_settings"></button>
+  </nav>
+  <div class="status">
+    <span id="src" class="pill">…</span>
+    <button id="phonebtn" class="iconbtn" data-i18n-title="qr_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.5 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <a id="remotebtn" class="remotebtn hidden" href="/m">🎯 <span data-i18n="rem_ctrl"></span></a>
+    <span class="zoom" data-i18n-title="tip_ui">
+      <button id="zoomout" class="iconbtn">A−</button><button id="zoomin" class="iconbtn">A+</button>
+    </span>
+    <div class="voicewrap">
+      <button id="sound" class="iconbtn" data-i18n-title="tip_voice"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><g class="ico-on" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></g><g class="ico-off" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9.5l5 5M21 9.5l-5 5"/></g></svg></button>
+      <div id="voicepanel" class="voicepanel hidden"><div id="voicebox" class="voicebox">
+        <label class="check"><input id="v_on" type="checkbox" checked> <span data-i18n="v_on"></span></label>
+        <label><span data-i18n="v_engine"></span> <select id="v_prov">
+          <option value="auto" data-i18n="v_p_auto"></option>
+          <option value="piper" data-i18n="v_p_piper"></option>
+          <option value="elevenlabs" data-i18n="v_p_eleven"></option>
+          <option value="azure" data-i18n="v_p_azure"></option>
+          <option value="browser" data-i18n="v_p_browser"></option></select></label>
+        <div id="v_eleven" class="vsub hidden">
+          <p class="hint" data-i18n="v_eleven_help"></p>
+          <label><span data-i18n="v_key"></span> <input id="v_ekey" type="password" autocomplete="off" spellcheck="false"></label>
+          <div class="row"><button id="v_esave" class="primary" data-i18n="v_savekey"></button>
+            <button id="v_eload" class="ghost" data-i18n="v_loadvoices"></button></div>
+          <label><span data-i18n="v_voice"></span> <select id="v_evoice"></select></label>
+          <label><span data-i18n="v_model"></span> <select id="v_emodel">
+            <option value="eleven_multilingual_v2" data-i18n="v_m_multi"></option>
+            <option value="eleven_flash_v2_5" data-i18n="v_m_flash"></option></select></label>
+        </div>
+        <div id="v_azure" class="vsub hidden">
+          <p class="hint" data-i18n="v_azure_help"></p>
+          <label><span data-i18n="v_key"></span> <input id="v_akey" type="password" autocomplete="off" spellcheck="false"></label>
+          <label><span data-i18n="v_region"></span> <input id="v_areg" placeholder="westeurope" spellcheck="false"></label>
+          <div class="row"><button id="v_asave" class="primary" data-i18n="v_savekey"></button></div>
+          <label><span data-i18n="v_voice_nl"></span> <select id="v_anl"></select></label>
+          <label><span data-i18n="v_voice_en"></span> <select id="v_aen"></select></label>
+        </div>
+        <label id="v_voice_row"><span data-i18n="v_voice"></span> <select id="v_voice"></select></label>
+        <label id="v_pitch_row"><span><span data-i18n="v_pitch"></span> <span id="v_pitch_val"></span></span>
+          <input id="v_pitch" type="range" min="0.5" max="1.5" step="0.05"></label>
+        <label><span><span data-i18n="v_rate"></span> <span id="v_rate_val"></span></span>
+          <input id="v_rate" type="range" min="0.6" max="1.4" step="0.05"></label>
+        <label><span data-i18n="v_comm"></span> <select id="v_comm">
+          <option value="off" data-i18n="v_c_off"></option>
+          <option value="some" data-i18n="v_c_some"></option>
+          <option value="lots" data-i18n="v_c_lots"></option></select></label>
+        <div class="row">
+          <button id="v_test" class="ghost" data-i18n="v_test1"></button>
+          <button id="v_test2" class="ghost" data-i18n="v_test2"></button>
+          <button id="v_test3" class="ghost" data-i18n="v_test3"></button>
+        </div>
+        <p id="v_hint" class="hint"></p>
+        <button id="v_clear" class="ghost small hidden" data-i18n="v_clearkeys"></button>
+      </div></div>
+    </div>
+    <button id="powerbtn" class="iconbtn powerbtn hidden" data-i18n-title="pw_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></g></svg></button>
+  </div>
+</header>
+
+<main>
+  <!-- Home -->
+  <section id="view-home" class="page hidden">
+    <div id="homestats" class="statstrip"></div>
+    <div class="hero">
+      <button id="tile-play" class="herotile hero-play">
+        <span class="herobig" data-i18n="home_play"></span>
+        <span class="herosub" data-i18n="home_play_sub"></span>
+        <svg class="heroart" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="120" cy="110" r="78" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="16"/>
+          <circle cx="120" cy="110" r="44" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="14"/>
+          <circle cx="120" cy="110" r="12" fill="rgba(255,255,255,.35)"/>
+        </svg>
+      </button>
+      <button id="tile-modes" class="herotile hero-modes">
+        <span class="herobig" data-i18n="home_modes"></span>
+        <span class="herosub" data-i18n="home_modes_sub"></span>
+        <svg class="heroart" viewBox="0 0 200 200" aria-hidden="true">
+          <rect x="40" y="40" width="54" height="54" rx="10" fill="rgba(255,255,255,.2)"/>
+          <rect x="106" y="40" width="54" height="54" rx="10" fill="rgba(255,255,255,.12)"/>
+          <rect x="40" y="106" width="54" height="54" rx="10" fill="rgba(255,255,255,.12)"/>
+          <rect x="106" y="106" width="54" height="54" rx="10" fill="rgba(255,255,255,.26)"/>
+        </svg>
+      </button>
+    </div>
+    <button id="tile-stats" class="widetile">
+      <span class="wt-title" data-i18n="home_stats"></span>
+      <span class="wt-sub" data-i18n="home_stats_sub"></span>
+      <span class="wt-arrow">›</span>
+    </button>
+  </section>
+
+  <!-- Spelkeuze -->
+  <section id="view-modes" class="page hidden">
+    <h1 class="pagetitle"><span class="pt-mark"></span><span data-i18n="modes_title"></span></h1>
+    <div id="modelist"></div>
+  </section>
+
+  <!-- Instellingen -->
+  <section id="view-settings" class="page hidden">
+    <h1 class="pagetitle"><span class="pt-mark"></span><span data-i18n="set_title"></span></h1>
+    <div class="settingsgrid">
+      <div class="setcol">
+        <div class="card">
+          <div class="cardhead"><h2 data-i18n="set_players"></h2><span id="regcount" class="countpill">0</span></div>
+          <p class="sub" data-i18n="set_players_sub"></p>
+          <form id="regform" class="regform">
+            <input id="regname" maxlength="24" data-i18n-ph="set_newname">
+            <button class="bigbtn" type="submit" data-i18n="set_add"></button>
+          </form>
+          <div id="regerr" class="err"></div>
+          <div id="playerlist" class="playerlist"></div>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2 data-i18n="set_data"></h2></div>
+          <p class="sub" id="datainfo"></p>
+          <p class="sub small" data-i18n="set_data_sub"></p>
+        </div>
+      </div>
+      <div class="setcol">
+        <div class="card">
+          <div class="cardhead"><h2 data-i18n="set_lang"></h2></div>
+          <div class="langpick" id="langpick">
+            <button class="langbtn" data-lang="nl"><span class="flag">NL</span>Nederlands</button>
+            <button class="langbtn" data-lang="en"><span class="flag">EN</span>English</button>
+          </div>
+          <p class="sub small" data-i18n="set_lang_sub"></p>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2 data-i18n="set_display"></h2></div>
+          <p class="sub small" data-i18n="set_display_sub"></p>
+          <div class="setrows">
+            <label class="setrange"><span data-i18n="set_zoom"></span><b id="d_zoom_val"></b>
+              <input id="d_zoom" type="range" min="0.6" max="2" step="0.05"></label>
+            <label class="setrange"><span data-i18n="set_ui"></span><b id="d_ui_val"></b>
+              <input id="d_ui" type="range" min="0.8" max="2.4" step="0.05"></label>
+            <label class="setrange"><span data-i18n="set_board"></span><b id="d_board_val"></b>
+              <input id="d_board" type="range" min="0.5" max="1" step="0.05"></label>
+            <label class="setrange"><span data-i18n="set_split"></span><b id="d_split_val"></b>
+              <input id="d_split" type="range" min="0.5" max="0.75" step="0.05"></label>
+            <label class="switch"><input id="d_fx" type="checkbox" checked><span class="sl"></span><span data-i18n="set_fx"></span></label>
+            <label class="switch"><input id="d_perf" type="checkbox"><span class="sl"></span><span data-i18n="set_perf"></span></label>
+            <label class="switch"><input id="d_awake" type="checkbox"><span class="sl"></span><span data-i18n="set_awake"></span> <small id="d_awake_no" class="muted hidden" data-i18n="set_awake_no"></small></label>
+            <div class="row left">
+              <button id="d_full" class="bigbtn" data-i18n="set_full"></button>
+              <button id="d_reset" class="ghost" data-i18n="set_reset_display"></button>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="voicecard">
+          <div class="cardhead"><h2 data-i18n="set_voice"></h2></div>
+          <p class="sub small" data-i18n="set_voice_sub"></p>
+          <div id="voiceslot"></div>
+        </div>
+        <div class="card" id="updatecard">
+          <div class="cardhead"><h2 data-i18n="up_title"></h2><span id="up_cur" class="pill"></span></div>
+          <p class="sub small" data-i18n="up_sub"></p>
+          <div class="upblock">
+            <h3 data-i18n="up_file_h"></h3>
+            <p class="hint" data-i18n="up_file_help"></p>
+            <div class="uprow"><input id="up_file" type="file" accept=".zip,application/zip">
+              <button id="up_upload" class="primary" data-i18n="up_install_file"></button></div>
+          </div>
+          <div class="upblock">
+            <h3 data-i18n="up_online_h"></h3>
+            <p class="hint" data-i18n="up_online_help"></p>
+            <label class="setrange2"><span data-i18n="up_repo"></span><input id="up_repo" placeholder="gebruikersnaam/afgooien" spellcheck="false"></label>
+            <label class="setrange2"><span data-i18n="up_token"></span><input id="up_token" type="password" autocomplete="off" spellcheck="false"></label>
+            <label class="switch"><input id="up_auto" type="checkbox"><span class="sl"></span><span data-i18n="up_auto"></span></label>
+            <div class="row left">
+              <button id="up_save" class="ghost" data-i18n="up_save"></button>
+              <button id="up_check" class="ghost" data-i18n="up_check"></button>
+              <button id="up_install" class="primary hidden"></button>
+            </div>
+          </div>
+          <p id="up_status" class="hint"></p>
+          <p id="up_notes" class="hint upnotes hidden"></p>
+          <div class="row left"><button id="up_rollback" class="ghost small hidden"></button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lobby (nieuw spel) -->
+  <section id="setup" class="page lobby hidden">
+    <div class="lobbyhead">
+      <button id="lobbyback" class="backlink" data-i18n="back"></button>
+      <h1 class="pagetitle"><span class="pt-mark"></span><span id="lobbytitle">Afgooien</span></h1>
+    </div>
+    <div class="lobbygrid">
+      <div class="card playerscard">
+        <div class="cardhead"><h2 data-i18n="lobby_players"></h2><span id="pcount" class="countpill">0/8</span></div>
+        <div id="savedchips" class="savedchips"></div>
+        <ol id="names" class="names"></ol>
+        <div class="addrow">
+          <button id="addname" class="bigbtn" data-i18n="add_player"></button>
+          <button id="addbot" class="bigbtn" data-i18n="add_bot"></button>
+        </div>
+        <p class="sub small" id="lobbyorder" data-i18n="lobby_order"></p>
+      </div>
+      <div class="lobbyside">
+        <div class="card rulescard x01card hidden" id="x01card">
+          <div class="cardhead"><h2 id="x01title">501</h2><span class="tag tag-classic">X01</span></div>
+          <p class="sub" data-i18n="x01_sub"></p>
+          <div class="chips" id="x01chips"></div>
+          <div class="xset">
+            <div class="xrow"><span class="xl" data-i18n="x_start"></span>
+              <div class="stepper big"><button data-step="start" data-d="-1">−</button><span class="val" id="x_start"></span><button data-step="start" data-d="1">+</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_match"></span>
+              <div class="seg" data-seg="match"><button data-v="off" data-i18n="o_off"></button><button data-v="legs">Legs</button><button data-v="sets">Sets</button></div></div>
+            <div class="xrow sub2" id="x_legsrow"><span class="xl" id="x_legs_lbl"></span>
+              <div class="stepper"><button data-step="legs" data-d="-1">−</button><span class="val" id="x_legs"></span><button data-step="legs" data-d="1">+</button></div></div>
+            <div class="xrow sub2" id="x_setsrow"><span class="xl" data-i18n="x_sets"></span>
+              <div class="stepper"><button data-step="sets" data-d="-1">−</button><span class="val" id="x_sets"></span><button data-step="sets" data-d="1">+</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_in"></span>
+              <div class="seg" data-seg="in_mode"><button data-v="straight">Straight</button><button data-v="double">Double</button><button data-v="master">Master</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_out"></span>
+              <div class="seg" data-seg="out_mode"><button data-v="straight">Straight</button><button data-v="double">Double</button><button data-v="master">Master</button></div></div>
+            <div class="xrow"><span class="xl">Bull-off</span>
+              <div class="seg" data-seg="bulloff"><button data-v="off" data-i18n="o_off"></button><button data-v="wdf">WDF</button><button data-v="pdc">PDC</button></div></div>
+            <p class="sub small" id="x_help"></p>
+          </div>
+        </div>
+        <div class="card rulescard cucard hidden" id="cucard">
+          <div class="cardhead"><h2>Count Up</h2><span class="tag tag-practice" data-i18n="tag_practice"></span></div>
+          <p class="sub" data-i18n="cu_sub"></p>
+          <div class="xset">
+            <div class="xrow"><span class="xl" data-i18n="cu_rounds"></span>
+              <div class="stepper big"><button data-step="rounds" data-d="-1">−</button><span class="val" id="cu_rounds"></span><button data-step="rounds" data-d="1">+</button></div></div>
+          </div>
+        </div>
+        <div class="card rulescard gencard hidden" id="gencard">
+          <div class="cardhead"><h2 id="gentitle"></h2><span id="gentag" class="tag"></span></div>
+          <p class="sub" id="gendesc"></p>
+          <div class="chips" id="genchips"></div>
+          <div class="xset" id="genset"></div>
+        </div>
+        <div class="card rulescard" id="afgcard">
+          <div class="cardhead"><h2>Afgooien</h2><span class="tag tag-party" data-i18n="tag_party"></span></div>
+          <p class="sub" data-i18n="rules_sub"></p>
+          <div class="extrarules">
+            <div class="ertitle" data-i18n="rules_extra"></div>
+            <label class="switch"><input id="r_ton" type="checkbox" checked><span class="sl"></span><span data-i18n="r_ton"></span></label>
+            <label class="switch"><input id="r_bull" type="checkbox" checked><span class="sl"></span><span data-i18n="r_bull"></span></label>
+            <label class="switch"><input id="r_miss" type="checkbox" checked><span class="sl"></span><span data-i18n="r_miss"></span></label>
+          </div>
+          <details class="settings">
+            <summary data-i18n="more_settings"></summary>
+            <label><span data-i18n="s_target"></span> <input id="target" type="number" min="1" max="15" value="5"></label>
+            <label><span data-i18n="s_dpt"></span> <input id="dpt" type="number" min="1" max="6" value="3"></label>
+            <label><span data-i18n="s_elim"></span>
+              <select id="elim">
+                <option value="any" data-i18n="e_any"></option>
+                <option value="scored" data-i18n="e_scored"></option>
+                <option value="reached_target" data-i18n="e_reached"></option>
+              </select>
+            </label>
+          </details>
+        </div>
+        <div class="card autocard">
+          <div class="cardhead"><h2 data-i18n="autoscoring"></h2><span id="autopill" class="pill">…</span></div>
+          <p class="sub small" id="autotext"></p>
+        </div>
+      </div>
+    </div>
+    <div class="startbar">
+      <div id="setuperr" class="err"></div>
+      <button id="start" class="startbtn" data-i18n="start"></button>
+    </div>
+  </section>
+
+  <!-- Spel -->
+  <section id="game" class="game hidden">
+    <div class="left">
+      <div class="gamehead">
+        <button id="newgame" class="backlink" data-i18n="stop" data-i18n-title="stop_tip"></button>
+        <span class="gametitle" id="gametitle">Afgooien</span>
+        <span id="roundpill" class="roundpill"></span>
+      </div>
+      <div id="banner" class="banner"></div>
+      <div id="phaseinfo" class="phaseinfo"></div>
+      <div id="players" class="players"></div>
+      <div id="ctable" class="ctable hidden"></div>
+      <div id="logwrap" class="logwrap collapsed">
+        <button id="logtoggle" class="loghead" data-i18n-title="log_tip">
+          <span data-i18n="log"></span><span id="logarrow">▸</span>
+        </button>
+        <ul id="log" class="log"></ul>
+      </div>
+    </div>
+    <div class="right">
+      <div class="rightin">
+        <div class="dartbar">
+          <div id="turn" class="turnbar"></div>
+          <div id="turnscore" class="turnscore"></div>
+        </div>
+        <div class="boardwrap">
+          <svg id="board" viewBox="-240 -240 480 480" data-i18n-aria="board_label"></svg>
+        </div>
+        <div class="statusrow">
+          <span id="boardstatus" class="bstatus"></span>
+          <button id="boardreset" class="ghost small hidden" data-i18n="reset_cams" data-i18n-title="reset_cams_tip"></button>
+        </div>
+        <div class="controls">
+          <button id="undo" class="ctrl" data-i18n-title="undo_tip">↶ <span data-i18n="undo"></span></button>
+          <button id="miss" class="ctrl"><span id="misslbl"></span> <kbd>M</kbd></button>
+          <button id="next" class="ctrl primary"><span data-i18n="next"></span> <kbd>Enter</kbd></button>
+        </div>
+        <div id="notice" class="notice"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="winner" class="overlay hidden">
+  <div class="card win">
+    <div class="trophy">🏆</div>
+    <h1 id="winname"></h1>
+    <div id="todayline" class="todayline"></div>
+    <table id="ranking" class="ranking"></table>
+    <div class="row">
+      <button id="undowin" class="ghost" data-i18n="undo_full"></button>
+      <button id="again" class="primary" data-i18n="again"></button>
+      <button id="newplayers" class="ghost" data-i18n="newplayers"></button>
+      <button id="winmodes" class="ghost" data-i18n="win_modes"></button>
+      <button id="winhome" class="ghost" data-i18n="win_home"></button>
+      <button id="winstats" class="ghost" data-i18n="scoreboard_btn"></button>
+    </div>
+  </div>
+</div>
+
+<div id="alloc" class="overlay hidden">
+  <div class="card allocbox">
+    <h2 id="alloctitle"></h2>
+    <p id="allocsub" class="sub"></p>
+    <div id="alloclist" class="alloclist"></div>
+    <div class="row">
+      <button id="allocundo" class="ghost" data-i18n="undo_full"></button>
+      <button id="allocok" class="primary" data-i18n="confirm"></button>
+    </div>
+  </div>
+</div>
+
+<div id="stats" class="overlay hidden">
+  <div class="card statsbox">
+    <div class="statshead">
+      <h1 class="pagetitle"><span class="pt-mark"></span><span data-i18n="sb_title"></span></h1>
+      <div class="tabs">
+        <button class="tab active" data-tab="rank" data-i18n="tab_rank"></button>
+        <button class="tab" data-tab="awards" data-i18n="tab_awards"></button>
+        <button class="tab" data-tab="h2h" data-i18n="tab_h2h"></button>
+        <button class="tab" data-tab="games" data-i18n="tab_games"></button>
+      </div>
+      <select id="statsmode" data-i18n-title="mode_tip"></select>
+      <select id="statsrange" data-i18n-title="range_tip">
+        <option value="today" data-i18n="r_today"></option>
+        <option value="week" data-i18n="r_week"></option>
+        <option value="all" data-i18n="r_all"></option>
+      </select>
+      <button id="statsclose" class="iconbtn" data-i18n-title="close">✕</button>
+    </div>
+    <div id="statsbody" class="statsbody"></div>
+    <div class="statsfoot">
+      <span id="statscount" class="sub"></span>
+      <button id="statsclear" class="ghost" data-i18n="clear_hist"></button>
+    </div>
+  </div>
+</div>
+
+<div id="qr" class="overlay hidden">
+  <div class="card qrbox">
+    <button id="qrclose" class="iconbtn qrx" data-i18n-title="close">✕</button>
+    <h2 data-i18n="qr_title"></h2>
+    <img id="qrimg" alt="QR" width="260" height="260">
+    <div id="qrurl" class="qrurl"></div>
+    <ol class="qrsteps"><li data-i18n="qr_s1"></li><li data-i18n="qr_s2"></li><li data-i18n="qr_s3"></li></ol>
+    <p class="sub small" data-i18n="qr_home"></p>
+    <p class="sub small" data-i18n="qr_fw"></p>
+  </div>
+</div>
+
+<div id="power" class="overlay hidden">
+  <div class="card win powerbox">
+    <h2 data-i18n="pw_title"></h2>
+    <p id="powertext" class="sub" data-i18n="pw_sub"></p>
+    <div class="row">
+      <button id="pwoff" class="primary danger" data-i18n="pw_off"></button>
+      <button id="pwreboot" class="ghost" data-i18n="pw_reboot"></button>
+      <button id="pwcancel" class="ghost" data-i18n="cancel"></button>
+    </div>
+  </div>
+</div>
+<div id="confirm" class="overlay hidden">
+  <div class="card win">
+    <h2 id="confirmtext"></h2>
+    <div class="row">
+      <button id="confirmno" class="ghost" data-i18n="cancel"></button>
+      <button id="confirmyes" class="primary" data-i18n="yes"></button>
+    </div>
+  </div>
+</div>
+
+<div id="loading" class="overlay hidden"><div class="card win"><h2 data-i18n="loading"></h2><p class="sub" id="loadingtext" data-i18n="loading_sub"></p></div></div>
+
+<canvas id="confetti" class="confetti"></canvas>
+<div id="fxlayer" class="fxlayer"></div>
+<div id="appversion" class="appversion"></div>
+<div id="offline" class="offline hidden" data-i18n="offline"></div>
+<script src="/static/i18n.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
