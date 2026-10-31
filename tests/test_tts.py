@@ -77,6 +77,7 @@ class EndpointTests(unittest.TestCase):
             self.assertTrue(st["tts"]["available"])
             r = op.open(base + "/api/tts?l=nl&r=1&t=" + urllib.request.quote("Eloy is af"))
             self.assertEqual(r.headers["Content-Type"], "audio/wav")
+            self.assertEqual(r.headers["Cache-Control"], "no-store")     # anders blijft de oude stem hangen
             self.assertGreater(len(r.read()), 44)
             with self.assertRaises(Exception):
                 op.open(base + "/api/tts?l=en&t=hello")

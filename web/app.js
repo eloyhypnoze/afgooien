@@ -574,11 +574,12 @@ async function serverSay(list) {
     parts.forEach((part, i) => {
       const last = i === parts.length - 1;
       const r = Math.round(rate * (big ? (last ? 0.88 : 0.95) : 1) * 20) / 20;
-      items.push({ url: `/api/tts?l=${LANG}&r=${r}&t=${encodeURIComponent(part)}`, gap: last ? 150 : 280 });
+      const vk = encodeURIComponent((S && S.tts && S.tts.voices && S.tts.voices[LANG]) || "");
+      items.push({ url: `/api/tts?l=${LANG}&r=${r}&v=${vk}&t=${encodeURIComponent(part)}`, gap: last ? 150 : 280 });
     });
   }
   // alles meteen opvragen (de server maakt ze), dan na elkaar afspelen
-  for (const it of items) it.p = fetch(it.url).then((r) => (r.ok ? r.blob() : null)).catch(() => null);
+  for (const it of items) it.p = fetch(it.url, { cache: "no-store" }).then((r) => (r.ok ? r.blob() : null)).catch(() => null);
   for (const it of items) {
     const blob = await it.p;
     if (run !== ttsRun) return;

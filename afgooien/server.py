@@ -432,7 +432,9 @@ def make_handler(app: App):
                 self.send_response(200)
                 self.send_header("Content-Type", mime)
                 self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "max-age=86400")
+                # niet in de browser bewaren: de server heeft zijn eigen opslag per stem, en anders
+                # blijft de browser de oude stem afspelen nadat je een andere stem kiest
+                self.send_header("Cache-Control", "no-store")
                 self.end_headers()
                 return self.wfile.write(data)
             if path == "/qr.svg":

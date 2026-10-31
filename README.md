@@ -313,6 +313,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.34**: een andere stem kiezen had geen effect: de browser speelde de bewaarde opname van de vorige stem af;
+  opgelost
 - **1.33**: volumeknop bij de stem; willekeurige gooivolgorde (behalve bij Afgooien en X01 met bull-off, daar
   beslist de bull); ElevenLabs: duidelijke melding als een stem een betaald abonnement nodig heeft, en in de
   stemmenlijst staat welke stemmen gratis werken
