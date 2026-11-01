@@ -266,7 +266,13 @@
     "cu_l_cut_tie": "Gelijk onderaan ({names}, {score} punten): niemand valt af, door naar het volgende blok",
     "xo_so_label": "Shoot-out (3+ spelers)",
     "so_bull": "Dichtst bij bull",
-    "so_score": "Hoogste score"
+    "so_score": "Hoogste score",
+    "fr_l_new": "Vrij gooien met {names}",
+    "fr_l_turn": "Beurt voor {name} (ronde {round})",
+    "fr_i_throw": "{name}: gooi maar raak (ronde {round})",
+    "fr_n_nothing": "Er is nog niets gegooid om op te slaan",
+    "fr_l_done": "Gestopt. Hoogste gemiddelde: {names}",
+    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -535,6 +541,12 @@
     "cu_l_cut_tie": "Tie at the bottom ({names}, {score} points): nobody is out, on to the next block",
     "xo_so_label": "Shoot-out (3+ players)",
     "so_bull": "Closest to bull",
-    "so_score": "Highest score"
+    "so_score": "Highest score",
+    "fr_l_new": "Free throw with {names}",
+    "fr_l_turn": "{name} to throw (round {round})",
+    "fr_i_throw": "{name}: throw away (round {round})",
+    "fr_n_nothing": "Nothing has been thrown yet to save",
+    "fr_l_done": "Stopped. Highest average: {names}",
+    "fr_s_done": "Done! Highest average: {names}"
   }
 }

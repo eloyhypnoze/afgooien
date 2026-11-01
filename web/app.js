@@ -326,6 +326,7 @@ function render(state) {
   $("misslbl").textContent = t(!other && S.phase === "play" && S.settings.miss_penalty ? "miss_pen" : "miss");
   $("miss").disabled = !active || botTurn();
   $("undo").disabled = !S.can_undo;
+  $("finishbtn").classList.toggle("hidden", !(S.mode === "free" && S.phase === "play"));
   $("next").disabled = !active || (S.phase === "select" && S.sel_step !== "done") || !!S.pending || botTurn();
   if (fixIndex !== null && (!S.darts[fixIndex] || botTurn())) setFix(null, true);
   if (fixIndex !== null) $("notice").innerHTML = `<span class="fixhint">${t("fix_hint", { n: fixIndex + 1 })}</span>`;
@@ -351,6 +352,7 @@ function render(state) {
     $("ranking").innerHTML = ranked.map((p) => {
       let who = `<b>${esc(p.name)}</b>`, row;
       if (S.mode === "x01") row = t("win_x01", { avg: fmt2(xavg(p)), legs: p.legs_total, co: p.hi_checkout || "–" });
+      else if (S.mode === "free") row = t("win_fr", { avg: fmt2(avg3(p.score, p.darts)), score: p.score, darts: p.darts, best: p.best_round });
       else if (S.mode === "countup") row = t("win_cu", { score: p.score, avg: fmt2(avg3(p.points, p.darts)), best: p.best_round });
       else if (isParty()) { const v = S.views[p.index]; row = esc([String(v.big)].concat(v.meta).join(" · ")); }
       else { who += ` (${p.number})`; row = t("win_row", { kills: p.kills, ppt: fmt2(p.turns ? (p.gained + p.knocked) / p.turns : 0), tr: p.triples }); }
@@ -386,6 +388,9 @@ function renderOther() {
       $("phaseinfo").innerHTML = esc(t("ph_x01", { start: st.start, out: cap(st.out_mode), in: st.in_mode !== "straight" ? t("ph_in", { m: cap(st.in_mode) }) : "", match })) +
         (S.checkout ? `<span class="tg co">${esc(t("ph_checkout", { route: S.checkout.join(" · ") }))}</span>` : "");
     }
+  } else if (S.mode === "free") {
+    $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_round", { n: S.turn_no });
+    $("phaseinfo").textContent = t("ph_free");
   } else if (S.rounds === null) {
     $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu_elim", { n: S.turn_no, l: S.elim_left });
     $("phaseinfo").textContent = t("ph_cu_elim", { n: st.elim });
@@ -418,6 +423,10 @@ function renderOther() {
         side = (st.match === "sets" ? `<span class="ls"><small>${t("pm_sets")}</small><b>${p.sets}</b></span>` : "") +
           `<span class="ls"><small>${t("pm_legs")}</small><b>${p.legs}</b></span>`;
       }
+    } else if (S.mode === "free") {
+      big = fmt2(avg3(p.score, p.darts));
+      meta.push(t("pm_fr_pts", { n: p.score }), t("pm_darts", { n: p.darts }));
+      if (p.rounds.length) meta.push(t("pm_last", { n: p.rounds[p.rounds.length - 1] }));
     } else {
       big = p.score;
       meta.push(t("pm_avg", { avg: fmt2(avg3(p.score, p.darts)) }));
@@ -1112,6 +1121,7 @@ const SUMS = {
   afgooien: ["kills", "knocked", "gained", "darts", "useful", "outside", "triples", "doubles", "bulls", "tons", "turns"],
   x01: ["darts", "points", "f9_points", "f9_darts", "n180", "n140", "n100", "legs_total", "co_att", "co_hit", "busts"],
   countup: ["darts", "points", "score", "n180", "n140", "n100"],
+  free: ["darts", "points", "score", "n180", "n140", "n100"],
 };
 for (const m of ["atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"]) {
   SUMS[m] = ["darts", "hits", "score", "mtotal", "kills"];
@@ -1196,6 +1206,12 @@ const MODE_COLS = {
     { key: "ppr", label: "c_ppr", fmt: (a) => fmt2(a.ppr) },
     { key: "bestRound", label: "c_bestround" },
     { key: "n180", label: "c_180" }, { key: "n140", label: "c_140" }, { key: "n100", label: "c_100" },
+  ],
+  free: [
+    { key: "ppr", label: "c_avg", fmt: (a) => fmt2(a.ppr), cls: "big" },
+    { key: "bestRound", label: "c_bestround" },
+    { key: "n180", label: "c_180" }, { key: "n140", label: "c_140" }, { key: "n100", label: "c_100" },
+    { key: "darts", label: "g_darts" },
   ],
 };
 function partyCols(m) {
@@ -1296,6 +1312,11 @@ function awardsHtml(rows) {
     ["🎯", "phit", best((a) => a.hitPct, (a) => a.darts >= 30), pct],
     ["🔥", "streak", best((a) => a.bestStreak, (a) => a.bestStreak >= 2), (v) => v],
     ["🥈", "second", best((a) => a.seconds, (a) => a.seconds >= 2), (v) => v, true],
+  ] : statsMode === "free" ? [
+    ["📈", "fravg", best((a) => a.ppr, (a) => a.darts >= 30), fmt2],
+    ["🚀", "curound", best((a) => a.bestRound), (v) => v],
+    ["💯", "x180", best((a) => a.n180), (v) => v],
+    ["🎯", "frdarts", best((a) => a.darts), (v) => v],
   ] : statsMode === "countup" ? [
     ["👑", "champ", best((a) => a.wins), (v) => v],
     ["🏆", "cubest", best((a) => a.hiscore), (v) => v],
@@ -1399,8 +1420,9 @@ function otherGameRow(g, when, me) {
   const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     cells(p).map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
   const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out${g.settings.shootout === "on" ? " · " + t("chip_so") : ""}`
+    : gmode(g) === "free" ? t("chip_free", { n: g.rounds })
     : g.settings && g.settings.elim ? t("chip_elim", { n: g.settings.elim }) : t("chip_rounds", { n: g.rounds });
-  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : `${esc(g.winner)} (${w.score})`;
+  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : gmode(g) === "free" ? `${esc(g.winner)} (${fmt2(avg3(w.score, w.darts))})` : `${esc(g.winner)} (${w.score})`;
   return `<details class="gamerow"><summary><span class="when">${when}</span>
     <span class="gwin">🏆 ${wtxt}</span>
     <span class="rest">${rest.map((p) => `${p.place}. ${esc(p.name)}`).join(" · ")}</span>
@@ -1434,6 +1456,7 @@ function keyStat(g, p) {
   if (m === "afgooien") return [t("c_kills"), String(p.kills || 0), p.kills || 0];
   if (m === "x01") { const a = xavg(p); return [t("c_avg"), fmt2(a), a]; }
   if (m === "countup") return [t("c_score"), String(p.score), p.score];
+  if (m === "free") { const a = avg3(p.score, p.darts); return [t("c_avg"), fmt2(a), a]; }
   return [t("c_score2"), String(p.score), p.score];
 }
 // per spel samenvatten voor deze speler (zelfde berekening als het scorebord)
@@ -1448,6 +1471,7 @@ function playerModes(name, games) {
     if (m === "afgooien") { key = [t("c_kills"), String(a.kills)]; best = [t("c_ppt"), fmt2(a.ppt)]; }
     else if (m === "x01") { key = [t("c_avg"), fmt2(a.avg)]; best = [t("c_hico"), a.hico || "–"]; }
     else if (m === "countup") { key = [t("c_score"), fmt1(a.avgScore)]; best = [t("c_hiscore"), a.hiscore]; }
+    else if (m === "free") { key = [t("c_avg"), fmt2(a.ppr)]; best = [t("c_bestround"), a.bestRound]; }
     else { key = [m === "atc" ? t("c_targets") : t("c_avgscore"), fmt1(a.avgScore)]; best = [t("c_bestscore"), a.bestScore == null ? "–" : a.bestScore]; }
     out.push({ mode: m, a, key, best });
   }
@@ -1780,7 +1804,7 @@ async function playerAction(act, name) {
 const GAME_LIST = [
   { sec: "classic", modes: ["x01", "cricket"] },
   { sec: "party", modes: ["afgooien", "killer", "shanghai", "halveit", "golf", "gotcha"] },
-  { sec: "training", modes: ["countup", "atc", "bobs27", "doubles", "bulls", "checkout"] },
+  { sec: "training", modes: ["free", "countup", "atc", "bobs27", "doubles", "bulls", "checkout"] },
 ];
 const TAGCLS = { classic: "tag-classic", party: "tag-party", training: "tag-practice" };
 const ALL_MODES = GAME_LIST.flatMap((g) => g.modes);
@@ -1866,7 +1890,7 @@ const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
 const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
-if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
+if (!["afgooien", "x01", "countup", "free", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
 // elim = rondes per blok bij het toernooi (0 = uit); block onthoudt de laatst gekozen blokgrootte
 const cuSet = Object.assign({ rounds: 8, elim: 0, block: 3 }, store.get("afgooien.countup", {}));
@@ -1895,6 +1919,7 @@ function renderLobbyMode() {
   $("afgcard").classList.toggle("hidden", lobbyMode !== "afgooien");
   $("x01card").classList.toggle("hidden", lobbyMode !== "x01");
   $("cucard").classList.toggle("hidden", lobbyMode !== "countup");
+  $("freecard").classList.toggle("hidden", lobbyMode !== "free");
   $("gencard").classList.toggle("hidden", !PARTY.includes(lobbyMode));
   renderGenCard();
   $("lobbytitle").textContent = modeTitle(lobbyMode);
@@ -2038,7 +2063,7 @@ function startGame() {
   };
   store.set("afgooien.players", rows);
   if (lobbyMode === "afgooien") store.set("afgooien.settings", settings);
-  const st = lobbyMode === "x01" ? { ...x01Set } : lobbyMode === "countup" ? { ...cuSet } : PARTY.includes(lobbyMode) ? { ...partySet[lobbyMode] } : settings;
+  const st = lobbyMode === "x01" ? { ...x01Set } : lobbyMode === "countup" ? { ...cuSet } : lobbyMode === "free" ? {} : PARTY.includes(lobbyMode) ? { ...partySet[lobbyMode] } : settings;
   const order = randomOrderUsed(lobbyMode, st) ? shuffled(rows) : rows;
   send({ type: "new_game", mode: lobbyMode, players: order.map((r) => r.name), bots: order.map((r) => r.bot), settings: st });
 }
@@ -2282,6 +2307,7 @@ function bind() {
     if (b) send({ type: "shootout", choice: b.dataset.so });
   });
   $("soundo").onclick = () => send({ type: "undo" });
+  $("finishbtn").onclick = () => confirmDialog(t("q_free_stop"), () => send({ type: "finish" }));
   // klok in de bovenbalk
   // Altijd Nederlandse tijd (zomer/winter automatisch), ook als de tijdzone van de Pi niet goed staat:
   // de klok van het apparaat zelf (UTC, via internet gelijkgezet) klopt wel.

@@ -755,14 +755,17 @@
         this.turn_pos += 1;
         if (this.turn_pos >= this.order.length) {
           this.turn_pos = 0;
-          if (this._elim()) {
-            if (this.turn_no % this.settings.elim === 0 && this._cut()) return true;
-          } else if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
+          if (this._roundEnd()) return true;
           this.turn_no += 1;
         }
         this._beginTurn();
         return true;
       }
+      return false;
+    }
+    _roundEnd() {
+      if (this._elim()) return this.turn_no % this.settings.elim === 0 && this._cut();
+      if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
       return false;
     }
     _cut() {
@@ -835,7 +838,82 @@
     }
   }
 
-  const GAMES = { x01: X01Game, countup: CountUpGame };
+  // ============================================================ Vrij gooien
+  class FreeGame extends CountUpGame {
+    get MODE() { return "free"; }
+    defaultSettings() { return {}; }
+    cleanSettings() { return {}; }
+    _elim() { return false; }
+    start() {
+      this.order = this.players.map((_, i) => i);
+      this.phase = "play";
+      this.turn_no = 1;
+      this.turn_pos = 0;
+      this._say("start", "fr_l_new", null, { names: this.players.map((p) => p.name) });
+      this._beginTurn();
+    }
+    _beginTurn() {
+      const p = this.players[this.order[this.turn_pos]];
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("turn", "fr_l_turn", "s_name", { name: p.name, round: this.turn_no });
+    }
+    _roundEnd() { return false; }
+    finish() { return this._record(["finish", null]); }
+    play(kind, data) {
+      if (kind === "finish") return this._stop();
+      return super.play(kind, data);
+    }
+    _stop() {
+      const P = this.players;
+      if (!P.some((q) => q.darts)) return this._ignore("fr_n_nothing");
+      const p = P[this.order[this.turn_pos]];
+      if (this.turn_darts.length) {
+        p.points += this.turn_score;
+        p.rounds = p.rounds.concat([this.turn_score]);
+        p.best_round = Math.max(p.best_round, this.turn_score);
+        this._turnStats(p, this.turn_score);
+      }
+      const better = (a, b) => (!a.darts ? false : !b.darts ? true : a.score * b.darts > b.score * a.darts);
+      for (const q of P) q.place = 1 + P.filter((o) => better(o, q)).length;
+      const top = P.filter((q) => q.place === 1);
+      this.winner = top[0].index;
+      this.phase = "finished";
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("win", "fr_l_done", "fr_s_done", { names: top.map((q) => q.name) });
+      this._effect("win", { player: this.winner });
+      return true;
+    }
+    summary() {
+      if (this.phase !== "finished" || this.winner === null) return null;
+      const ranked = this.players.slice().sort((a, b) => a.place - b.place || a.index - b.index);
+      const keys = ["name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn"];
+      return { mode: "free", winner: ranked.filter((q) => q.place === 1).map((q) => q.name).join(" & "),
+        rounds: this.turn_no, settings: {}, players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
+    }
+    state(lang) {
+      const st = this._baseState(lang);
+      lang = st.lang;
+      const cur = this.current;
+      st.waiting = this.phase === "play" && this.turn_darts.length >= DARTS;
+      st.rounds = null;
+      st.elim_left = null;
+      let instr = null;
+      if (this.phase === "play" && cur !== null) {
+        const p = this.players[cur];
+        instr = tr(lang, st.waiting ? "i_takeout" : "fr_i_throw", { name: p.name, round: this.turn_no });
+      } else if (this.phase === "finished" && this.winner !== null) {
+        const top = this.players.filter((p) => p.place === 1).map((p) => p.name);
+        instr = top.length === 1 ? tr(lang, "i_win", { name: top[0] }) : tr(lang, "cu_i_tie", { names: top });
+      }
+      st.instruction = instr;
+      st.checkout = null;
+      return st;
+    }
+  }
+
+  const GAMES = { x01: X01Game, countup: CountUpGame, free: FreeGame };
   function makeGame(mode) {
     if (!mode || mode === "afgooien") return new E.Game();
     const P = (typeof module !== "undefined" && module.exports) ? require("./party.js") : root.AfgooienParty;
@@ -844,7 +922,7 @@
     return new cls();
   }
 
-  const api = { X01Game, CountUpGame, makeGame, checkout, X01_SCORES, BaseGame, DARTS, pyInt, intOf, has, pyStr };
+  const api = { X01Game, CountUpGame, FreeGame, makeGame, checkout, X01_SCORES, BaseGame, DARTS, pyInt, intOf, has, pyStr };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AfgooienGames = api;
 })(typeof window !== "undefined" ? window : globalThis);

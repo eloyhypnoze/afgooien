@@ -209,6 +209,42 @@ class TournamentTests(unittest.TestCase):
         self.assertEqual(g.log[-2]["k"], "cu_l_cut_tie")
 
 
+class FreeThrowTests(unittest.TestCase):
+    def test_endless_until_stopped_and_ranked_by_average(self):
+        from afgooien.games import FreeGame
+        g = FreeGame()
+        g.new_game(["Ann", "Bob"], {"rounds": 3})          # instellingen doen er niet toe
+        self.assertFalse(g.finish())                        # nog niets gegooid
+        for _ in range(12):                                 # ver voorbij elk rondelimiet
+            turn(g, [(20, 1)] * 3)
+            turn(g, [(19, 1)] * 3)
+        d(g, 20, 3)                                         # halve beurt telt mee
+        self.assertEqual(g.state()["phase"], "play")
+        self.assertTrue(g.finish())
+        st = g.state()
+        self.assertEqual(st["phase"], "finished")
+        ann, bob = st["players"]
+        self.assertEqual((ann["score"], ann["darts"], ann["points"]), (12 * 60 + 60, 37, 780))
+        self.assertEqual((ann["place"], bob["place"]), (1, 2))
+        summ = g.summary()
+        self.assertEqual((summ["mode"], summ["rounds"], summ["winner"]), ("free", 13, "Ann"))
+        g.undo()
+        self.assertEqual(g.state()["phase"], "play")
+
+    def test_server_finish_saves_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            app = App(ROOT / "web", tmp / "spel.json", history_file=tmp / "geschiedenis.json", data_dir=tmp)
+            app.command({"type": "new_game", "mode": "free", "players": ["Ann"], "settings": {}})
+            app.command({"type": "dart", "number": 20, "multiplier": 3})
+            st = app.command({"type": "finish"})
+            self.assertEqual(st["phase"], "finished")
+            self.assertEqual(app.history.games[-1]["mode"], "free")
+            app.command({"type": "new_game", "mode": "x01", "players": ["Ann"], "settings": {"start": 101}})
+            with self.assertRaises(GameError):
+                app.command({"type": "finish"})
+
+
 class ServerModeTests(unittest.TestCase):
     def test_switch_save_and_load(self):
         with tempfile.TemporaryDirectory() as tmp:

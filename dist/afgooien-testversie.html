@@ -706,6 +706,8 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* vrij gooien: stoppen en opslaan */
+.ctrl.finish { background: linear-gradient(135deg, rgba(62,224,143,.22), rgba(62,224,143,.08)); border-color: rgba(62,224,143,.45); }
 /* shoot-out keuze */
 .sobox { text-align: center; }
 .sobtns { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 1rem 0 .6rem; }
@@ -1022,6 +1024,11 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
             <p class="sub small" id="cu_help"></p>
           </div>
         </div>
+        <div class="card rulescard cucard hidden" id="freecard">
+          <div class="cardhead"><h2 data-i18n="gm_free"></h2><span class="tag tag-practice" data-i18n="tag_practice"></span></div>
+          <p class="sub" data-i18n="free_sub"></p>
+          <div class="chips"><span class="chipx" data-i18n="free_chip1"></span><span class="chipx" data-i18n="free_chip2"></span><span class="chipx" data-i18n="free_chip3"></span></div>
+        </div>
         <div class="card rulescard gencard hidden" id="gencard">
           <div class="cardhead"><h2 id="gentitle"></h2><span id="gentag" class="tag"></span></div>
           <p class="sub" id="gendesc"></p>
@@ -1095,6 +1102,7 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
           <button id="boardreset" class="ghost small hidden" data-i18n="reset_cams" data-i18n-title="reset_cams_tip"></button>
         </div>
         <div class="controls">
+          <button id="finishbtn" class="ctrl finish hidden">🏁 <span data-i18n="free_stop"></span></button>
           <button id="undo" class="ctrl" data-i18n-title="undo_tip">↶ <span data-i18n="undo"></span></button>
           <button id="miss" class="ctrl"><span id="misslbl"></span> <kbd>M</kbd></button>
           <button id="next" class="ctrl primary"><span data-i18n="next"></span> <kbd>Enter</kbd></button>
@@ -1480,7 +1488,13 @@ window.AFGOOIEN_MESSAGES = {
     "cu_l_cut_tie": "Gelijk onderaan ({names}, {score} punten): niemand valt af, door naar het volgende blok",
     "xo_so_label": "Shoot-out (3+ spelers)",
     "so_bull": "Dichtst bij bull",
-    "so_score": "Hoogste score"
+    "so_score": "Hoogste score",
+    "fr_l_new": "Vrij gooien met {names}",
+    "fr_l_turn": "Beurt voor {name} (ronde {round})",
+    "fr_i_throw": "{name}: gooi maar raak (ronde {round})",
+    "fr_n_nothing": "Er is nog niets gegooid om op te slaan",
+    "fr_l_done": "Gestopt. Hoogste gemiddelde: {names}",
+    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1749,7 +1763,13 @@ window.AFGOOIEN_MESSAGES = {
     "cu_l_cut_tie": "Tie at the bottom ({names}, {score} points): nobody is out, on to the next block",
     "xo_so_label": "Shoot-out (3+ players)",
     "so_bull": "Closest to bull",
-    "so_score": "Highest score"
+    "so_score": "Highest score",
+    "fr_l_new": "Free throw with {names}",
+    "fr_l_turn": "{name} to throw (round {round})",
+    "fr_i_throw": "{name}: throw away (round {round})",
+    "fr_n_nothing": "Nothing has been thrown yet to save",
+    "fr_l_done": "Stopped. Highest average: {names}",
+    "fr_s_done": "Done! Highest average: {names}"
   }
 }
 ;
@@ -3195,14 +3215,17 @@ window.AFGOOIEN_MESSAGES = {
         this.turn_pos += 1;
         if (this.turn_pos >= this.order.length) {
           this.turn_pos = 0;
-          if (this._elim()) {
-            if (this.turn_no % this.settings.elim === 0 && this._cut()) return true;
-          } else if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
+          if (this._roundEnd()) return true;
           this.turn_no += 1;
         }
         this._beginTurn();
         return true;
       }
+      return false;
+    }
+    _roundEnd() {
+      if (this._elim()) return this.turn_no % this.settings.elim === 0 && this._cut();
+      if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
       return false;
     }
     _cut() {
@@ -3275,7 +3298,82 @@ window.AFGOOIEN_MESSAGES = {
     }
   }
 
-  const GAMES = { x01: X01Game, countup: CountUpGame };
+  // ============================================================ Vrij gooien
+  class FreeGame extends CountUpGame {
+    get MODE() { return "free"; }
+    defaultSettings() { return {}; }
+    cleanSettings() { return {}; }
+    _elim() { return false; }
+    start() {
+      this.order = this.players.map((_, i) => i);
+      this.phase = "play";
+      this.turn_no = 1;
+      this.turn_pos = 0;
+      this._say("start", "fr_l_new", null, { names: this.players.map((p) => p.name) });
+      this._beginTurn();
+    }
+    _beginTurn() {
+      const p = this.players[this.order[this.turn_pos]];
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("turn", "fr_l_turn", "s_name", { name: p.name, round: this.turn_no });
+    }
+    _roundEnd() { return false; }
+    finish() { return this._record(["finish", null]); }
+    play(kind, data) {
+      if (kind === "finish") return this._stop();
+      return super.play(kind, data);
+    }
+    _stop() {
+      const P = this.players;
+      if (!P.some((q) => q.darts)) return this._ignore("fr_n_nothing");
+      const p = P[this.order[this.turn_pos]];
+      if (this.turn_darts.length) {
+        p.points += this.turn_score;
+        p.rounds = p.rounds.concat([this.turn_score]);
+        p.best_round = Math.max(p.best_round, this.turn_score);
+        this._turnStats(p, this.turn_score);
+      }
+      const better = (a, b) => (!a.darts ? false : !b.darts ? true : a.score * b.darts > b.score * a.darts);
+      for (const q of P) q.place = 1 + P.filter((o) => better(o, q)).length;
+      const top = P.filter((q) => q.place === 1);
+      this.winner = top[0].index;
+      this.phase = "finished";
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("win", "fr_l_done", "fr_s_done", { names: top.map((q) => q.name) });
+      this._effect("win", { player: this.winner });
+      return true;
+    }
+    summary() {
+      if (this.phase !== "finished" || this.winner === null) return null;
+      const ranked = this.players.slice().sort((a, b) => a.place - b.place || a.index - b.index);
+      const keys = ["name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn"];
+      return { mode: "free", winner: ranked.filter((q) => q.place === 1).map((q) => q.name).join(" & "),
+        rounds: this.turn_no, settings: {}, players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
+    }
+    state(lang) {
+      const st = this._baseState(lang);
+      lang = st.lang;
+      const cur = this.current;
+      st.waiting = this.phase === "play" && this.turn_darts.length >= DARTS;
+      st.rounds = null;
+      st.elim_left = null;
+      let instr = null;
+      if (this.phase === "play" && cur !== null) {
+        const p = this.players[cur];
+        instr = tr(lang, st.waiting ? "i_takeout" : "fr_i_throw", { name: p.name, round: this.turn_no });
+      } else if (this.phase === "finished" && this.winner !== null) {
+        const top = this.players.filter((p) => p.place === 1).map((p) => p.name);
+        instr = top.length === 1 ? tr(lang, "i_win", { name: top[0] }) : tr(lang, "cu_i_tie", { names: top });
+      }
+      st.instruction = instr;
+      st.checkout = null;
+      return st;
+    }
+  }
+
+  const GAMES = { x01: X01Game, countup: CountUpGame, free: FreeGame };
   function makeGame(mode) {
     if (!mode || mode === "afgooien") return new E.Game();
     const P = (typeof module !== "undefined" && module.exports) ? require("./party.js") : root.AfgooienParty;
@@ -3284,7 +3382,7 @@ window.AFGOOIEN_MESSAGES = {
     return new cls();
   }
 
-  const api = { X01Game, CountUpGame, makeGame, checkout, X01_SCORES, BaseGame, DARTS, pyInt, intOf, has, pyStr };
+  const api = { X01Game, CountUpGame, FreeGame, makeGame, checkout, X01_SCORES, BaseGame, DARTS, pyInt, intOf, has, pyStr };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AfgooienGames = api;
 })(typeof window !== "undefined" ? window : globalThis);
@@ -4115,7 +4213,7 @@ window.AFGOOIEN_MESSAGES = {
       return "T" + t.n;
     }
     if (mode === "gotcha") return st.settings.target - me.score > 60 ? "T20" : "S1";
-    if (mode === "countup") return "T20";
+    if (mode === "countup" || mode === "free") return "T20";
     if (mode === "checkout") return x01Target({ settings: { in_mode: "straight", out_mode: "double" }, checkout: null }, { opened: true, score: me.rem });
     return t ? code(t, level) : "T20";
   }
@@ -4217,7 +4315,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.37";
+    s.app_version = "1.38";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4257,6 +4355,7 @@ window.AFGOOIEN_LOCAL = (function () {
         case "correct": g.correct(cmd.index, Dart.fromDict(cmd)); break;
         case "next": g.nextPlayer(); break;
         case "allocate": g.allocate(cmd.alloc || []); break;
+        case "finish": if (!g.finish) throw new GameError("err_unknown_cmd", { cmd: cmd.type }); g.finish(); break;
         case "shootout": if (!g.choose) throw new GameError("err_unknown_cmd", { cmd: cmd.type }); g.choose(cmd.choice); break;
         case "undo": g.undo(); break;
         case "reset": g.reset(); gameId = null; break;
@@ -4474,12 +4573,19 @@ window.AFGOOIEN_UI = {
     aw_curound: "Uitschieter", aw_curound_v: "{v} in één ronde", aw_curound_d: "Hoogste ronde",
     set_pstats2: "{games} · {wins}× gewonnen ({pct})",
     tag_classic: "Klassiek", home_modes_sub: "14 spellen: klassiek, party en training",
-    gm_afgooien: "Afgooien", gm_x01: "X01", gm_countup: "Count Up", gm_atc: "Rond de klok", gm_shanghai: "Shanghai",
+    gm_afgooien: "Afgooien", gm_x01: "X01", gm_countup: "Count Up", gm_free: "Vrij gooien", gm_atc: "Rond de klok", gm_shanghai: "Shanghai",
     gm_bobs27: "Bob's 27", gm_halveit: "Halve-It", gm_cricket: "Cricket", gm_bulls: "Bullen", gm_doubles: "Doubles oefenen",
     gm_checkout: "Random checkout", gm_killer: "Killer", gm_golf: "Golf", gm_gotcha: "Gotcha",
     gd_afgooien: "Kies je nummer met je verkeerde arm, haal 5 punten en gooi de rest af",
     gd_x01: "Van 501 (of 301, 701…) precies naar nul. Legs, sets, double-out en meer",
     gd_countup: "Zoveel mogelijk punten in een vast aantal rondes",
+    gd_free: "Gewoon gooien zolang je wilt: punten en gemiddelde lopen mee, jij bepaalt wanneer je stopt",
+    free_sub: "Elke pijl telt zijn score. Er is geen einde: gooi zo lang je wilt, alleen of met anderen en bots. Met Stoppen & opslaan komt het op het scorebord; de ranglijst gaat op 3-pijlsgemiddelde.",
+    free_chip1: "Geen limiet", free_chip2: "Gemiddelde live", free_chip3: "Solo of samen",
+    free_stop: "Stoppen & opslaan", q_free_stop: "Stoppen en de stand opslaan op het scorebord?",
+    ph_free: "Vrij gooien · gemiddelde per 3 pijlen", pm_fr_pts: "{n} punten", chip_free: "Vrij gooien · {n} rondes",
+    win_fr: "gem. {avg} · {score} punten in {darts} pijlen · beste beurt {best}", aw_frdarts: "Doorzetter", aw_frdarts_v: "{v} pijlen", aw_frdarts_d: "Meeste pijlen gegooid",
+    aw_fravg: "Beste gemiddelde", aw_fravg_v: "{v} gem.", aw_fravg_d: "Hoogste 3-pijlsgemiddelde (min. 30 pijlen)",
     gd_atc: "Raak 1 t/m 20 op volgorde, eventueel met dubbels of triples",
     gd_shanghai: "Elke ronde een nummer. Single + dubbel + triple in één beurt wint meteen",
     gd_bobs27: "Dubbels-training: begin op 27, mis een dubbel en je verliest punten",
@@ -4699,12 +4805,19 @@ window.AFGOOIEN_UI = {
     aw_curound: "Big round", aw_curound_v: "{v} in one round", aw_curound_d: "Highest round",
     set_pstats2: "{games} · {wins}× won ({pct})",
     tag_classic: "Classic", home_modes_sub: "14 games: classic, party and practice",
-    gm_afgooien: "Afgooien", gm_x01: "X01", gm_countup: "Count Up", gm_atc: "Around the Clock", gm_shanghai: "Shanghai",
+    gm_afgooien: "Afgooien", gm_x01: "X01", gm_countup: "Count Up", gm_free: "Free throw", gm_atc: "Around the Clock", gm_shanghai: "Shanghai",
     gm_bobs27: "Bob's 27", gm_halveit: "Halve-It", gm_cricket: "Cricket", gm_bulls: "Bull trainer", gm_doubles: "Doubles practice",
     gm_checkout: "Random checkout", gm_killer: "Killer", gm_golf: "Golf", gm_gotcha: "Gotcha",
     gd_afgooien: "Pick your number with your wrong arm, score 5 points and knock the others out",
     gd_x01: "From 501 (or 301, 701…) down to exactly zero. Legs, sets, double out and more",
     gd_countup: "Score as many points as you can in a set number of rounds",
+    gd_free: "Just throw for as long as you like: points and average keep running, you decide when to stop",
+    free_sub: "Every dart scores its value. There is no end: throw as long as you like, alone or with others and bots. Stop & save puts it on the scoreboard; the ranking is by 3-dart average.",
+    free_chip1: "No limit", free_chip2: "Live average", free_chip3: "Solo or together",
+    free_stop: "Stop & save", q_free_stop: "Stop and save the standings to the scoreboard?",
+    ph_free: "Free throw · 3-dart average", pm_fr_pts: "{n} points", chip_free: "Free throw · {n} rounds",
+    win_fr: "avg {avg} · {score} points in {darts} darts · best turn {best}", aw_frdarts: "Stamina", aw_frdarts_v: "{v} darts", aw_frdarts_d: "Most darts thrown",
+    aw_fravg: "Best average", aw_fravg_v: "{v} avg", aw_fravg_d: "Highest 3-dart average (min. 30 darts)",
     gd_atc: "Hit 1 to 20 in order, optionally doubles or trebles only",
     gd_shanghai: "One number per round. Single + double + treble in one turn wins instantly",
     gd_bobs27: "Doubles practice: start on 27, miss a double and you lose points",
@@ -5086,6 +5199,7 @@ function render(state) {
   $("misslbl").textContent = t(!other && S.phase === "play" && S.settings.miss_penalty ? "miss_pen" : "miss");
   $("miss").disabled = !active || botTurn();
   $("undo").disabled = !S.can_undo;
+  $("finishbtn").classList.toggle("hidden", !(S.mode === "free" && S.phase === "play"));
   $("next").disabled = !active || (S.phase === "select" && S.sel_step !== "done") || !!S.pending || botTurn();
   if (fixIndex !== null && (!S.darts[fixIndex] || botTurn())) setFix(null, true);
   if (fixIndex !== null) $("notice").innerHTML = `<span class="fixhint">${t("fix_hint", { n: fixIndex + 1 })}</span>`;
@@ -5111,6 +5225,7 @@ function render(state) {
     $("ranking").innerHTML = ranked.map((p) => {
       let who = `<b>${esc(p.name)}</b>`, row;
       if (S.mode === "x01") row = t("win_x01", { avg: fmt2(xavg(p)), legs: p.legs_total, co: p.hi_checkout || "–" });
+      else if (S.mode === "free") row = t("win_fr", { avg: fmt2(avg3(p.score, p.darts)), score: p.score, darts: p.darts, best: p.best_round });
       else if (S.mode === "countup") row = t("win_cu", { score: p.score, avg: fmt2(avg3(p.points, p.darts)), best: p.best_round });
       else if (isParty()) { const v = S.views[p.index]; row = esc([String(v.big)].concat(v.meta).join(" · ")); }
       else { who += ` (${p.number})`; row = t("win_row", { kills: p.kills, ppt: fmt2(p.turns ? (p.gained + p.knocked) / p.turns : 0), tr: p.triples }); }
@@ -5146,6 +5261,9 @@ function renderOther() {
       $("phaseinfo").innerHTML = esc(t("ph_x01", { start: st.start, out: cap(st.out_mode), in: st.in_mode !== "straight" ? t("ph_in", { m: cap(st.in_mode) }) : "", match })) +
         (S.checkout ? `<span class="tg co">${esc(t("ph_checkout", { route: S.checkout.join(" · ") }))}</span>` : "");
     }
+  } else if (S.mode === "free") {
+    $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_round", { n: S.turn_no });
+    $("phaseinfo").textContent = t("ph_free");
   } else if (S.rounds === null) {
     $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu_elim", { n: S.turn_no, l: S.elim_left });
     $("phaseinfo").textContent = t("ph_cu_elim", { n: st.elim });
@@ -5178,6 +5296,10 @@ function renderOther() {
         side = (st.match === "sets" ? `<span class="ls"><small>${t("pm_sets")}</small><b>${p.sets}</b></span>` : "") +
           `<span class="ls"><small>${t("pm_legs")}</small><b>${p.legs}</b></span>`;
       }
+    } else if (S.mode === "free") {
+      big = fmt2(avg3(p.score, p.darts));
+      meta.push(t("pm_fr_pts", { n: p.score }), t("pm_darts", { n: p.darts }));
+      if (p.rounds.length) meta.push(t("pm_last", { n: p.rounds[p.rounds.length - 1] }));
     } else {
       big = p.score;
       meta.push(t("pm_avg", { avg: fmt2(avg3(p.score, p.darts)) }));
@@ -5872,6 +5994,7 @@ const SUMS = {
   afgooien: ["kills", "knocked", "gained", "darts", "useful", "outside", "triples", "doubles", "bulls", "tons", "turns"],
   x01: ["darts", "points", "f9_points", "f9_darts", "n180", "n140", "n100", "legs_total", "co_att", "co_hit", "busts"],
   countup: ["darts", "points", "score", "n180", "n140", "n100"],
+  free: ["darts", "points", "score", "n180", "n140", "n100"],
 };
 for (const m of ["atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"]) {
   SUMS[m] = ["darts", "hits", "score", "mtotal", "kills"];
@@ -5956,6 +6079,12 @@ const MODE_COLS = {
     { key: "ppr", label: "c_ppr", fmt: (a) => fmt2(a.ppr) },
     { key: "bestRound", label: "c_bestround" },
     { key: "n180", label: "c_180" }, { key: "n140", label: "c_140" }, { key: "n100", label: "c_100" },
+  ],
+  free: [
+    { key: "ppr", label: "c_avg", fmt: (a) => fmt2(a.ppr), cls: "big" },
+    { key: "bestRound", label: "c_bestround" },
+    { key: "n180", label: "c_180" }, { key: "n140", label: "c_140" }, { key: "n100", label: "c_100" },
+    { key: "darts", label: "g_darts" },
   ],
 };
 function partyCols(m) {
@@ -6056,6 +6185,11 @@ function awardsHtml(rows) {
     ["🎯", "phit", best((a) => a.hitPct, (a) => a.darts >= 30), pct],
     ["🔥", "streak", best((a) => a.bestStreak, (a) => a.bestStreak >= 2), (v) => v],
     ["🥈", "second", best((a) => a.seconds, (a) => a.seconds >= 2), (v) => v, true],
+  ] : statsMode === "free" ? [
+    ["📈", "fravg", best((a) => a.ppr, (a) => a.darts >= 30), fmt2],
+    ["🚀", "curound", best((a) => a.bestRound), (v) => v],
+    ["💯", "x180", best((a) => a.n180), (v) => v],
+    ["🎯", "frdarts", best((a) => a.darts), (v) => v],
   ] : statsMode === "countup" ? [
     ["👑", "champ", best((a) => a.wins), (v) => v],
     ["🏆", "cubest", best((a) => a.hiscore), (v) => v],
@@ -6159,8 +6293,9 @@ function otherGameRow(g, when, me) {
   const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     cells(p).map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
   const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out${g.settings.shootout === "on" ? " · " + t("chip_so") : ""}`
+    : gmode(g) === "free" ? t("chip_free", { n: g.rounds })
     : g.settings && g.settings.elim ? t("chip_elim", { n: g.settings.elim }) : t("chip_rounds", { n: g.rounds });
-  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : `${esc(g.winner)} (${w.score})`;
+  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : gmode(g) === "free" ? `${esc(g.winner)} (${fmt2(avg3(w.score, w.darts))})` : `${esc(g.winner)} (${w.score})`;
   return `<details class="gamerow"><summary><span class="when">${when}</span>
     <span class="gwin">🏆 ${wtxt}</span>
     <span class="rest">${rest.map((p) => `${p.place}. ${esc(p.name)}`).join(" · ")}</span>
@@ -6194,6 +6329,7 @@ function keyStat(g, p) {
   if (m === "afgooien") return [t("c_kills"), String(p.kills || 0), p.kills || 0];
   if (m === "x01") { const a = xavg(p); return [t("c_avg"), fmt2(a), a]; }
   if (m === "countup") return [t("c_score"), String(p.score), p.score];
+  if (m === "free") { const a = avg3(p.score, p.darts); return [t("c_avg"), fmt2(a), a]; }
   return [t("c_score2"), String(p.score), p.score];
 }
 // per spel samenvatten voor deze speler (zelfde berekening als het scorebord)
@@ -6208,6 +6344,7 @@ function playerModes(name, games) {
     if (m === "afgooien") { key = [t("c_kills"), String(a.kills)]; best = [t("c_ppt"), fmt2(a.ppt)]; }
     else if (m === "x01") { key = [t("c_avg"), fmt2(a.avg)]; best = [t("c_hico"), a.hico || "–"]; }
     else if (m === "countup") { key = [t("c_score"), fmt1(a.avgScore)]; best = [t("c_hiscore"), a.hiscore]; }
+    else if (m === "free") { key = [t("c_avg"), fmt2(a.ppr)]; best = [t("c_bestround"), a.bestRound]; }
     else { key = [m === "atc" ? t("c_targets") : t("c_avgscore"), fmt1(a.avgScore)]; best = [t("c_bestscore"), a.bestScore == null ? "–" : a.bestScore]; }
     out.push({ mode: m, a, key, best });
   }
@@ -6540,7 +6677,7 @@ async function playerAction(act, name) {
 const GAME_LIST = [
   { sec: "classic", modes: ["x01", "cricket"] },
   { sec: "party", modes: ["afgooien", "killer", "shanghai", "halveit", "golf", "gotcha"] },
-  { sec: "training", modes: ["countup", "atc", "bobs27", "doubles", "bulls", "checkout"] },
+  { sec: "training", modes: ["free", "countup", "atc", "bobs27", "doubles", "bulls", "checkout"] },
 ];
 const TAGCLS = { classic: "tag-classic", party: "tag-party", training: "tag-practice" };
 const ALL_MODES = GAME_LIST.flatMap((g) => g.modes);
@@ -6626,7 +6763,7 @@ const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
 const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
-if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
+if (!["afgooien", "x01", "countup", "free", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
 // elim = rondes per blok bij het toernooi (0 = uit); block onthoudt de laatst gekozen blokgrootte
 const cuSet = Object.assign({ rounds: 8, elim: 0, block: 3 }, store.get("afgooien.countup", {}));
@@ -6655,6 +6792,7 @@ function renderLobbyMode() {
   $("afgcard").classList.toggle("hidden", lobbyMode !== "afgooien");
   $("x01card").classList.toggle("hidden", lobbyMode !== "x01");
   $("cucard").classList.toggle("hidden", lobbyMode !== "countup");
+  $("freecard").classList.toggle("hidden", lobbyMode !== "free");
   $("gencard").classList.toggle("hidden", !PARTY.includes(lobbyMode));
   renderGenCard();
   $("lobbytitle").textContent = modeTitle(lobbyMode);
@@ -6798,7 +6936,7 @@ function startGame() {
   };
   store.set("afgooien.players", rows);
   if (lobbyMode === "afgooien") store.set("afgooien.settings", settings);
-  const st = lobbyMode === "x01" ? { ...x01Set } : lobbyMode === "countup" ? { ...cuSet } : PARTY.includes(lobbyMode) ? { ...partySet[lobbyMode] } : settings;
+  const st = lobbyMode === "x01" ? { ...x01Set } : lobbyMode === "countup" ? { ...cuSet } : lobbyMode === "free" ? {} : PARTY.includes(lobbyMode) ? { ...partySet[lobbyMode] } : settings;
   const order = randomOrderUsed(lobbyMode, st) ? shuffled(rows) : rows;
   send({ type: "new_game", mode: lobbyMode, players: order.map((r) => r.name), bots: order.map((r) => r.bot), settings: st });
 }
@@ -7042,6 +7180,7 @@ function bind() {
     if (b) send({ type: "shootout", choice: b.dataset.so });
   });
   $("soundo").onclick = () => send({ type: "undo" });
+  $("finishbtn").onclick = () => confirmDialog(t("q_free_stop"), () => send({ type: "finish" }));
   // klok in de bovenbalk
   // Altijd Nederlandse tijd (zomer/winter automatisch), ook als de tijdzone van de Pi niet goed staat:
   // de klok van het apparaat zelf (UTC, via internet gelijkgezet) klopt wel.

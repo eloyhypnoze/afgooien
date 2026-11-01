@@ -101,6 +101,8 @@ def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
                         "shootout": rng.choice(["off", "on", "on"])}
             if rng.random() < 0.03:
                 settings["start"] = 500                  # ongeldig
+        elif mode == "free":
+            settings = {}
         else:
             settings = {"rounds": rng.choice([1, 2, 3, 4]), "elim": rng.choice([0, 0, 1, 2, 3, 8])}
             if rng.random() < 0.03:
@@ -119,6 +121,8 @@ def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
         return {"type": "choose", "choice": rng.choice(["bull", "score", "score", "x"])}
     if rng.random() < 0.01:
         return {"type": "choose", "choice": rng.choice(["bull", "score"])}
+    if mode == "free" and rng.random() < 0.02:
+        return {"type": "finish"}
     if st["phase"] == "shootout" and rng.random() < 0.3:
         return {"type": "dart", "number": 25, "multiplier": rng.choice([1, 2]),
                 "x": rng.uniform(-0.2, 0.2), "y": rng.uniform(-0.2, 0.2)}
@@ -219,6 +223,8 @@ def run_py(g: Game, cmd: dict):
             g.allocate(cmd["alloc"])
         elif t == "choose":
             g.choose(cmd["choice"])
+        elif t == "finish":
+            g.finish()
         elif t == "correct":
             g.correct(cmd["index"], {k: v for k, v in cmd.items() if k not in ("type", "index")})
         return None
@@ -264,6 +270,9 @@ class ParityTest(unittest.TestCase):
 
     def test_x01_js_matches_python(self):
         self._check("x01", 150, 160, 777)
+
+    def test_free_js_matches_python(self):
+        self._check("free", 80, 90, 9090)
 
     def test_countup_js_matches_python(self):
         self._check("countup", 80, 80, 4242)

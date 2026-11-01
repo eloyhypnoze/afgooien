@@ -98,3 +98,5 @@ a.ghost.mbtn { color: var(--text); background: var(--panel2); border: 1px solid 
   background: var(--panel2); border: 2px solid var(--line2, var(--line)); color: var(--text); font-size: 1rem; }
 .sobtn:active { border-color: var(--accent); }
 .sobtn small { color: var(--muted); font-size: .78rem; }
+.mstop { display: block; width: calc(100% - 1.4rem); margin: .2rem .7rem 0; background: rgba(62,224,143,.14); border-color: rgba(62,224,143,.45); }
+.mstop.hidden { display: none; }

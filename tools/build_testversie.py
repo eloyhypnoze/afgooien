@@ -113,6 +113,7 @@ window.AFGOOIEN_LOCAL = (function () {
         case "correct": g.correct(cmd.index, Dart.fromDict(cmd)); break;
         case "next": g.nextPlayer(); break;
         case "allocate": g.allocate(cmd.alloc || []); break;
+        case "finish": if (!g.finish) throw new GameError("err_unknown_cmd", { cmd: cmd.type }); g.finish(); break;
         case "shootout": if (!g.choose) throw new GameError("err_unknown_cmd", { cmd: cmd.type }); g.choose(cmd.choice); break;
         case "undo": g.undo(); break;
         case "reset": g.reset(); gameId = null; break;

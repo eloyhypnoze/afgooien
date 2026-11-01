@@ -219,6 +219,10 @@ class App:
             g.next_player()
         elif t == "allocate":
             g.allocate(cmd.get("alloc") or [])
+        elif t == "finish":
+            if not hasattr(g, "finish"):
+                raise GameError("err_unknown_cmd", cmd=t)
+            g.finish()
         elif t == "shootout":
             if not hasattr(g, "choose"):
                 raise GameError("err_unknown_cmd", cmd=t)

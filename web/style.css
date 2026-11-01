@@ -699,6 +699,8 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* vrij gooien: stoppen en opslaan */
+.ctrl.finish { background: linear-gradient(135deg, rgba(62,224,143,.22), rgba(62,224,143,.08)); border-color: rgba(62,224,143,.45); }
 /* shoot-out keuze */
 .sobox { text-align: center; }
 .sobtns { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 1rem 0 .6rem; }

@@ -39,6 +39,7 @@ for (const [gi, run] of data.entries()) {
       else if (c.type === "undo") g.undo();
       else if (c.type === "allocate") g.allocate(c.alloc);
       else if (c.type === "choose") g.choose(c.choice);
+      else if (c.type === "finish") g.finish();
       else if (c.type === "correct") { const d = { ...c }; delete d.type; delete d.index; g.correct(c.index, d); }
     } catch (e) {
       if (!(e instanceof GameError)) throw e;

@@ -223,7 +223,7 @@ def party_target(st: dict, me: dict, level: int) -> str | None:
         return "T%d" % t["n"]
     if mode == "gotcha":
         return "T20" if st["settings"]["target"] - me["score"] > 60 else "S1"
-    if mode == "countup":
+    if mode in ("countup", "free"):
         return "T20"
     if mode == "checkout":      # geen route meer met de pijlen die over zijn: een mooie rest klaarzetten
         return x01_target({"settings": {"in_mode": "straight", "out_mode": "double"}, "checkout": None},

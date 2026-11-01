@@ -342,6 +342,7 @@ function render(state) {
     $("mkeys").classList.toggle("hidden", !keysMode);
     $("mtoggle").textContent = keysMode ? "◎ " + t("mob_board") : "⌨ " + t("mob_keys");
     $("mundo").disabled = !S.can_undo;
+    $("mstop").classList.toggle("hidden", !(S.mode === "free" && S.phase === "play"));
     $("mmiss").querySelector("span").textContent = t(isAfg() && S.phase === "play" && S.settings.miss_penalty ? "miss_pen" : "miss");
     $("mmiss").disabled = botTurn() || (sel === null && full());
     $("mnext").disabled = botTurn() || !!S.pending || (S.phase === "select" && S.sel_step !== "done");
@@ -364,6 +365,7 @@ function roundText() {
   if (S.round_label) return S.round_label;
   if (S.phase === "finished") return t("rp_over");
   if (S.mode === "x01") return S.phase === "bulloff" ? t("rp_bulloff") : S.phase === "shootout" ? t("rp_so") : t("rp_leg", { n: (S.leg_no || 0) + 1 });
+  if (S.mode === "free") return t("rp_round", { n: S.turn_no });
   if (S.mode === "countup") return S.rounds === null ? t("rp_cu_elim", { n: S.turn_no, l: S.elim_left }) : t("rp_cu", { n: S.turn_no, r: S.settings.rounds });
   if (S.phase === "select") return t(S.tiebreak ? "rp_tie" : "rp_select");
   return S.phase === "play" ? t("rp_round", { n: S.turn_no }) : "";
@@ -448,6 +450,9 @@ function renderPlayers() {
         big = i in soVal ? (soVal[i] === null ? t("miss_mm") : soVal[i]) : so.rest.includes(i) ? "–" : `#${p.place}`;
         meta = so.rest.includes(i) ? t("pm_so_in") : "";
       } else meta = S.settings.match !== "off" ? `${t("pm_legs")} ${p.legs}${S.settings.match === "sets" ? ` · ${t("pm_sets")} ${p.sets}` : ""}` : "";
+    } else if (S.mode === "free") {
+      big = (p.darts ? p.score / p.darts * 3 : 0).toFixed(2).replace(".", t("dec"));
+      meta = t("pm_fr_pts", { n: p.score });
     } else if (S.views) {
       big = esc(S.views[i].big);
       meta = esc(S.views[i].meta[0] || "");
@@ -506,6 +511,7 @@ function bind() {
     alloc[i] = Math.max(0, (alloc[i] || 0) + +b.dataset.d);
     renderAlloc();
   });
+  $("mstop").onclick = () => { if (window.confirm(t("q_free_stop"))) send({ type: "finish" }); };
   $("mso").addEventListener("click", (e) => {
     const b = e.target.closest("[data-so]");
     if (b) { buzz(15); send({ type: "shootout", choice: b.dataset.so }); }

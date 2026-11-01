@@ -311,6 +311,11 @@
             <p class="sub small" id="cu_help"></p>
           </div>
         </div>
+        <div class="card rulescard cucard hidden" id="freecard">
+          <div class="cardhead"><h2 data-i18n="gm_free"></h2><span class="tag tag-practice" data-i18n="tag_practice"></span></div>
+          <p class="sub" data-i18n="free_sub"></p>
+          <div class="chips"><span class="chipx" data-i18n="free_chip1"></span><span class="chipx" data-i18n="free_chip2"></span><span class="chipx" data-i18n="free_chip3"></span></div>
+        </div>
         <div class="card rulescard gencard hidden" id="gencard">
           <div class="cardhead"><h2 id="gentitle"></h2><span id="gentag" class="tag"></span></div>
           <p class="sub" id="gendesc"></p>
@@ -384,6 +389,7 @@
           <button id="boardreset" class="ghost small hidden" data-i18n="reset_cams" data-i18n-title="reset_cams_tip"></button>
         </div>
         <div class="controls">
+          <button id="finishbtn" class="ctrl finish hidden">🏁 <span data-i18n="free_stop"></span></button>
           <button id="undo" class="ctrl" data-i18n-title="undo_tip">↶ <span data-i18n="undo"></span></button>
           <button id="miss" class="ctrl"><span id="misslbl"></span> <kbd>M</kbd></button>
           <button id="next" class="ctrl primary"><span data-i18n="next"></span> <kbd>Enter</kbd></button>

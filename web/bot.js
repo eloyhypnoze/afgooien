@@ -143,7 +143,7 @@
       return "T" + t.n;
     }
     if (mode === "gotcha") return st.settings.target - me.score > 60 ? "T20" : "S1";
-    if (mode === "countup") return "T20";
+    if (mode === "countup" || mode === "free") return "T20";
     if (mode === "checkout") return x01Target({ settings: { in_mode: "straight", out_mode: "double" }, checkout: null }, { opened: true, score: me.rem });
     return t ? code(t, level) : "T20";
   }

@@ -960,14 +960,19 @@ class CountUpGame(BaseGame):
             self.turn_pos += 1
             if self.turn_pos >= n:
                 self.turn_pos = 0
-                if self._elim():
-                    if self.turn_no % self.settings["elim"] == 0 and self._cut():
-                        return True
-                elif self.turn_no >= self.settings["rounds"]:
-                    self._finish()
+                if self._round_end():
                     return True
                 self.turn_no += 1
             self._begin_turn()
+            return True
+        return False
+
+    def _round_end(self) -> bool:
+        """Iedereen heeft deze ronde gegooid. Geeft True als het spel daarmee klaar is."""
+        if self._elim():
+            return self.turn_no % self.settings["elim"] == 0 and self._cut()
+        if self.turn_no >= self.settings["rounds"]:
+            self._finish()
             return True
         return False
 
@@ -1044,7 +1049,106 @@ class CountUpGame(BaseGame):
         return st
 
 
-GAMES = {"x01": X01Game, "countup": CountUpGame}
+# =================================================================== Vrij gooien
+class FreeGame(CountUpGame):
+    """Vrij gooien: elke pijl telt zijn score, zonder einde; je stopt zelf (dan wordt het opgeslagen).
+    De ranglijst gaat op 3-pijlsgemiddelde, want niet iedereen heeft dan evenveel beurten gegooid."""
+    MODE = "free"
+
+    def default_settings(self) -> dict:
+        return {}
+
+    def clean_settings(self, d: dict | None) -> dict:
+        return {}
+
+    def _elim(self) -> bool:
+        return False
+
+    def start(self) -> None:
+        self.order = list(range(len(self.players)))
+        self.phase = "play"
+        self.turn_no = 1
+        self.turn_pos = 0
+        self._say("start", "fr_l_new", names=[p["name"] for p in self.players])
+        self._begin_turn()
+
+    def _begin_turn(self) -> None:
+        p = self.players[self.order[self.turn_pos]]
+        self.turn_darts, self.turn_dart_events = [], []
+        self.turn_score = 0
+        self._say("turn", "fr_l_turn", speak="s_name", name=p["name"], round=self.turn_no)
+
+    def _round_end(self) -> bool:
+        return False
+
+    def finish(self) -> bool:
+        """Stoppen en opslaan."""
+        return self._record(("finish", None))
+
+    def play(self, kind: str, data) -> bool:
+        if kind == "finish":
+            return self._stop()
+        return super().play(kind, data)
+
+    def _stop(self) -> bool:
+        P = self.players
+        if not any(q["darts"] for q in P):
+            return self._ignore("fr_n_nothing")
+        p = P[self.order[self.turn_pos]]
+        if self.turn_darts:              # een halve beurt telt mee zoals hij gegooid is
+            p["points"] += self.turn_score
+            p["rounds"] = p["rounds"] + [self.turn_score]
+            p["best_round"] = max(p["best_round"], self.turn_score)
+            self._turn_stats(p, self.turn_score)
+
+        def better(a: dict, b: dict) -> bool:          # a heeft een hoger gemiddelde dan b (exact, zonder afronding)
+            if not a["darts"]:
+                return False
+            if not b["darts"]:
+                return True
+            return a["score"] * b["darts"] > b["score"] * a["darts"]
+
+        for q in P:
+            q["place"] = 1 + sum(1 for o in P if better(o, q))
+        top = [q for q in P if q["place"] == 1]
+        self.winner = top[0]["index"]
+        self.phase = "finished"
+        self.turn_darts, self.turn_dart_events = [], []
+        self.turn_score = 0
+        self._say("win", "fr_l_done", speak="fr_s_done", names=[q["name"] for q in top])
+        self._effect("win", player=self.winner)
+        return True
+
+    def summary(self) -> dict | None:
+        if self.phase != "finished" or self.winner is None:
+            return None
+        ranked = sorted(self.players, key=lambda q: (q["place"], q["index"]))
+        keys = ("name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn")
+        top = [q["name"] for q in ranked if q["place"] == 1]
+        return {"mode": "free", "winner": " & ".join(top), "rounds": self.turn_no, "settings": {},
+                "players": [{k: q[k] for k in keys} for q in ranked]}
+
+    def state(self, lang: str = "nl") -> dict:
+        st = self._base_state(lang)
+        lang = st["lang"]
+        cur = self.current
+        st["waiting"] = self.phase == "play" and len(self.turn_darts) >= DARTS
+        st["rounds"] = None
+        st["elim_left"] = None
+        instr = None
+        if self.phase == "play" and cur is not None:
+            p = self.players[cur]
+            key = "i_takeout" if st["waiting"] else "fr_i_throw"
+            instr = tr(lang, key, {"name": p["name"], "round": self.turn_no})
+        elif self.phase == "finished" and self.winner is not None:
+            top = [p["name"] for p in self.players if p["place"] == 1]
+            instr = tr(lang, "i_win", {"name": top[0]}) if len(top) == 1 else tr(lang, "cu_i_tie", {"names": top})
+        st["instruction"] = instr
+        st["checkout"] = None
+        return st
+
+
+GAMES = {"x01": X01Game, "countup": CountUpGame, "free": FreeGame}
 
 
 def make_game(mode: str | None):

@@ -164,6 +164,11 @@ hoogste. Ook solo te spelen. **Toernooi**: zet het aan en kies het aantal rondes
 de speler met de laagste totaalscore af (staan er meerdere gelijk onderaan, dan valt niemand af).
 De laatste speler die overblijft wint.
 
+**Vrij gooien**: elke pijl telt zijn score, zonder einde. Alleen of met meerdere spelers en bots.
+Per speler staan het 3-pijlsgemiddelde (groot), de punten, het aantal pijlen en de vorige beurt in beeld.
+Met **Stoppen & opslaan** (ook op de telefoon) komt het potje op het scorebord; een halve beurt telt
+mee zoals gegooid en de ranglijst gaat op gemiddelde.
+
 **Cricket**: sluit 15 t/m 20 en de bull (3 marks; dubbel = 2, triple = 3). Normaal, cut-throat
 of zonder punten; maximaal aantal rondes instelbaar. Een marks-tabel staat onder de spelers.
 
@@ -321,6 +326,7 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.38**: nieuw spel Vrij gooien (oneindig, gemiddelde live, zelf stoppen en opslaan)
 - **1.37**: Count Up-toernooi: rondes per blok vrij instelbaar van 1 t/m 30 (was 1, 2, 3 of 5); de klok toont
   altijd de Nederlandse tijd (winter-/zomertijd automatisch), ook als de tijdzone van de Pi verkeerd staat
 - **1.36**: de klok en de statustekst schoven op smallere (of ingezoomde) schermen over het menu; de kop

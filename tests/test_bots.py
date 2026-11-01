@@ -118,6 +118,21 @@ class OtherBotTests(unittest.TestCase):
             g = run_other("countup", [level, 2, 5], {"elim": 1}, rng)
             self.assertEqual(sorted(p["place"] for p in g.players), [1, 2, 3])
 
+    def test_free_throw_bots_keep_throwing(self):
+        from afgooien.games import make_game
+        rng = random.Random(4)
+        g = make_game("free")
+        g.new_game(["B1", "B6"], {}, [1, 6])
+        for _ in range(400):
+            a = bot.next_action(g.state(), rng)
+            if a["type"] == "dart":
+                g.throw({k: v for k, v in a.items() if k != "type"})
+            else:
+                g.next_player()
+        self.assertEqual(g.phase, "play")
+        self.assertTrue(g.finish())
+        self.assertEqual(g.players[1]["place"], 1)
+
     def test_js_tournament_bots_finish(self):
         node = shutil.which("node")
         if not node:
