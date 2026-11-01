@@ -507,9 +507,19 @@ table.h2h td.self { background: repeating-linear-gradient(45deg, transparent 0 6
   .statstrip .st { padding: 0 .8rem; }
 }
 
-/* lange statustekst inkorten in plaats van de kop te laten overlopen (handig bij inzoomen) */
+/* kop: logo | menu (gecentreerd in de vrije ruimte) | status. De status krijgt altijd zijn eigen
+   breedte, zodat klok en statustekst nooit over het menu schuiven (ook niet ingezoomd). */
+.topnav { grid-template-columns: auto minmax(0, 1fr) auto; }
+.topnav .mainnav { justify-self: center; }
 .topnav .status { min-width: 0; }
-.topnav #src { max-width: 26vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topnav .status > * { flex: none; }
+.topnav #src { flex: 0 1 auto; min-width: 2.5em; max-width: 26vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* te smal voor menu + status naast elkaar: menu op een eigen regel */
+@media (max-width: 1240px) {
+  .topnav { grid-template-columns: auto 1fr; }
+  .topnav .mainnav { grid-column: 1 / -1; grid-row: 2; justify-content: center; justify-self: stretch; }
+  .navlink.active::after { bottom: -.3rem; }
+}
 
 /* ---------- X01 en Count Up */
 .tag-classic { color: #3ee08f; background: rgba(62,224,143,.12); border: 1px solid rgba(62,224,143,.3); }
@@ -4205,7 +4215,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.35";
+    s.app_version = "1.36";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;

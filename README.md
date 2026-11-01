@@ -321,6 +321,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.36**: de klok en de statustekst schoven op smallere (of ingezoomde) schermen over het menu; de kop
+  maakt nu altijd ruimte (en zet het menu op een eigen regel als het niet past)
 - **1.35**: klok in de bovenbalk; X01-gemiddelde telt alleen beurten waarin je nog niet op een finish
   stond; toernooimodus bij X01 (shoot-out om de plaatsen) en Count Up (laagste valt af na elk blok rondes),
   ook te bedienen vanaf de telefoon
