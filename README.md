@@ -160,7 +160,7 @@ plaatsen. De nummer 2 (dichtst bij nul) kiest: dichtst bij de bull (1 pijl) of h
 gelijkspel onderaan gooien alleen die spelers opnieuw. Dit gaat door tot er één over is.
 
 **Count Up**: elke pijl telt zijn gewone score; na het aantal rondes (standaard 8) wint de
-hoogste. Ook solo te spelen. **Toernooi**: kies 1, 2, 3 of 5: na elk blok van zoveel rondes valt
+hoogste. Ook solo te spelen. **Toernooi**: zet het aan en kies het aantal rondes per blok (1 t/m 30): na elk blok valt
 de speler met de laagste totaalscore af (staan er meerdere gelijk onderaan, dan valt niemand af).
 De laatste speler die overblijft wint.
 
@@ -321,6 +321,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.37**: Count Up-toernooi: rondes per blok vrij instelbaar van 1 t/m 30 (was 1, 2, 3 of 5); de klok toont
+  altijd de Nederlandse tijd (winter-/zomertijd automatisch), ook als de tijdzone van de Pi verkeerd staat
 - **1.36**: de klok en de statustekst schoven op smallere (of ingezoomde) schermen over het menu; de kop
   maakt nu altijd ruimte (en zet het menu op een eigen regel als het niet past)
 - **1.35**: klok in de bovenbalk; X01-gemiddelde telt alleen beurten waarin je nog niet op een finish

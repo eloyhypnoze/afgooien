@@ -102,11 +102,11 @@ def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
             if rng.random() < 0.03:
                 settings["start"] = 500                  # ongeldig
         else:
-            settings = {"rounds": rng.choice([1, 2, 3, 4]), "elim": rng.choice([0, 0, 1, 2, 3])}
+            settings = {"rounds": rng.choice([1, 2, 3, 4]), "elim": rng.choice([0, 0, 1, 2, 3, 8])}
             if rng.random() < 0.03:
                 settings["rounds"] = 0                   # ongeldig
             if rng.random() < 0.03:
-                settings["elim"] = 9                     # ongeldig
+                settings["elim"] = 31                    # ongeldig
         names = [f"P{i}" for i in range(n)]
         if rng.random() < 0.03:
             names = []                                   # ongeldig

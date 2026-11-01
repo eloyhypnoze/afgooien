@@ -194,6 +194,13 @@ class TournamentTests(unittest.TestCase):
         self.assertEqual([p["place"] for p in st["players"]], [1, 3, 2])
         self.assertEqual(g.summary()["rounds"], 4)
 
+    def test_countup_block_size_range(self):
+        g = CountUpGame()
+        g.new_game(["A", "B"], {"elim": 8})
+        self.assertEqual(g.state()["elim_left"], 8)
+        with self.assertRaises(GameError):
+            CountUpGame().new_game(["A", "B"], {"elim": 31})
+
     def test_countup_tie_at_bottom_nobody_out(self):
         g = CountUpGame()
         g.new_game(["A", "B", "C"], {"elim": 1})

@@ -1014,7 +1014,9 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
           <p class="sub" data-i18n="cu_sub"></p>
           <div class="xset">
             <div class="xrow"><span class="xl" data-i18n="cu_elim"></span>
-              <div class="seg" data-cuseg="elim"><button data-v="0" data-i18n="o_off"></button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="5">5</button></div></div>
+              <div class="seg" data-cuseg="tourn"><button data-v="0" data-i18n="o_off"></button><button data-v="1" data-i18n="o_on"></button></div></div>
+            <div class="xrow sub2" id="cu_blockrow"><span class="xl" data-i18n="cu_block"></span>
+              <div class="stepper big"><button data-step="block" data-d="-1">−</button><span class="val" id="cu_block"></span><button data-step="block" data-d="1">+</button></div></div>
             <div class="xrow" id="cu_roundsrow"><span class="xl" data-i18n="cu_rounds"></span>
               <div class="stepper big"><button data-step="rounds" data-d="-1">−</button><span class="val" id="cu_rounds"></span><button data-step="rounds" data-d="1">+</button></div></div>
             <p class="sub small" id="cu_help"></p>
@@ -3145,7 +3147,7 @@ window.AFGOOIEN_MESSAGES = {
     defaultSettings() { return { rounds: 8, elim: 0 }; }
     cleanSettings(d) {
       const s = { rounds: intOf(d || {}, "rounds", 8), elim: intOf(d || {}, "elim", 0) };
-      if (!(s.rounds >= 1 && s.rounds <= 30) || ![0, 1, 2, 3, 4, 5].includes(s.elim)) throw new GameError("err_settings");
+      if (!(s.rounds >= 1 && s.rounds <= 30) || !(s.elim >= 0 && s.elim <= 30)) throw new GameError("err_settings");
       return s;
     }
     _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0, out: false }); }
@@ -4215,7 +4217,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.36";
+    s.app_version = "1.37";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4435,7 +4437,7 @@ window.AFGOOIEN_UI = {
     so_bull: "🎯 Dichtst bij de bull", so_bull_d: "1 pijl per speler", so_score: "💯 Hoogste score", so_score_d: "3 pijlen per speler",
     so_wait: "{name} kiest het soort shoot-out…", pm_so_in: "shoot-out", pm_mm: "{n} mm", pm_so_pts: "{n} punten",
     bs_so_choose: "{name} kiest de shoot-out", rp_cu_elim: "Ronde {n} · nog {l} tot cut", ph_cu_elim: "Toernooi: elke {n} ronde(s) valt de laagste totaalscore af",
-    cu_elim: "Toernooi (laagste valt af)", o_elim_n: "Elke {n}", chip_elim: "Laagste valt af elke {n} ronde(s)",
+    cu_elim: "Toernooi (laagste valt af)", cu_block: "Rondes per blok", chip_elim: "Laagste valt af elke {n} ronde(s)",
     cuh_elim: "Na elk blok van {n} ronde(s) valt de speler met de laagste totaalscore af. Staan er meerdere gelijk onderaan, dan valt niemand af. Laatste speler over wint.",
     cuh_rounds: "Zoveel mogelijk punten in een vast aantal rondes.",
     xh_double: "Double out: de laatste pijl moet een dubbel of de bullseye zijn.",
@@ -4660,7 +4662,7 @@ window.AFGOOIEN_UI = {
     so_bull: "🎯 Closest to the bull", so_bull_d: "1 dart each", so_score: "💯 Highest score", so_score_d: "3 darts each",
     so_wait: "{name} is choosing the shoot-out…", pm_so_in: "shoot-out", pm_mm: "{n} mm", pm_so_pts: "{n} points",
     bs_so_choose: "{name} chooses the shoot-out", rp_cu_elim: "Round {n} · {l} to cut", ph_cu_elim: "Tournament: every {n} round(s) the lowest total is out",
-    cu_elim: "Tournament (lowest is out)", o_elim_n: "Every {n}", chip_elim: "Lowest out every {n} round(s)",
+    cu_elim: "Tournament (lowest is out)", cu_block: "Rounds per block", chip_elim: "Lowest out every {n} round(s)",
     cuh_elim: "After every block of {n} round(s) the player with the lowest total is out. If several are tied at the bottom, nobody is out. Last player standing wins.",
     cuh_rounds: "Score as many points as you can in a fixed number of rounds.",
     xh_double: "Double out: the last dart must be a double or the bullseye.",
@@ -6626,8 +6628,11 @@ const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
-const cuSet = Object.assign({ rounds: 8, elim: 0 }, store.get("afgooien.countup", {}));
-if (![0, 1, 2, 3, 5].includes(cuSet.elim)) cuSet.elim = 0;
+// elim = rondes per blok bij het toernooi (0 = uit); block onthoudt de laatst gekozen blokgrootte
+const cuSet = Object.assign({ rounds: 8, elim: 0, block: 3 }, store.get("afgooien.countup", {}));
+if (!(cuSet.block >= 1 && cuSet.block <= 30)) cuSet.block = 3;
+if (!(cuSet.elim >= 0 && cuSet.elim <= 30)) cuSet.elim = 0;
+if (cuSet.elim) cuSet.block = cuSet.elim;
 const cap = (m) => m.charAt(0).toUpperCase() + m.slice(1);
 const modeTitle = (m, st) => (m === "x01" ? String((st || x01Set).start) : t("gm_" + (m || "afgooien")));
 function setLobbyMode(m) {
@@ -6667,8 +6672,10 @@ function renderLobbyMode() {
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
     (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
   $("cu_rounds").textContent = cuSet.rounds;
+  $("cu_block").textContent = cuSet.block;
   $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
-  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === cuSet.elim));
+  $("cu_blockrow").classList.toggle("hidden", !cuSet.elim);
+  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === (cuSet.elim ? 1 : 0)));
   $("cu_help").textContent = cuSet.elim > 0 ? t("cuh_elim", { n: cuSet.elim }) : t("cuh_rounds");
   store.set("afgooien.x01", x01Set);
   store.set("afgooien.countup", cuSet);
@@ -6680,6 +6687,7 @@ function lobbyStep(key, d) {
   } else if (key === "legs") x01Set.legs = Math.max(1, Math.min(11, x01Set.legs + d));
   else if (key === "sets") x01Set.sets = Math.max(1, Math.min(7, x01Set.sets + d));
   else if (key === "rounds") cuSet.rounds = Math.max(1, Math.min(30, cuSet.rounds + d));
+  else if (key === "block") { cuSet.block = Math.max(1, Math.min(30, cuSet.block + d)); cuSet.elim = cuSet.block; }
   renderLobbyMode();
 }
 
@@ -6927,7 +6935,7 @@ function bind() {
     const st = e.target.closest("[data-step]");
     if (st) { lobbyStep(st.dataset.step, +st.dataset.d); return; }
     const sg = e.target.closest(".seg button");
-    if (sg && sg.parentElement.dataset.cuseg) { cuSet[sg.parentElement.dataset.cuseg] = +sg.dataset.v; renderLobbyMode(); return; }
+    if (sg && sg.parentElement.dataset.cuseg) { cuSet.elim = +sg.dataset.v ? cuSet.block : 0; renderLobbyMode(); return; }
     if (sg) { x01Set[sg.parentElement.dataset.seg] = sg.dataset.v; renderLobbyMode(); }
   });
   $("lobbyback").onclick = () => setView("modes");
@@ -7035,9 +7043,14 @@ function bind() {
   });
   $("soundo").onclick = () => send({ type: "undo" });
   // klok in de bovenbalk
+  // Altijd Nederlandse tijd (zomer/winter automatisch), ook als de tijdzone van de Pi niet goed staat:
+  // de klok van het apparaat zelf (UTC, via internet gelijkgezet) klopt wel.
+  let clockFmt = null;
+  try { clockFmt = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); } catch (e) { clockFmt = null; }
   const tickClock = () => {
     const d = new Date();
-    $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    $("clock").textContent = clockFmt ? clockFmt.format(d)
+      : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   };
   tickClock();
   setInterval(tickClock, 10000);

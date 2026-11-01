@@ -893,7 +893,7 @@ class CountUpGame(BaseGame):
 
     def clean_settings(self, d: dict | None) -> dict:
         s = {"rounds": _int(d or {}, "rounds", 8), "elim": _int(d or {}, "elim", 0)}
-        if not 1 <= s["rounds"] <= 30 or s["elim"] not in (0, 1, 2, 3, 4, 5):
+        if not 1 <= s["rounds"] <= 30 or not 0 <= s["elim"] <= 30:
             raise GameError("err_settings")
         return s
 

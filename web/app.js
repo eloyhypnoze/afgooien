@@ -1868,8 +1868,11 @@ const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
-const cuSet = Object.assign({ rounds: 8, elim: 0 }, store.get("afgooien.countup", {}));
-if (![0, 1, 2, 3, 5].includes(cuSet.elim)) cuSet.elim = 0;
+// elim = rondes per blok bij het toernooi (0 = uit); block onthoudt de laatst gekozen blokgrootte
+const cuSet = Object.assign({ rounds: 8, elim: 0, block: 3 }, store.get("afgooien.countup", {}));
+if (!(cuSet.block >= 1 && cuSet.block <= 30)) cuSet.block = 3;
+if (!(cuSet.elim >= 0 && cuSet.elim <= 30)) cuSet.elim = 0;
+if (cuSet.elim) cuSet.block = cuSet.elim;
 const cap = (m) => m.charAt(0).toUpperCase() + m.slice(1);
 const modeTitle = (m, st) => (m === "x01" ? String((st || x01Set).start) : t("gm_" + (m || "afgooien")));
 function setLobbyMode(m) {
@@ -1909,8 +1912,10 @@ function renderLobbyMode() {
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
     (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
   $("cu_rounds").textContent = cuSet.rounds;
+  $("cu_block").textContent = cuSet.block;
   $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
-  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === cuSet.elim));
+  $("cu_blockrow").classList.toggle("hidden", !cuSet.elim);
+  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === (cuSet.elim ? 1 : 0)));
   $("cu_help").textContent = cuSet.elim > 0 ? t("cuh_elim", { n: cuSet.elim }) : t("cuh_rounds");
   store.set("afgooien.x01", x01Set);
   store.set("afgooien.countup", cuSet);
@@ -1922,6 +1927,7 @@ function lobbyStep(key, d) {
   } else if (key === "legs") x01Set.legs = Math.max(1, Math.min(11, x01Set.legs + d));
   else if (key === "sets") x01Set.sets = Math.max(1, Math.min(7, x01Set.sets + d));
   else if (key === "rounds") cuSet.rounds = Math.max(1, Math.min(30, cuSet.rounds + d));
+  else if (key === "block") { cuSet.block = Math.max(1, Math.min(30, cuSet.block + d)); cuSet.elim = cuSet.block; }
   renderLobbyMode();
 }
 
@@ -2169,7 +2175,7 @@ function bind() {
     const st = e.target.closest("[data-step]");
     if (st) { lobbyStep(st.dataset.step, +st.dataset.d); return; }
     const sg = e.target.closest(".seg button");
-    if (sg && sg.parentElement.dataset.cuseg) { cuSet[sg.parentElement.dataset.cuseg] = +sg.dataset.v; renderLobbyMode(); return; }
+    if (sg && sg.parentElement.dataset.cuseg) { cuSet.elim = +sg.dataset.v ? cuSet.block : 0; renderLobbyMode(); return; }
     if (sg) { x01Set[sg.parentElement.dataset.seg] = sg.dataset.v; renderLobbyMode(); }
   });
   $("lobbyback").onclick = () => setView("modes");
@@ -2277,9 +2283,14 @@ function bind() {
   });
   $("soundo").onclick = () => send({ type: "undo" });
   // klok in de bovenbalk
+  // Altijd Nederlandse tijd (zomer/winter automatisch), ook als de tijdzone van de Pi niet goed staat:
+  // de klok van het apparaat zelf (UTC, via internet gelijkgezet) klopt wel.
+  let clockFmt = null;
+  try { clockFmt = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); } catch (e) { clockFmt = null; }
   const tickClock = () => {
     const d = new Date();
-    $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    $("clock").textContent = clockFmt ? clockFmt.format(d)
+      : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   };
   tickClock();
   setInterval(tickClock, 10000);

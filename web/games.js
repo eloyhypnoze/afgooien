@@ -707,7 +707,7 @@
     defaultSettings() { return { rounds: 8, elim: 0 }; }
     cleanSettings(d) {
       const s = { rounds: intOf(d || {}, "rounds", 8), elim: intOf(d || {}, "elim", 0) };
-      if (!(s.rounds >= 1 && s.rounds <= 30) || ![0, 1, 2, 3, 4, 5].includes(s.elim)) throw new GameError("err_settings");
+      if (!(s.rounds >= 1 && s.rounds <= 30) || !(s.elim >= 0 && s.elim <= 30)) throw new GameError("err_settings");
       return s;
     }
     _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0, out: false }); }
