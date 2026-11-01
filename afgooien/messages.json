@@ -272,7 +272,18 @@
     "fr_i_throw": "{name}: gooi maar raak (ronde {round})",
     "fr_n_nothing": "Er is nog niets gegooid om op te slaan",
     "fr_l_done": "Gestopt. Hoogste gemiddelde: {names}",
-    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}"
+    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}",
+    "x_bm_start_run": "Autodarts-detectie wordt gestart…",
+    "x_bm_start_ok": "Autodarts-detectie staat aan",
+    "x_bm_stop_run": "Autodarts-detectie wordt gestopt…",
+    "x_bm_stop_ok": "Autodarts-detectie staat uit",
+    "x_bm_calibrate_run": "Camera's worden gekalibreerd (kan tot een minuut duren)…",
+    "x_bm_calibrate_ok": "Kalibreren klaar",
+    "x_bm_restart_run": "Board Manager wordt herstart…",
+    "x_bm_restart_ok": "Board Manager herstart: even wachten tot de camera's weer draaien",
+    "x_bm_fail": "Autodarts deed het niet ({info}). Probeer het in de Board Manager zelf.",
+    "x_bm_busy": "Even geduld: Autodarts is nog bezig",
+    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -547,6 +558,17 @@
     "fr_i_throw": "{name}: throw away (round {round})",
     "fr_n_nothing": "Nothing has been thrown yet to save",
     "fr_l_done": "Stopped. Highest average: {names}",
-    "fr_s_done": "Done! Highest average: {names}"
+    "fr_s_done": "Done! Highest average: {names}",
+    "x_bm_start_run": "Starting Autodarts detection…",
+    "x_bm_start_ok": "Autodarts detection is on",
+    "x_bm_stop_run": "Stopping Autodarts detection…",
+    "x_bm_stop_ok": "Autodarts detection is off",
+    "x_bm_calibrate_run": "Calibrating the cameras (can take up to a minute)…",
+    "x_bm_calibrate_ok": "Calibration done",
+    "x_bm_restart_run": "Restarting the Board Manager…",
+    "x_bm_restart_ok": "Board Manager restarted: wait a moment for the cameras to come back",
+    "x_bm_fail": "Autodarts did not respond ({info}). Try it in the Board Manager itself.",
+    "x_bm_busy": "Please wait: Autodarts is still busy",
+    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control"
   }
 }

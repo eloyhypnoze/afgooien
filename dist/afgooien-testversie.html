@@ -706,6 +706,20 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* Autodarts-bediening onder de statuspil */
+.adwrap { position: relative; display: flex; min-width: 0; }
+button.pill { cursor: pointer; font: inherit; font-size: .8rem; line-height: inherit; }
+button.pill:hover { border-color: var(--accent); }
+.adpanel { width: 320px; display: grid; gap: .6rem; }
+.adpanel h3 { margin: 0; font: 900 italic 1.15rem/1 var(--display); }
+.adstate { margin: 0; font-size: .88rem; color: var(--muted); }
+.adstate b { color: var(--text); }
+.adstate.msg:empty { display: none; }
+.adstate.msg { color: var(--text); background: rgba(255,255,255,.05); border-radius: 10px; padding: .45rem .6rem; }
+.adbtns { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+.adbtns button, .adrestart { padding: .6em .7em; font-size: .92rem; }
+.adbtns button.on { border-color: var(--good, #3ee08f); color: var(--good, #3ee08f); }
+.adbtns button:disabled, .adrestart:disabled { opacity: .45; cursor: default; }
 /* vrij gooien: stoppen en opslaan */
 .ctrl.finish { background: linear-gradient(135deg, rgba(62,224,143,.22), rgba(62,224,143,.08)); border-color: rgba(62,224,143,.45); }
 /* shoot-out keuze */
@@ -716,6 +730,9 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 .sobtn:hover, .sobtn:focus-visible { border-color: var(--accent); }
 .sobtn small { color: var(--muted); font-size: .8rem; }
 .player.xp.soout { opacity: .45; }
+.topnav .status > .adwrap { flex: 0 1 auto; min-width: 2.5em; }
+.topnav .adwrap #src { max-width: 26vw; min-width: 0; }
+.adpanel { right: auto; left: 50%; transform: translateX(-50%); }
 
 </style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -746,7 +763,22 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
   </nav>
   <div class="status">
     <span id="clock" class="clock"></span>
-    <span id="src" class="pill">…</span>
+    <div class="adwrap">
+      <button id="src" class="pill">…</button>
+      <div id="adpanel" class="voicepanel adpanel hidden">
+        <h3>Autodarts</h3>
+        <div id="ad_state" class="adstate"></div>
+        <div class="adbtns">
+          <button data-bm="start">▶ <span data-i18n="bm_start"></span></button>
+          <button data-bm="stop">■ <span data-i18n="bm_stop"></span></button>
+          <button data-bm="reset">↻ <span data-i18n="bm_reset"></span></button>
+          <button data-bm="calibrate">🎯 <span data-i18n="bm_cal"></span></button>
+        </div>
+        <button data-bm="restart" class="ghost adrestart">⟲ <span data-i18n="bm_restart"></span></button>
+        <p id="ad_msg" class="adstate msg"></p>
+        <p class="hint" data-i18n="bm_hint"></p>
+      </div>
+    </div>
     <button id="phonebtn" class="iconbtn" data-i18n-title="qr_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.5 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <a id="remotebtn" class="remotebtn hidden" href="/m">🎯 <span data-i18n="rem_ctrl"></span></a>
     <span class="zoom" data-i18n-title="tip_ui">
@@ -1494,7 +1526,18 @@ window.AFGOOIEN_MESSAGES = {
     "fr_i_throw": "{name}: gooi maar raak (ronde {round})",
     "fr_n_nothing": "Er is nog niets gegooid om op te slaan",
     "fr_l_done": "Gestopt. Hoogste gemiddelde: {names}",
-    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}"
+    "fr_s_done": "Klaar! Het hoogste gemiddelde: {names}",
+    "x_bm_start_run": "Autodarts-detectie wordt gestart…",
+    "x_bm_start_ok": "Autodarts-detectie staat aan",
+    "x_bm_stop_run": "Autodarts-detectie wordt gestopt…",
+    "x_bm_stop_ok": "Autodarts-detectie staat uit",
+    "x_bm_calibrate_run": "Camera's worden gekalibreerd (kan tot een minuut duren)…",
+    "x_bm_calibrate_ok": "Kalibreren klaar",
+    "x_bm_restart_run": "Board Manager wordt herstart…",
+    "x_bm_restart_ok": "Board Manager herstart: even wachten tot de camera's weer draaien",
+    "x_bm_fail": "Autodarts deed het niet ({info}). Probeer het in de Board Manager zelf.",
+    "x_bm_busy": "Even geduld: Autodarts is nog bezig",
+    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1769,7 +1812,18 @@ window.AFGOOIEN_MESSAGES = {
     "fr_i_throw": "{name}: throw away (round {round})",
     "fr_n_nothing": "Nothing has been thrown yet to save",
     "fr_l_done": "Stopped. Highest average: {names}",
-    "fr_s_done": "Done! Highest average: {names}"
+    "fr_s_done": "Done! Highest average: {names}",
+    "x_bm_start_run": "Starting Autodarts detection…",
+    "x_bm_start_ok": "Autodarts detection is on",
+    "x_bm_stop_run": "Stopping Autodarts detection…",
+    "x_bm_stop_ok": "Autodarts detection is off",
+    "x_bm_calibrate_run": "Calibrating the cameras (can take up to a minute)…",
+    "x_bm_calibrate_ok": "Calibration done",
+    "x_bm_restart_run": "Restarting the Board Manager…",
+    "x_bm_restart_ok": "Board Manager restarted: wait a moment for the cameras to come back",
+    "x_bm_fail": "Autodarts did not respond ({info}). Try it in the Board Manager itself.",
+    "x_bm_busy": "Please wait: Autodarts is still busy",
+    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control"
   }
 }
 ;
@@ -4315,7 +4369,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.38";
+    s.app_version = "1.39";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4360,7 +4414,7 @@ window.AFGOOIEN_LOCAL = (function () {
         case "undo": g.undo(); break;
         case "reset": g.reset(); gameId = null; break;
         case "clear_history": history = []; saveHistory(); if (g.phase === "finished") gameId = null; break;
-        case "board_reset": extraNotice = "x_test_nocam"; break;
+        case "board_reset": case "board_cmd": extraNotice = "x_test_nocam"; break;
         case "set_lang":
           if (cmd.lang !== "nl" && cmd.lang !== "en") throw new GameError("err_lang");
           lang = cmd.lang; hver++;
@@ -4458,6 +4512,11 @@ window.AFGOOIEN_UI = {
     // bronstatus
     src_test: "Testversie · handmatige invoer", src_off: "Handmatig (Autodarts uit)",
     src_ok: "Autodarts verbonden", src_bad: "Autodarts niet bereikbaar", not_connected: "niet verbonden",
+    bm_start: "Aan", bm_stop: "Uit", bm_reset: "Reset", bm_cal: "Kalibreren", bm_restart: "Board Manager herstarten",
+    bm_hint: "Kalibreren: haal eerst alle pijlen uit het bord. Herstarten helpt als een camera blijft hangen.",
+    bm_state: "Status: {s}", bm_busy: "Bezig…", bm_unreach: "De Board Manager is niet bereikbaar",
+    q_bm_cal: "Camera's kalibreren? Haal eerst alle pijlen uit het bord. Dit kan tot een minuut duren.",
+    q_bm_restart: "De Board Manager herstarten? De camera's zijn dan even weg.", src_tip: "Autodarts bedienen",
     // spel
     stop: "‹ Stoppen", stop_tip: "Spel stoppen", log: "Verloop", log_tip: "Verloop in- of uitklappen",
     board_label: "Dartbord", reset_cams: "↻ Reset camera's", reset_cams_tip: "Reset de camera's in Autodarts",
@@ -4696,6 +4755,11 @@ window.AFGOOIEN_UI = {
     a_start: "Start the Autodarts app and turn on detection.",
     src_test: "Test version · manual input", src_off: "Manual (Autodarts off)",
     src_ok: "Autodarts connected", src_bad: "Autodarts unreachable", not_connected: "not connected",
+    bm_start: "On", bm_stop: "Off", bm_reset: "Reset", bm_cal: "Calibrate", bm_restart: "Restart Board Manager",
+    bm_hint: "Calibrate: remove all darts from the board first. Restarting helps when a camera gets stuck.",
+    bm_state: "Status: {s}", bm_busy: "Busy…", bm_unreach: "The Board Manager cannot be reached",
+    q_bm_cal: "Calibrate the cameras? Remove all darts from the board first. This can take up to a minute.",
+    q_bm_restart: "Restart the Board Manager? The cameras will be gone for a moment.", src_tip: "Control Autodarts",
     stop: "‹ Stop", stop_tip: "Stop game", log: "Game log", log_tip: "Expand or collapse the log",
     board_label: "Dartboard", reset_cams: "↻ Reset cameras", reset_cams_tip: "Reset the cameras in Autodarts",
     undo: "Undo", undo_tip: "Undo (Z)", miss: "Miss", miss_pen: "Off board −1", next: "Next",
@@ -5113,6 +5177,8 @@ function render(state) {
   else if (!src.enabled) pill.textContent = t("src_off");
   else if (src.connected) { pill.textContent = t("src_ok") + (boardName(src) ? ` · ${boardName(src)}` : ""); pill.classList.add("ok"); }
   else { pill.textContent = t("src_bad"); pill.classList.add("bad"); pill.title = src.error || ""; }
+  if (src.enabled && src.mode !== "test" && !pill.title) pill.title = t("src_tip");
+  renderAdPanel();
 
   renderLobbyInfo();
   if (setup) { $("winner").classList.add("hidden"); updateHome(); feedback(); return; }
@@ -5927,6 +5993,22 @@ function boardStatus() {
   return ["green", cur ? t("bs_go", { name: cur.name }) : t("bs_go2")];
 }
 // Status van de Autodarts-detectie zoals Autodarts hem geeft, plus "niet verbonden" in de eigen taal.
+// Autodarts-bediening (klik op de statuspil): aan/uit, reset, kalibreren, herstarten
+function renderAdPanel() {
+  const src = (S && S.source) || {};
+  const live = !!(src.enabled && src.mode !== "test");
+  if (!live) { $("adpanel").classList.add("hidden"); return; }
+  const busy = src.busy;
+  const stopped = /stop/i.test(String(src.board || ""));
+  $("ad_state").innerHTML = !src.connected ? esc(t("bm_unreach"))
+    : t("bm_state", { s: `<b>${esc(boardName(src) || "–")}</b>` }) + (busy ? ` · ${esc(t("bm_busy"))}` : "");
+  $("ad_msg").textContent = src.msg || "";
+  $("adpanel").querySelectorAll("[data-bm]").forEach((b) => {
+    const a = b.dataset.bm;
+    b.disabled = !!busy || !src.connected;
+    b.classList.toggle("on", (a === "start" && src.connected && !stopped) || (a === "stop" && stopped) || busy === a);
+  });
+}
 function boardName(src) {
   const b = src.board ? String(src.board) : "";
   if (!src.board_offline) return b;
@@ -7200,6 +7282,25 @@ function bind() {
     fillVoices(); $("voicepanel").classList.toggle("hidden");
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
+  $("src").onclick = (e) => {
+    e.stopPropagation();
+    const src = (S && S.source) || {};
+    if (!src.enabled || src.mode === "test") return;
+    $("voicepanel").classList.add("hidden");
+    renderAdPanel();
+    $("adpanel").classList.toggle("hidden");
+  };
+  $("adpanel").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const b = e.target.closest("[data-bm]");
+    if (!b || b.disabled) return;
+    const a = b.dataset.bm;
+    if (a === "reset") send({ type: "board_reset" });
+    else if (a === "calibrate") confirmDialog(t("q_bm_cal"), () => send({ type: "board_cmd", action: "calibrate" }));
+    else if (a === "restart") confirmDialog(t("q_bm_restart"), () => send({ type: "board_cmd", action: "restart" }));
+    else send({ type: "board_cmd", action: a });
+  });
+  document.addEventListener("click", () => $("adpanel").classList.add("hidden"));
   document.addEventListener("click", () => $("voicepanel").classList.add("hidden"));
   $("v_on").onchange = (e) => { if (!e.target.checked) stopSpeech(); voiceSave({ on: e.target.checked }); };
   $("v_prov").onchange = (e) => { stopSpeech(); bestVoice = undefined; voiceSave({ provider: e.target.value }); };

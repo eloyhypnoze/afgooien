@@ -11,9 +11,11 @@ De parser hieronder is daarom ruim opgezet. Werkt het niet meteen, draai dan
 """
 from __future__ import annotations
 
+import http.client
 import json
 import threading
 import time
+import urllib.error
 import urllib.request
 from typing import Callable
 
@@ -125,6 +127,15 @@ class AutodartsSource(threading.Thread):
         self.suppress_clear = False
         return ("x_reset_fail", {"info": info})
 
+    def command(self, action: str) -> tuple[bool, str]:
+        """Bedien de Board Manager: start, stop, restart of calibrate. Geeft (gelukt, info)."""
+        ok, info = board_command(self, action)
+        # Wat er daarna in het bord zit (of niet meer) is het nieuwe beginpunt: geen beurtwissel
+        # of "pijl gegooid" door het stoppen, starten of kalibreren zelf.
+        self.last = None
+        self.suppress_clear = False
+        return ok, info
+
     def run(self) -> None:
         while not self._stop.is_set():
             try:
@@ -186,6 +197,47 @@ def _reset_board(source: "AutodartsSource") -> tuple[bool, str]:
                     return True, f"{method} {path}"
         except Exception as e:  # noqa: BLE001
             last = f"{type(e).__name__}: {e}"[:120]
+    return False, last
+
+
+# Bediening van de Board Manager (dezelfde knoppen als in de Board Manager zelf).
+# Alleen deze vaste opdrachten; nooit /api/config of /api/system uitlezen (daar staat de API-sleutel).
+BOARD_COMMANDS = {
+    "start": ("PUT", "/api/start"),
+    "stop": ("PUT", "/api/stop"),
+    "restart": ("POST", "/api/restart"),
+    "calibrate": ("POST", "/api/config/calibration/auto"),
+}
+# oudere Board Managers
+BOARD_FALLBACK = {"start": "/api/detection/start", "stop": "/api/detection/stop"}
+
+
+def board_command(source: "AutodartsSource", action: str) -> tuple[bool, str]:
+    if action not in BOARD_COMMANDS:
+        return False, "?"
+    method, path = BOARD_COMMANDS[action]
+    base = source.url.rsplit("/api/", 1)[0]
+    paths = [path] + ([BOARD_FALLBACK[action]] if action in BOARD_FALLBACK else [])
+    timeout = 90 if action == "calibrate" else 10
+    last = ""
+    for i, p in enumerate(paths):
+        try:
+            req = urllib.request.Request(base + p, data=b"", method=method)
+            with source._opener.open(req, timeout=timeout) as r:      # antwoord niet uitlezen of bewaren
+                if 200 <= r.status < 300:
+                    return True, ""
+                last = f"HTTP {r.status}"
+        except urllib.error.HTTPError as e:
+            last = f"HTTP {e.code}"
+            if e.code in (404, 405) and i + 1 < len(paths):
+                continue
+            return False, last
+        except (http.client.RemoteDisconnected, http.client.IncompleteRead, ConnectionResetError) as e:
+            if action == "restart":          # de Board Manager herstart al voordat hij antwoordt
+                return True, ""
+            return False, type(e).__name__
+        except Exception as e:  # noqa: BLE001
+            return False, f"{type(e).__name__}: {e}"[:120]
     return False, last
 
 

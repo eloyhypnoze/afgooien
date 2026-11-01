@@ -270,6 +270,11 @@ class ServerModeTests(unittest.TestCase):
             app2.command({"type": "new_game", "mode": "x01", "players": ["A", "B", "C"], "settings": {"start": 101, "shootout": "on"}})
             st = app2.command({"type": "shootout", "choice": "bull"})
             self.assertTrue(st["notice"])                                  # nog geen shoot-out
+            st = app2.command({"type": "board_cmd", "action": "stop"})       # Autodarts staat uit
+            self.assertIsNone(st["source"]["busy"])
+            self.assertTrue(st["source"]["msg"])
+            with self.assertRaises(GameError):
+                app2.command({"type": "board_cmd", "action": "format_disk"})
 
 
 if __name__ == "__main__":

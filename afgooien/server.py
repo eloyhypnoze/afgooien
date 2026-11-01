@@ -43,6 +43,8 @@ class App:
         self.source = None
         self.status_version = 0
         self.extra_notice: tuple | None = None    # (berichtcode, parameters)
+        self.board_busy: str | None = None        # lopende Board Manager-opdracht (start/stop/restart/calibrate)
+        self.board_msg: tuple | None = None       # uitkomst van de laatste opdracht
         self.game_id: str | None = None
         self.history = History(history_file)
         self.dart_log = DartLog(dart_log)
@@ -114,6 +116,8 @@ class App:
         with self.lock:
             s = self.game.state(self.lang)
             s["source"] = self.source.status() if self.source else {"enabled": False}
+            s["source"]["busy"] = self.board_busy
+            s["source"]["msg"] = tr(self.lang, *self.board_msg) if self.board_msg else None
             s["app_version"] = __version__
             s["history_version"] = self.history.version
             s["data_dir"] = str(self.data_dir) if self.data_dir else None
@@ -238,6 +242,9 @@ class App:
                 self.game_id = None
         elif t == "board_reset":
             self.extra_notice = self._board_reset()
+            self.board_msg = self.extra_notice
+        elif t == "board_cmd":
+            self._board_cmd(str(cmd.get("action") or ""))
         elif t == "voice_config":
             self.tts.update(cmd)
         elif t == "say":
@@ -296,6 +303,35 @@ class App:
             self.dart_log.write({"type": "correct", "game": self.game_id, "event": ev_i, "player": self._player_name(),
                                  "from": old, "to": dart.to_dict(), "from_source": "autodarts" if raw else "hand",
                                  "autodarts": raw})
+
+    def _board_cmd(self, action: str) -> None:
+        """Start, stop, herstart of kalibreer de Board Manager, op de achtergrond (kalibreren duurt even)."""
+        from .sources.autodarts import BOARD_COMMANDS
+        if action not in BOARD_COMMANDS:
+            raise GameError("err_unknown_cmd", cmd=action)
+        if not self.source or not hasattr(self.source, "command"):
+            self.extra_notice = self.board_msg = ("x_bm_off", {})
+            return
+        if self.board_busy:
+            self.extra_notice = ("x_bm_busy", {})
+            return
+        self.board_busy = action
+        self.extra_notice = self.board_msg = ("x_bm_" + action + "_run", {})
+        src = self.source
+
+        def work() -> None:
+            try:
+                ok, info = src.command(action)
+            except Exception as e:  # noqa: BLE001
+                ok, info = False, type(e).__name__
+            with self.lock:
+                self.board_busy = None
+                self.board_msg = ("x_bm_" + action + "_ok", {}) if ok else ("x_bm_fail", {"info": info})
+                self.extra_notice = self.board_msg
+                self.status_version += 1
+                self.changed.notify_all()
+
+        threading.Thread(target=work, daemon=True, name="board-" + action).start()
 
     def _board_reset(self) -> tuple:
         if not self.source:

@@ -59,10 +59,40 @@ class H(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-    def do_POST(self):  # voor geautomatiseerde tests: body = "T20 D20" of "u"
+    def do_POST(self):  # voor geautomatiseerde tests: body = "T20 D20" of "u"; anders een bedieningsopdracht
         n = int(self.headers.get("Content-Length") or 0)
-        apply(self.rfile.read(n).decode())
+        body = self.rfile.read(n).decode()
+        if self.path.startswith("/api/"):
+            return self._command("POST")
+        apply(body)
         self.send_response(204)
+        self.end_headers()
+
+    def do_PUT(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        self.rfile.read(n)
+        self._command("PUT")
+
+    def _command(self, method: str) -> None:
+        """Zelfde bediening als de echte Board Manager (start/stop/reset/restart/kalibreren)."""
+        import time
+        routes = {("PUT", "/api/start"): "Throw", ("PUT", "/api/stop"): "Stopped", ("POST", "/api/reset"): "Throw",
+                  ("POST", "/api/restart"): "Throw", ("POST", "/api/config/calibration/auto"): "Throw"}
+        new = routes.get((method, self.path))
+        if new is None:
+            return self.send_error(404)
+        if self.path.endswith("/auto"):
+            with lock:
+                state["status"] = "Calibrating"
+            time.sleep(1.5)
+        with lock:
+            state["status"] = new
+            state["running"] = new != "Stopped"
+            if self.path in ("/api/reset", "/api/restart"):
+                state["throws"] = []
+                state["numThrows"] = 0
+        self.send_response(200)
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
 

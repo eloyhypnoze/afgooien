@@ -237,6 +237,13 @@ daarna gewoon mee.
 Onder "Spelregels aanpassen" kun je het aantal punten, pijlen per beurt, de
 regel voor "af" en elk van de extra regels (5-7) aan- of uitzetten.
 
+## Autodarts bedienen vanuit Afgooien
+
+Klik bovenin op de statuspil ("Autodarts verbonden · …"). Daar zet je de detectie **aan** of **uit**,
+doe je een **reset**, laat je de camera's **kalibreren** (eerst alle pijlen uit het bord; duurt tot een
+minuut) of **herstart** je de Board Manager als een camera blijft hangen. Afgooien gebruikt daarvoor alleen
+de bedieningsopdrachten van de Board Manager; de configuratie (met de API-sleutel) wordt niet uitgelezen.
+
 ## Als de koppeling met Autodarts niet werkt
 
 **Autodarts 2.x:** op http://localhost:3180 zie je "Board Manager is no longer supported".
@@ -326,6 +333,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.39**: klik op de Autodarts-statuspil voor bediening van de Board Manager: detectie aan/uit, reset,
+  camera's kalibreren en de Board Manager herstarten
 - **1.38**: nieuw spel Vrij gooien (oneindig, gemiddelde live, zelf stoppen en opslaan)
 - **1.37**: Count Up-toernooi: rondes per blok vrij instelbaar van 1 t/m 30 (was 1, 2, 3 of 5); de klok toont
   altijd de Nederlandse tijd (winter-/zomertijd automatisch), ook als de tijdzone van de Pi verkeerd staat

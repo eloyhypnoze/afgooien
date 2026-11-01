@@ -118,7 +118,7 @@ window.AFGOOIEN_LOCAL = (function () {
         case "undo": g.undo(); break;
         case "reset": g.reset(); gameId = null; break;
         case "clear_history": history = []; saveHistory(); if (g.phase === "finished") gameId = null; break;
-        case "board_reset": extraNotice = "x_test_nocam"; break;
+        case "board_reset": case "board_cmd": extraNotice = "x_test_nocam"; break;
         case "set_lang":
           if (cmd.lang !== "nl" && cmd.lang !== "en") throw new GameError("err_lang");
           lang = cmd.lang; hver++;

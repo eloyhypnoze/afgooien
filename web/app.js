@@ -240,6 +240,8 @@ function render(state) {
   else if (!src.enabled) pill.textContent = t("src_off");
   else if (src.connected) { pill.textContent = t("src_ok") + (boardName(src) ? ` · ${boardName(src)}` : ""); pill.classList.add("ok"); }
   else { pill.textContent = t("src_bad"); pill.classList.add("bad"); pill.title = src.error || ""; }
+  if (src.enabled && src.mode !== "test" && !pill.title) pill.title = t("src_tip");
+  renderAdPanel();
 
   renderLobbyInfo();
   if (setup) { $("winner").classList.add("hidden"); updateHome(); feedback(); return; }
@@ -1054,6 +1056,22 @@ function boardStatus() {
   return ["green", cur ? t("bs_go", { name: cur.name }) : t("bs_go2")];
 }
 // Status van de Autodarts-detectie zoals Autodarts hem geeft, plus "niet verbonden" in de eigen taal.
+// Autodarts-bediening (klik op de statuspil): aan/uit, reset, kalibreren, herstarten
+function renderAdPanel() {
+  const src = (S && S.source) || {};
+  const live = !!(src.enabled && src.mode !== "test");
+  if (!live) { $("adpanel").classList.add("hidden"); return; }
+  const busy = src.busy;
+  const stopped = /stop/i.test(String(src.board || ""));
+  $("ad_state").innerHTML = !src.connected ? esc(t("bm_unreach"))
+    : t("bm_state", { s: `<b>${esc(boardName(src) || "–")}</b>` }) + (busy ? ` · ${esc(t("bm_busy"))}` : "");
+  $("ad_msg").textContent = src.msg || "";
+  $("adpanel").querySelectorAll("[data-bm]").forEach((b) => {
+    const a = b.dataset.bm;
+    b.disabled = !!busy || !src.connected;
+    b.classList.toggle("on", (a === "start" && src.connected && !stopped) || (a === "stop" && stopped) || busy === a);
+  });
+}
 function boardName(src) {
   const b = src.board ? String(src.board) : "";
   if (!src.board_offline) return b;
@@ -2327,6 +2345,25 @@ function bind() {
     fillVoices(); $("voicepanel").classList.toggle("hidden");
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
+  $("src").onclick = (e) => {
+    e.stopPropagation();
+    const src = (S && S.source) || {};
+    if (!src.enabled || src.mode === "test") return;
+    $("voicepanel").classList.add("hidden");
+    renderAdPanel();
+    $("adpanel").classList.toggle("hidden");
+  };
+  $("adpanel").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const b = e.target.closest("[data-bm]");
+    if (!b || b.disabled) return;
+    const a = b.dataset.bm;
+    if (a === "reset") send({ type: "board_reset" });
+    else if (a === "calibrate") confirmDialog(t("q_bm_cal"), () => send({ type: "board_cmd", action: "calibrate" }));
+    else if (a === "restart") confirmDialog(t("q_bm_restart"), () => send({ type: "board_cmd", action: "restart" }));
+    else send({ type: "board_cmd", action: a });
+  });
+  document.addEventListener("click", () => $("adpanel").classList.add("hidden"));
   document.addEventListener("click", () => $("voicepanel").classList.add("hidden"));
   $("v_on").onchange = (e) => { if (!e.target.checked) stopSpeech(); voiceSave({ on: e.target.checked }); };
   $("v_prov").onchange = (e) => { stopSpeech(); bestVoice = undefined; voiceSave({ provider: e.target.value }); };

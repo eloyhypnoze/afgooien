@@ -70,3 +70,53 @@ class ProcessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BoardCommandTests(unittest.TestCase):
+    """Bediening van de Board Manager tegen een kleine nep-server."""
+
+    def setUp(self):
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        self.calls = calls = []
+
+        class H(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def _any(self):
+                calls.append((self.command, self.path))
+                if self.path == "/api/restart":            # herstart: verbinding valt weg zonder antwoord
+                    self.close_connection = True
+                    self.wfile.flush()
+                    self.connection.close()
+                    return
+                if self.path in ("/api/start", "/api/detection/stop", "/api/config/calibration/auto"):
+                    self.send_response(200)
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                self.send_error(404)
+
+            do_PUT = do_POST = do_GET = _any
+
+        self.srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        port = self.srv.server_address[1]
+        self.src = AutodartsSource(f"http://127.0.0.1:{port}", lambda d, raw: None, lambda: None,
+                                   lambda: None, lambda t: None)
+
+    def tearDown(self):
+        self.srv.shutdown()
+
+    def test_commands_and_fallback(self):
+        self.src.last = []
+        self.assertEqual(self.src.command("start"), (True, ""))
+        self.assertIsNone(self.src.last)                       # nieuw beginpunt: geen nep-takeout
+        self.assertEqual(self.src.command("stop"), (True, ""))    # oudere route via /api/detection/stop
+        self.assertEqual(self.src.command("calibrate"), (True, ""))
+        self.assertEqual(self.src.command("restart"), (True, ""))
+        self.assertEqual(self.calls, [("PUT", "/api/start"), ("PUT", "/api/stop"), ("PUT", "/api/detection/stop"),
+                                      ("POST", "/api/config/calibration/auto"), ("POST", "/api/restart")])
+        self.assertFalse(self.src.command("nonsense")[0])
+        self.assertNotIn(("GET", "/api/config"), self.calls)

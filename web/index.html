@@ -33,7 +33,22 @@
   </nav>
   <div class="status">
     <span id="clock" class="clock"></span>
-    <span id="src" class="pill">…</span>
+    <div class="adwrap">
+      <button id="src" class="pill">…</button>
+      <div id="adpanel" class="voicepanel adpanel hidden">
+        <h3>Autodarts</h3>
+        <div id="ad_state" class="adstate"></div>
+        <div class="adbtns">
+          <button data-bm="start">▶ <span data-i18n="bm_start"></span></button>
+          <button data-bm="stop">■ <span data-i18n="bm_stop"></span></button>
+          <button data-bm="reset">↻ <span data-i18n="bm_reset"></span></button>
+          <button data-bm="calibrate">🎯 <span data-i18n="bm_cal"></span></button>
+        </div>
+        <button data-bm="restart" class="ghost adrestart">⟲ <span data-i18n="bm_restart"></span></button>
+        <p id="ad_msg" class="adstate msg"></p>
+        <p class="hint" data-i18n="bm_hint"></p>
+      </div>
+    </div>
     <button id="phonebtn" class="iconbtn" data-i18n-title="qr_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.5 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <a id="remotebtn" class="remotebtn hidden" href="/m">🎯 <span data-i18n="rem_ctrl"></span></a>
     <span class="zoom" data-i18n-title="tip_ui">

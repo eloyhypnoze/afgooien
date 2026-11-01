@@ -71,6 +71,11 @@ window.AFGOOIEN_UI = {
     // bronstatus
     src_test: "Testversie · handmatige invoer", src_off: "Handmatig (Autodarts uit)",
     src_ok: "Autodarts verbonden", src_bad: "Autodarts niet bereikbaar", not_connected: "niet verbonden",
+    bm_start: "Aan", bm_stop: "Uit", bm_reset: "Reset", bm_cal: "Kalibreren", bm_restart: "Board Manager herstarten",
+    bm_hint: "Kalibreren: haal eerst alle pijlen uit het bord. Herstarten helpt als een camera blijft hangen.",
+    bm_state: "Status: {s}", bm_busy: "Bezig…", bm_unreach: "De Board Manager is niet bereikbaar",
+    q_bm_cal: "Camera's kalibreren? Haal eerst alle pijlen uit het bord. Dit kan tot een minuut duren.",
+    q_bm_restart: "De Board Manager herstarten? De camera's zijn dan even weg.", src_tip: "Autodarts bedienen",
     // spel
     stop: "‹ Stoppen", stop_tip: "Spel stoppen", log: "Verloop", log_tip: "Verloop in- of uitklappen",
     board_label: "Dartbord", reset_cams: "↻ Reset camera's", reset_cams_tip: "Reset de camera's in Autodarts",
@@ -309,6 +314,11 @@ window.AFGOOIEN_UI = {
     a_start: "Start the Autodarts app and turn on detection.",
     src_test: "Test version · manual input", src_off: "Manual (Autodarts off)",
     src_ok: "Autodarts connected", src_bad: "Autodarts unreachable", not_connected: "not connected",
+    bm_start: "On", bm_stop: "Off", bm_reset: "Reset", bm_cal: "Calibrate", bm_restart: "Restart Board Manager",
+    bm_hint: "Calibrate: remove all darts from the board first. Restarting helps when a camera gets stuck.",
+    bm_state: "Status: {s}", bm_busy: "Busy…", bm_unreach: "The Board Manager cannot be reached",
+    q_bm_cal: "Calibrate the cameras? Remove all darts from the board first. This can take up to a minute.",
+    q_bm_restart: "Restart the Board Manager? The cameras will be gone for a moment.", src_tip: "Control Autodarts",
     stop: "‹ Stop", stop_tip: "Stop game", log: "Game log", log_tip: "Expand or collapse the log",
     board_label: "Dartboard", reset_cams: "↻ Reset cameras", reset_cams_tip: "Reset the cameras in Autodarts",
     undo: "Undo", undo_tip: "Undo (Z)", miss: "Miss", miss_pen: "Off board −1", next: "Next",
