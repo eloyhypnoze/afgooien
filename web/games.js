@@ -133,6 +133,13 @@
     nextPlayer() { return this._record(["next", null]); }
     takeout() { return this._record(["takeout", null]); }
     allocate() { this.announce = []; this.fx = []; this.notice = ["n_no_pending", {}]; return false; }
+    choose(choice) {
+      if (!["setup", "finished", "shootout"].includes(this.phase)) {
+        this.announce = []; this.fx = [];
+        return this._ignore("n_no_choice");
+      }
+      return this._record(["choose", pyStr(choice)]);
+    }
     correct(index, dart) {
       this.announce = []; this.fx = []; this.notice = null;
       if (this.phase === "setup") { this.notice = ["n_no_correct", {}]; return false; }
@@ -263,7 +270,7 @@
   class X01Game extends BaseGame {
     get MODE() { return "x01"; }
     defaultSettings() {
-      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off" };
+      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
     }
     cleanSettings(d) {
       d = d || {};
@@ -272,7 +279,8 @@
       s.legs = intOf(d, "legs", s.legs);
       s.sets = intOf(d, "sets", s.sets);
       for (const [k, opts] of [["match", ["off", "legs", "sets"]], ["in_mode", ["straight", "double", "master"]],
-        ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]]]) {
+        ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]],
+        ["shootout", ["off", "on"]]]) {
         s[k] = pyStr(has(d, k) ? d[k] : s[k]);
         if (!opts.includes(s[k])) throw new GameError("err_settings");
       }
@@ -283,11 +291,14 @@
     resetMode() {
       this.leg_no = 0; this.set_no = 1; this.bust = false; this.leg_done = null;
       this.turn_start = 0; this.turn_opened = false; this.bo_queue = []; this.bo_darts = new Map(); this.tiebreak = 0;
+      this.turn_on_finish = false;
+      this.so_choice = null; this.so_chooser = null; this.so_rest = []; this.so_queue = []; this.so_vals = new Map();
+      this.so_next_place = 0; this.so_round = 0;
     }
     _newPlayer(name, i, bot) {
       return Object.assign(super._newPlayer(name, i, bot), {
         score: 0, legs: 0, sets: 0, legs_total: 0, opened: false, darts_leg: 0, f9_points: 0, f9_darts: 0,
-        hi_checkout: 0, best_leg: null, co_att: 0, co_hit: 0, busts: 0,
+        hi_checkout: 0, best_leg: null, co_att: 0, co_hit: 0, busts: 0, avg_points: 0, avg_darts: 0,
       });
     }
     start() {
@@ -320,6 +331,7 @@
       this.bust = false;
       this.turn_start = p.score;
       this.turn_opened = p.opened;
+      this.turn_on_finish = !!(p.opened && checkout(p.score, DARTS, this.settings.out_mode));
       if (first) {
         if (this.settings.match === "sets") this._say("start", "xo_l_leg_set", null, { set: this.set_no, leg: this._legInSet(), name: p.name });
         else this._say("start", "xo_l_leg", null, { leg: this.leg_no + 1, name: p.name });
@@ -330,8 +342,14 @@
       this._say("turn", "xo_l_turn", route ? "xo_s_require" : "s_name", { name: p.name, score: p.score });
     }
     _legInSet() { return this.players.reduce((a, p) => a + p.legs, 0) + 1; }
+    get current() {
+      if (this.phase === "shootout") return this.so_queue.length ? this.so_queue[0] : this.so_chooser;
+      return super.current;
+    }
     play(kind, data) {
       if (this.phase === "bulloff") return this._playBulloff(kind, data);
+      if (this.phase === "shootout") return this._playShootout(kind, data);
+      if (kind === "choose") return this._ignore("n_no_choice");
       const p = this.players[this.order[this.turn_pos]];
       const waiting = this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS;
       if (kind === "dart") {
@@ -389,6 +407,7 @@
     }
     _turnPoints(p, pts) {
       p.points += pts;
+      if (!this.turn_on_finish) { p.avg_points += pts; p.avg_darts += this.turn_darts.length; }
       const before = p.darts_leg - this.turn_darts.length;
       if (before < 9) { p.f9_points += pts; p.f9_darts += Math.min(this.turn_darts.length, 9 - before); }
       this._turnStats(p, pts);
@@ -409,6 +428,13 @@
       this._say("win", "xo_l_checkout", null, { name: p.name, label: d.label, score: co, darts: p.darts_leg });
       if (matchWon) {
         this.winner = idx;
+        if (s.shootout === "on" && this.players.length >= 3) {
+          p.place = 1;
+          this._say("win", "xo_l_match", "s_win", { name: p.name });
+          this._effect("win", { player: idx });
+          this._startShootout();
+          return;
+        }
         this.phase = "finished";
         this._place();
         this._say("win", "xo_l_match", "s_win", { name: p.name });
@@ -444,6 +470,7 @@
     _turnPointsPartial(p) {
       const pts = this.turn_score;
       p.points += pts;
+      if (!this.turn_on_finish) { p.avg_points += pts; p.avg_darts += DARTS; }
       const before = p.darts_leg - DARTS;
       if (before < 9) { p.f9_points += pts; p.f9_darts += Math.min(DARTS, 9 - before); }
       this._turnStats(p, pts);
@@ -459,6 +486,7 @@
     _playBulloff(kind, data) {
       const cur = this.order[this.turn_pos];
       const p = this.players[cur];
+      if (kind === "choose") return this._ignore("n_no_choice");
       if (kind === "dart") {
         if (this.bo_darts.has(cur)) return this._ignore("n_sel_done", { name: p.name });
         const d = Dart.fromDict(data);
@@ -505,11 +533,132 @@
       this._say("start", "l_order", null, { order: this.order.map((i) => this.players[i].name) });
       this._startLeg();
     }
+    // ------------------------------------------------------- shoot-out
+    _startShootout() {
+      const P = this.players;
+      const rest = P.map((_, i) => i).filter((i) => i !== this.winner).sort((a, b) =>
+        (P[b].sets - P[a].sets) || (P[b].legs_total - P[a].legs_total) || (P[a].score - P[b].score) || (a - b));
+      this.phase = "shootout";
+      this.so_rest = rest;
+      this.so_chooser = rest[0];
+      this.so_choice = null;
+      this.so_queue = [];
+      this.so_vals = new Map();
+      this.so_next_place = P.length;
+      this.so_round = 0;
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this.bust = false;
+      this.leg_done = null;
+      this._say("turn", "xo_l_so_start", "xo_s_so_choose", { name: P[rest[0]].name });
+    }
+    _soNeed() { return this.so_choice === "bull" ? 1 : DARTS; }
+    _soNewRound(who) {
+      this.so_round += 1;
+      let order = this.order.filter((i) => who.includes(i));
+      const k = order.indexOf(this.so_chooser);
+      if (k >= 0) order = order.slice(k).concat(order.slice(0, k));
+      this.so_queue = order;
+      this.so_vals = new Map();
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("turn", "xo_l_so_turn", "s_name", { name: this.players[order[0]].name });
+    }
+    _playShootout(kind, data) {
+      const P = this.players;
+      if (kind === "choose") {
+        if (this.so_choice !== null || (data !== "bull" && data !== "score")) return this._ignore("n_no_choice");
+        this.so_choice = data;
+        this._say("start", data === "bull" ? "xo_l_so_bull" : "xo_l_so_score_pick", null, { name: P[this.so_chooser].name });
+        this._soNewRound(this.so_rest);
+        return true;
+      }
+      if (this.so_choice === null) {
+        if (kind === "takeout") return false;
+        return this._ignore("n_so_choose", { name: P[this.so_chooser].name });
+      }
+      const cur = this.so_queue[0];
+      const p = P[cur];
+      const bull = this.so_choice === "bull";
+      if (kind === "dart") {
+        if (this.turn_darts.length >= this._soNeed()) return this._ignore("n_turn_full", { name: p.name, n: this._soNeed() });
+        const d = Dart.fromDict(data);
+        this.turn_darts.push(d);
+        this.turn_dart_events.push(this._cur_event);
+        if (bull) {
+          this.so_vals.set(cur, d.bullDistance());
+          this._say("info", "l_sel_bull", null, { name: p.name, dist: dist(d) });
+        } else {
+          this.turn_score += d.score;
+          this.so_vals.set(cur, -this.turn_score);
+          this._say("info", "xo_l_so_dart", null, { name: p.name, label: d.label, score: this.turn_score });
+        }
+        return true;
+      }
+      if (kind === "next" || kind === "takeout") {
+        if (!this.turn_darts.length) {
+          if (kind === "takeout") return false;
+          return this._ignore(bull ? "n_sel_wait_bull" : "n_so_wait", { name: p.name });
+        }
+        if (!bull) {
+          this._say("info", "xo_l_so_score", null, { name: p.name, score: this.turn_score });
+          this._callScore(this.turn_score);
+        }
+        this.so_queue.shift();
+        this.turn_darts = []; this.turn_dart_events = [];
+        this.turn_score = 0;
+        if (this.so_queue.length) {
+          this._say("turn", "xo_l_so_turn", "s_name", { name: P[this.so_queue[0]].name });
+          return true;
+        }
+        this._soResolve();
+        return true;
+      }
+      return false;
+    }
+    _soResolve() {
+      const P = this.players;
+      const keys = [...this.so_vals.keys()];
+      const worst = Math.max(...keys.map((k) => this.so_vals.get(k)));
+      const losers = keys.filter((k) => this.so_vals.get(k) === worst).sort((a, b) => a - b);
+      if (losers.length > 1) {
+        this.tiebreak += 1;
+        this._say("warn", "xo_l_so_tie", "xo_s_so_tie", { names: losers.map((i) => P[i].name) });
+        this._soNewRound(losers);
+        return;
+      }
+      const out = losers[0];
+      const place = this.so_next_place;
+      this.so_next_place -= 1;
+      P[out].place = place;
+      this.so_rest = this.so_rest.filter((i) => i !== out);
+      this._say("hit", "xo_l_so_out", "xo_s_so_out", { name: P[out].name, place });
+      this._effect("out", { player: out });
+      if (this.so_rest.length === 1) {
+        const last = this.so_rest[0];
+        P[last].place = this.so_next_place;
+        this.so_queue = [];
+        this.phase = "finished";
+        this._say("win", "xo_l_so_done", null, { name: P[last].name, place: this.so_next_place });
+        return;
+      }
+      this._soNewRound(this.so_rest);
+    }
+    _soState() {
+      if (this.so_chooser === null) return null;
+      const bull = this.so_choice === "bull";
+      const vals = [...this.so_vals.keys()].sort((a, b) => a - b).map((i) => {
+        const v = this.so_vals.get(i);
+        return { i, v: bull ? (v === Infinity ? null : Math.floor(v * 170.0 + 0.5)) : (v === 0 ? 0 : -v) };
+      });
+      return { choice: this.so_choice, chooser: this.so_chooser, rest: this.so_rest.slice(),
+        queue: this.so_queue.slice(), vals, round: this.so_round };
+    }
     summary() {
       if (this.phase !== "finished" || this.winner === null) return null;
       const ranked = this.players.slice().sort((a, b) => (a.place || 99) - (b.place || 99));
       const keys = ["name", "place", "bot", "darts", "points", "f9_points", "f9_darts", "n180", "n140", "n100", "hi_turn",
-        "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts"];
+        "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts", "avg_points", "avg_darts"];
       return { mode: "x01", winner: this.players[this.winner].name, rounds: this.leg_no + 1, settings: { ...this.settings },
         players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
     }
@@ -523,7 +672,9 @@
       st.bust = this.bust;
       st.leg_done = this.leg_done;
       st.waiting = (this.phase === "bulloff" && this.bo_darts.has(cur)) || (this.phase === "play" &&
-        (this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS));
+        (this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS)) ||
+        (this.phase === "shootout" && this.so_queue.length > 0 && this.turn_darts.length >= this._soNeed());
+      st.shootout = this._soState();
       let route = null, instr = null;
       if (this.phase === "bulloff" && cur !== null) {
         instr = tr(lang, this.bo_darts.has(cur) ? "i_takeout" : "xo_i_bulloff", { name: this.players[cur].name });
@@ -536,6 +687,11 @@
           route = checkout(p.score, DARTS - this.turn_darts.length, this.settings.out_mode);
           instr = tr(lang, "xo_i_throw", { name: p.name, score: p.score });
         }
+      } else if (this.phase === "shootout" && cur !== null) {
+        const p = this.players[cur];
+        if (this.so_choice === null) instr = tr(lang, "xo_i_so_choose", { name: p.name });
+        else if (st.waiting) instr = tr(lang, "i_takeout", { name: p.name });
+        else instr = tr(lang, "xo_i_so_" + this.so_choice, { name: p.name, score: this.turn_score });
       } else if (this.phase === "finished" && this.winner !== null) {
         instr = tr(lang, "i_win", { name: this.players[this.winner].name });
       }
@@ -548,26 +704,30 @@
   // ================================================================ Count Up
   class CountUpGame extends BaseGame {
     get MODE() { return "countup"; }
-    defaultSettings() { return { rounds: 8 }; }
+    defaultSettings() { return { rounds: 8, elim: 0 }; }
     cleanSettings(d) {
-      const s = { rounds: intOf(d || {}, "rounds", 8) };
-      if (!(s.rounds >= 1 && s.rounds <= 30)) throw new GameError("err_settings");
+      const s = { rounds: intOf(d || {}, "rounds", 8), elim: intOf(d || {}, "elim", 0) };
+      if (!(s.rounds >= 1 && s.rounds <= 30) || ![0, 1, 2, 3, 4, 5].includes(s.elim)) throw new GameError("err_settings");
       return s;
     }
-    _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0 }); }
+    _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0, out: false }); }
+    _elim() { return this.settings.elim > 0 && this.players.length > 1; }
     start() {
       this.order = this.players.map((_, i) => i);
       this.phase = "play";
       this.turn_no = 1;
       this.turn_pos = 0;
-      this._say("start", "cu_l_new", null, { rounds: this.settings.rounds, names: this.players.map((p) => p.name) });
+      if (this._elim()) this._say("start", "cu_l_new_elim", null, { every: this.settings.elim, names: this.players.map((p) => p.name) });
+      else this._say("start", "cu_l_new", null, { rounds: this.settings.rounds, names: this.players.map((p) => p.name) });
       this._beginTurn();
     }
+    _left() { const e = this.settings.elim; return e - ((this.turn_no - 1) % e); }
     _beginTurn() {
       const p = this.players[this.order[this.turn_pos]];
       this.turn_darts = []; this.turn_dart_events = [];
       this.turn_score = 0;
-      this._say("turn", "cu_l_turn", "s_name", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
+      if (this._elim()) this._say("turn", "cu_l_turn_elim", "s_name", { name: p.name, round: this.turn_no, left: this._left() });
+      else this._say("turn", "cu_l_turn", "s_name", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
     }
     play(kind, data) {
       const p = this.players[this.order[this.turn_pos]];
@@ -595,10 +755,38 @@
         this.turn_pos += 1;
         if (this.turn_pos >= this.order.length) {
           this.turn_pos = 0;
-          if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
+          if (this._elim()) {
+            if (this.turn_no % this.settings.elim === 0 && this._cut()) return true;
+          } else if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
           this.turn_no += 1;
         }
         this._beginTurn();
+        return true;
+      }
+      return false;
+    }
+    _cut() {
+      const active = this.order.map((i) => this.players[i]);
+      const low = Math.min(...active.map((p) => p.score));
+      const bottom = active.filter((p) => p.score === low);
+      if (bottom.length > 1) {
+        this._say("warn", "cu_l_cut_tie", null, { names: bottom.map((p) => p.name), score: low });
+        return false;
+      }
+      const q = bottom[0];
+      q.out = true;
+      q.place = active.length;
+      this.order = this.order.filter((i) => i !== q.index);
+      this._say("hit", "cu_l_out", "cu_s_out", { name: q.name, score: q.score, place: q.place });
+      this._effect("out", { player: q.index });
+      if (this.order.length === 1) {
+        const w = this.players[this.order[0]];
+        w.place = 1;
+        this.winner = w.index;
+        this.phase = "finished";
+        this.turn_darts = []; this.turn_dart_events = [];
+        this._say("win", "cu_l_win", "cu_s_win", { name: w.name, score: w.score });
+        this._effect("win", { player: this.winner });
         return true;
       }
       return false;
@@ -621,7 +809,7 @@
       const ranked = this.players.slice().sort((a, b) => a.place - b.place || a.index - b.index);
       const keys = ["name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn"];
       return { mode: "countup", winner: ranked.filter((q) => q.place === 1).map((q) => q.name).join(" & "),
-        rounds: this.settings.rounds, settings: { ...this.settings },
+        rounds: this._elim() ? this.turn_no : this.settings.rounds, settings: { ...this.settings },
         players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
     }
     state(lang) {
@@ -629,11 +817,13 @@
       lang = st.lang;
       const cur = this.current;
       st.waiting = this.phase === "play" && this.turn_darts.length >= DARTS;
-      st.rounds = this.settings.rounds;
+      st.rounds = this._elim() ? null : this.settings.rounds;
+      st.elim_left = this._elim() && this.phase === "play" ? this._left() : null;
       let instr = null;
       if (this.phase === "play" && cur !== null) {
         const p = this.players[cur];
         instr = st.waiting ? tr(lang, "i_takeout", { name: p.name })
+          : this._elim() ? tr(lang, "cu_i_throw_elim", { name: p.name, round: this.turn_no, left: this._left() })
           : tr(lang, "cu_i_throw", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
       } else if (this.phase === "finished" && this.winner !== null) {
         const top = this.players.filter((p) => p.place === 1).map((p) => p.name);

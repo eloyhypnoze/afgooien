@@ -300,9 +300,10 @@ function commit(d) {
 
 // --------------------------------------------------------------- weergave
 const isAfg = () => !S.mode || S.mode === "afgooien";
-const active = () => S && ["select", "play", "bulloff"].includes(S.phase);
+const active = () => S && ["select", "play", "bulloff", "shootout"].includes(S.phase);
 const botTurn = () => active() && S.current !== null && S.players[S.current] && S.players[S.current].bot;
 const slotsCount = () => (S.phase === "select" || S.phase === "bulloff" ? Math.max(1, S.darts.length + (S.waiting || (S.phase === "select" && S.sel_step === "done") ? 0 : 1))
+  : S.phase === "shootout" ? (S.shootout && S.shootout.choice === "bull" ? 1 : 3)
   : isAfg() ? S.settings.darts_per_turn : 3);
 const full = () => isAfg() ? (S.phase === "select" ? S.sel_step === "done" : S.darts.length >= S.settings.darts_per_turn) : !!S.waiting;
 
@@ -350,13 +351,20 @@ function render(state) {
     $("mboard").classList.toggle("aiming", sel !== null);   // alleen dan het scrollen op het bord blokkeren
   }
   renderAlloc();
+  renderSo();
   renderPlayers();
+}
+function renderSo() {
+  const so = S && S.phase === "shootout" ? S.shootout : null;
+  const show = !!(so && so.choice === null && !(S.players[so.chooser] || {}).bot);
+  $("mso").classList.toggle("hidden", !show);
+  if (show) $("msosub").textContent = t("so_sub", { name: S.players[so.chooser].name });
 }
 function roundText() {
   if (S.round_label) return S.round_label;
   if (S.phase === "finished") return t("rp_over");
-  if (S.mode === "x01") return S.phase === "bulloff" ? t("rp_bulloff") : t("rp_leg", { n: (S.leg_no || 0) + 1 });
-  if (S.mode === "countup") return t("rp_cu", { n: S.turn_no, r: S.settings.rounds });
+  if (S.mode === "x01") return S.phase === "bulloff" ? t("rp_bulloff") : S.phase === "shootout" ? t("rp_so") : t("rp_leg", { n: (S.leg_no || 0) + 1 });
+  if (S.mode === "countup") return S.rounds === null ? t("rp_cu_elim", { n: S.turn_no, l: S.elim_left }) : t("rp_cu", { n: S.turn_no, r: S.settings.rounds });
   if (S.phase === "select") return t(S.tiebreak ? "rp_tie" : "rp_select");
   return S.phase === "play" ? t("rp_round", { n: S.turn_no }) : "";
 }
@@ -423,7 +431,11 @@ function renderAlloc() {
 // ----------------------------------------------------------------- stand
 function renderPlayers() {
   if (!S || !S.players || !S.players.length) { $("mplayers").innerHTML = ""; return; }
-  const order = S.order && S.order.length ? S.order : S.players.map((p) => p.index);
+  let order = S.order && S.order.length ? S.order.slice() : S.players.map((p) => p.index);
+  if (order.length < S.players.length) order = order.concat(S.players.map((p) => p.index).filter((i) => !order.includes(i)));
+  const so = S.mode === "x01" && S.phase === "shootout" ? S.shootout : null;
+  const soVal = {};
+  if (so) so.vals.forEach((v) => { soVal[v.i] = v.v; });
   $("mplayers").innerHTML = order.map((i) => {
     const p = S.players[i], c = COLORS[p.color % COLORS.length];
     let big = "", meta = "";
@@ -432,12 +444,16 @@ function renderPlayers() {
       meta = p.out ? t("badge_out") : p.killer ? t("badge_killer") : p.number ? "#" + p.number : t("pm_nonum");
     } else if (S.mode === "x01") {
       big = S.phase === "bulloff" ? "–" : p.score;
-      meta = S.settings.match !== "off" ? `${t("pm_legs")} ${p.legs}${S.settings.match === "sets" ? ` · ${t("pm_sets")} ${p.sets}` : ""}` : "";
+      if (so) {
+        big = i in soVal ? (soVal[i] === null ? t("miss_mm") : soVal[i]) : so.rest.includes(i) ? "–" : `#${p.place}`;
+        meta = so.rest.includes(i) ? t("pm_so_in") : "";
+      } else meta = S.settings.match !== "off" ? `${t("pm_legs")} ${p.legs}${S.settings.match === "sets" ? ` · ${t("pm_sets")} ${p.sets}` : ""}` : "";
     } else if (S.views) {
       big = esc(S.views[i].big);
       meta = esc(S.views[i].meta[0] || "");
     } else big = p.score;
-    const cls = ["mp", i === S.current && S.phase !== "finished" ? "cur" : "", p.out ? "out" : ""].join(" ");
+    const dim = p.out || (so && !so.rest.includes(i) && i !== S.winner);
+    const cls = ["mp", i === S.current && S.phase !== "finished" ? "cur" : "", dim ? "out" : ""].join(" ");
     return `<div class="${cls}" style="--pc:${c}"><span class="mpdot"></span><span class="mpn">${p.bot ? "🤖 " : ""}${esc(p.name)}</span>` +
       `<span class="mpm">${meta}</span><b class="mpb">${big}</b></div>`;
   }).join("");
@@ -489,6 +505,10 @@ function bind() {
     const i = +b.dataset.i;
     alloc[i] = Math.max(0, (alloc[i] || 0) + +b.dataset.d);
     renderAlloc();
+  });
+  $("mso").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-so]");
+    if (b) { buzz(15); send({ type: "shootout", choice: b.dataset.so }); }
   });
   $("mallocok").onclick = () => send({ type: "allocate", alloc: Object.entries(alloc).map(([i, n]) => [+i, n]) });
 }

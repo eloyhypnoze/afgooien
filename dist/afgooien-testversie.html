@@ -694,6 +694,17 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 .plgrid > *, .plmain > * { min-width: 0; }
 .plmain .card { overflow-x: auto; }
 
+/* klok in de bovenbalk */
+.clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* shoot-out keuze */
+.sobox { text-align: center; }
+.sobtns { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: 1rem 0 .6rem; }
+.sobtn { display: flex; flex-direction: column; gap: .35rem; align-items: center; justify-content: center; padding: 1.3rem .8rem; border-radius: 16px;
+  background: var(--panel2); border: 2px solid var(--line2); color: var(--text); cursor: pointer; font-size: 1.05rem; }
+.sobtn:hover, .sobtn:focus-visible { border-color: var(--accent); }
+.sobtn small { color: var(--muted); font-size: .8rem; }
+.player.xp.soout { opacity: .45; }
+
 </style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 </head>
@@ -722,6 +733,7 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
     <button id="nav-settings" class="navlink" data-i18n="nav_settings"></button>
   </nav>
   <div class="status">
+    <span id="clock" class="clock"></span>
     <span id="src" class="pill">…</span>
     <button id="phonebtn" class="iconbtn" data-i18n-title="qr_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.5 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <a id="remotebtn" class="remotebtn hidden" href="/m">🎯 <span data-i18n="rem_ctrl"></span></a>
@@ -982,6 +994,8 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
               <div class="seg" data-seg="out_mode"><button data-v="straight">Straight</button><button data-v="double">Double</button><button data-v="master">Master</button></div></div>
             <div class="xrow"><span class="xl">Bull-off</span>
               <div class="seg" data-seg="bulloff"><button data-v="off" data-i18n="o_off"></button><button data-v="wdf">WDF</button><button data-v="pdc">PDC</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_shootout"></span>
+              <div class="seg" data-seg="shootout"><button data-v="off" data-i18n="o_off"></button><button data-v="on">Shoot-out</button></div></div>
             <p class="sub small" id="x_help"></p>
           </div>
         </div>
@@ -989,8 +1003,11 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
           <div class="cardhead"><h2>Count Up</h2><span class="tag tag-practice" data-i18n="tag_practice"></span></div>
           <p class="sub" data-i18n="cu_sub"></p>
           <div class="xset">
-            <div class="xrow"><span class="xl" data-i18n="cu_rounds"></span>
+            <div class="xrow"><span class="xl" data-i18n="cu_elim"></span>
+              <div class="seg" data-cuseg="elim"><button data-v="0" data-i18n="o_off"></button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="5">5</button></div></div>
+            <div class="xrow" id="cu_roundsrow"><span class="xl" data-i18n="cu_rounds"></span>
               <div class="stepper big"><button data-step="rounds" data-d="-1">−</button><span class="val" id="cu_rounds"></span><button data-step="rounds" data-d="1">+</button></div></div>
+            <p class="sub small" id="cu_help"></p>
           </div>
         </div>
         <div class="card rulescard gencard hidden" id="gencard">
@@ -1090,6 +1107,18 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
       <button id="winhome" class="ghost" data-i18n="win_home"></button>
       <button id="winstats" class="ghost" data-i18n="scoreboard_btn"></button>
     </div>
+  </div>
+</div>
+
+<div id="sochoice" class="overlay hidden">
+  <div class="card allocbox sobox">
+    <h2 data-i18n="so_title"></h2>
+    <p id="sosub" class="sub"></p>
+    <div class="sobtns">
+      <button class="sobtn" data-so="bull"><b data-i18n="so_bull"></b><small data-i18n="so_bull_d"></small></button>
+      <button class="sobtn" data-so="score"><b data-i18n="so_score"></b><small data-i18n="so_score_d"></small></button>
+    </div>
+    <div class="row"><button id="soundo" class="ghost" data-i18n="undo_full"></button></div>
   </div>
 </div>
 
@@ -1412,7 +1441,34 @@ window.AFGOOIEN_MESSAGES = {
     "l_bonus_lost": "{name}: {reason}, maar niemand heeft punten om te verliezen",
     "l_bonus_new_killer": "{name}: {reason} telt niet om af te gooien: je staat pas net op 5 en begint bij je volgende pijl",
     "err_update": "Update-instelling klopt niet ({code})",
-    "err_email": "Ongeldig e-mailadres: {email}"
+    "err_email": "Ongeldig e-mailadres: {email}",
+    "n_no_choice": "Er valt nu niets te kiezen",
+    "xo_l_so_start": "Shoot-out om de overige plaatsen! {name} staat tweede en kiest: dichtst bij de bull of hoogste score in één beurt",
+    "xo_s_so_choose": "Shoot-out! {name}, jij mag kiezen",
+    "xo_l_so_bull": "{name} kiest: dichtst bij de bull (1 pijl per speler)",
+    "xo_l_so_score": "{name} gooit {score}",
+    "xo_l_so_score_pick": "{name} kiest: hoogste score in één beurt (3 pijlen)",
+    "xo_l_so_turn": "Shoot-out: {name} is aan de beurt",
+    "xo_l_so_dart": "{name}: {label} (totaal {score})",
+    "xo_l_so_out": "{name} valt af en wordt {place}e",
+    "xo_s_so_out": "{name}... valt af",
+    "xo_l_so_done": "{name} wint de shoot-out en wordt {place}e. Toernooi afgelopen!",
+    "xo_l_so_tie": "Gelijk! {names} gooien opnieuw",
+    "xo_s_so_tie": "Gelijk. Opnieuw gooien",
+    "xo_i_so_choose": "{name}: kies het soort shoot-out",
+    "xo_i_so_bull": "{name}: gooi één pijl zo dicht mogelijk bij de bull",
+    "xo_i_so_score": "{name}: gooi zo hoog mogelijk ({score} tot nu toe)",
+    "n_so_choose": "{name} moet eerst kiezen: bull of hoogste score",
+    "n_so_wait": "{name} moet eerst nog gooien",
+    "cu_l_new_elim": "Nieuw toernooi Count Up met {names}: elke {every} ronde(s) valt de laagste af",
+    "cu_l_turn_elim": "Beurt voor {name} (ronde {round}, nog {left} tot de cut)",
+    "cu_i_throw_elim": "{name}: ronde {round}, nog {left} ronde(s) tot de cut",
+    "cu_l_out": "{name} valt af met {score} punten en wordt {place}e",
+    "cu_s_out": "{name}... valt af",
+    "cu_l_cut_tie": "Gelijk onderaan ({names}, {score} punten): niemand valt af, door naar het volgende blok",
+    "xo_so_label": "Shoot-out (3+ spelers)",
+    "so_bull": "Dichtst bij bull",
+    "so_score": "Hoogste score"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1654,7 +1710,34 @@ window.AFGOOIEN_MESSAGES = {
     "l_bonus_lost": "{name}: {reason}, but nobody has points to lose",
     "l_bonus_new_killer": "{name}: {reason} can't take points: you only just reached 5 and start knocking out with your next dart",
     "err_update": "Update setting not valid ({code})",
-    "err_email": "Invalid e-mail address: {email}"
+    "err_email": "Invalid e-mail address: {email}",
+    "n_no_choice": "There is nothing to choose right now",
+    "xo_l_so_start": "Shoot-out for the remaining places! {name} is second and chooses: closest to the bull or highest score in one turn",
+    "xo_s_so_choose": "Shoot-out! {name}, your choice",
+    "xo_l_so_bull": "{name} chooses: closest to the bull (1 dart each)",
+    "xo_l_so_score": "{name} scores {score}",
+    "xo_l_so_score_pick": "{name} chooses: highest score in one turn (3 darts)",
+    "xo_l_so_turn": "Shoot-out: {name} to throw",
+    "xo_l_so_dart": "{name}: {label} (total {score})",
+    "xo_l_so_out": "{name} is out and finishes in place {place}",
+    "xo_s_so_out": "{name}... is out",
+    "xo_l_so_done": "{name} wins the shoot-out and finishes in place {place}. Tournament over!",
+    "xo_l_so_tie": "Tie! {names} throw again",
+    "xo_s_so_tie": "Tie. Throw again",
+    "xo_i_so_choose": "{name}: choose the type of shoot-out",
+    "xo_i_so_bull": "{name}: throw one dart as close to the bull as possible",
+    "xo_i_so_score": "{name}: score as high as you can ({score} so far)",
+    "n_so_choose": "{name} has to choose first: bull or highest score",
+    "n_so_wait": "{name} still has to throw",
+    "cu_l_new_elim": "New Count Up tournament with {names}: every {every} round(s) the lowest is out",
+    "cu_l_turn_elim": "{name} to throw (round {round}, {left} to the cut)",
+    "cu_i_throw_elim": "{name}: round {round}, {left} round(s) to the cut",
+    "cu_l_out": "{name} is out with {score} points and finishes in place {place}",
+    "cu_s_out": "{name}... is out",
+    "cu_l_cut_tie": "Tie at the bottom ({names}, {score} points): nobody is out, on to the next block",
+    "xo_so_label": "Shoot-out (3+ players)",
+    "so_bull": "Closest to bull",
+    "so_score": "Highest score"
   }
 }
 ;
@@ -2478,6 +2561,13 @@ window.AFGOOIEN_MESSAGES = {
     nextPlayer() { return this._record(["next", null]); }
     takeout() { return this._record(["takeout", null]); }
     allocate() { this.announce = []; this.fx = []; this.notice = ["n_no_pending", {}]; return false; }
+    choose(choice) {
+      if (!["setup", "finished", "shootout"].includes(this.phase)) {
+        this.announce = []; this.fx = [];
+        return this._ignore("n_no_choice");
+      }
+      return this._record(["choose", pyStr(choice)]);
+    }
     correct(index, dart) {
       this.announce = []; this.fx = []; this.notice = null;
       if (this.phase === "setup") { this.notice = ["n_no_correct", {}]; return false; }
@@ -2608,7 +2698,7 @@ window.AFGOOIEN_MESSAGES = {
   class X01Game extends BaseGame {
     get MODE() { return "x01"; }
     defaultSettings() {
-      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off" };
+      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
     }
     cleanSettings(d) {
       d = d || {};
@@ -2617,7 +2707,8 @@ window.AFGOOIEN_MESSAGES = {
       s.legs = intOf(d, "legs", s.legs);
       s.sets = intOf(d, "sets", s.sets);
       for (const [k, opts] of [["match", ["off", "legs", "sets"]], ["in_mode", ["straight", "double", "master"]],
-        ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]]]) {
+        ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]],
+        ["shootout", ["off", "on"]]]) {
         s[k] = pyStr(has(d, k) ? d[k] : s[k]);
         if (!opts.includes(s[k])) throw new GameError("err_settings");
       }
@@ -2628,11 +2719,14 @@ window.AFGOOIEN_MESSAGES = {
     resetMode() {
       this.leg_no = 0; this.set_no = 1; this.bust = false; this.leg_done = null;
       this.turn_start = 0; this.turn_opened = false; this.bo_queue = []; this.bo_darts = new Map(); this.tiebreak = 0;
+      this.turn_on_finish = false;
+      this.so_choice = null; this.so_chooser = null; this.so_rest = []; this.so_queue = []; this.so_vals = new Map();
+      this.so_next_place = 0; this.so_round = 0;
     }
     _newPlayer(name, i, bot) {
       return Object.assign(super._newPlayer(name, i, bot), {
         score: 0, legs: 0, sets: 0, legs_total: 0, opened: false, darts_leg: 0, f9_points: 0, f9_darts: 0,
-        hi_checkout: 0, best_leg: null, co_att: 0, co_hit: 0, busts: 0,
+        hi_checkout: 0, best_leg: null, co_att: 0, co_hit: 0, busts: 0, avg_points: 0, avg_darts: 0,
       });
     }
     start() {
@@ -2665,6 +2759,7 @@ window.AFGOOIEN_MESSAGES = {
       this.bust = false;
       this.turn_start = p.score;
       this.turn_opened = p.opened;
+      this.turn_on_finish = !!(p.opened && checkout(p.score, DARTS, this.settings.out_mode));
       if (first) {
         if (this.settings.match === "sets") this._say("start", "xo_l_leg_set", null, { set: this.set_no, leg: this._legInSet(), name: p.name });
         else this._say("start", "xo_l_leg", null, { leg: this.leg_no + 1, name: p.name });
@@ -2675,8 +2770,14 @@ window.AFGOOIEN_MESSAGES = {
       this._say("turn", "xo_l_turn", route ? "xo_s_require" : "s_name", { name: p.name, score: p.score });
     }
     _legInSet() { return this.players.reduce((a, p) => a + p.legs, 0) + 1; }
+    get current() {
+      if (this.phase === "shootout") return this.so_queue.length ? this.so_queue[0] : this.so_chooser;
+      return super.current;
+    }
     play(kind, data) {
       if (this.phase === "bulloff") return this._playBulloff(kind, data);
+      if (this.phase === "shootout") return this._playShootout(kind, data);
+      if (kind === "choose") return this._ignore("n_no_choice");
       const p = this.players[this.order[this.turn_pos]];
       const waiting = this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS;
       if (kind === "dart") {
@@ -2734,6 +2835,7 @@ window.AFGOOIEN_MESSAGES = {
     }
     _turnPoints(p, pts) {
       p.points += pts;
+      if (!this.turn_on_finish) { p.avg_points += pts; p.avg_darts += this.turn_darts.length; }
       const before = p.darts_leg - this.turn_darts.length;
       if (before < 9) { p.f9_points += pts; p.f9_darts += Math.min(this.turn_darts.length, 9 - before); }
       this._turnStats(p, pts);
@@ -2754,6 +2856,13 @@ window.AFGOOIEN_MESSAGES = {
       this._say("win", "xo_l_checkout", null, { name: p.name, label: d.label, score: co, darts: p.darts_leg });
       if (matchWon) {
         this.winner = idx;
+        if (s.shootout === "on" && this.players.length >= 3) {
+          p.place = 1;
+          this._say("win", "xo_l_match", "s_win", { name: p.name });
+          this._effect("win", { player: idx });
+          this._startShootout();
+          return;
+        }
         this.phase = "finished";
         this._place();
         this._say("win", "xo_l_match", "s_win", { name: p.name });
@@ -2789,6 +2898,7 @@ window.AFGOOIEN_MESSAGES = {
     _turnPointsPartial(p) {
       const pts = this.turn_score;
       p.points += pts;
+      if (!this.turn_on_finish) { p.avg_points += pts; p.avg_darts += DARTS; }
       const before = p.darts_leg - DARTS;
       if (before < 9) { p.f9_points += pts; p.f9_darts += Math.min(DARTS, 9 - before); }
       this._turnStats(p, pts);
@@ -2804,6 +2914,7 @@ window.AFGOOIEN_MESSAGES = {
     _playBulloff(kind, data) {
       const cur = this.order[this.turn_pos];
       const p = this.players[cur];
+      if (kind === "choose") return this._ignore("n_no_choice");
       if (kind === "dart") {
         if (this.bo_darts.has(cur)) return this._ignore("n_sel_done", { name: p.name });
         const d = Dart.fromDict(data);
@@ -2850,11 +2961,132 @@ window.AFGOOIEN_MESSAGES = {
       this._say("start", "l_order", null, { order: this.order.map((i) => this.players[i].name) });
       this._startLeg();
     }
+    // ------------------------------------------------------- shoot-out
+    _startShootout() {
+      const P = this.players;
+      const rest = P.map((_, i) => i).filter((i) => i !== this.winner).sort((a, b) =>
+        (P[b].sets - P[a].sets) || (P[b].legs_total - P[a].legs_total) || (P[a].score - P[b].score) || (a - b));
+      this.phase = "shootout";
+      this.so_rest = rest;
+      this.so_chooser = rest[0];
+      this.so_choice = null;
+      this.so_queue = [];
+      this.so_vals = new Map();
+      this.so_next_place = P.length;
+      this.so_round = 0;
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this.bust = false;
+      this.leg_done = null;
+      this._say("turn", "xo_l_so_start", "xo_s_so_choose", { name: P[rest[0]].name });
+    }
+    _soNeed() { return this.so_choice === "bull" ? 1 : DARTS; }
+    _soNewRound(who) {
+      this.so_round += 1;
+      let order = this.order.filter((i) => who.includes(i));
+      const k = order.indexOf(this.so_chooser);
+      if (k >= 0) order = order.slice(k).concat(order.slice(0, k));
+      this.so_queue = order;
+      this.so_vals = new Map();
+      this.turn_darts = []; this.turn_dart_events = [];
+      this.turn_score = 0;
+      this._say("turn", "xo_l_so_turn", "s_name", { name: this.players[order[0]].name });
+    }
+    _playShootout(kind, data) {
+      const P = this.players;
+      if (kind === "choose") {
+        if (this.so_choice !== null || (data !== "bull" && data !== "score")) return this._ignore("n_no_choice");
+        this.so_choice = data;
+        this._say("start", data === "bull" ? "xo_l_so_bull" : "xo_l_so_score_pick", null, { name: P[this.so_chooser].name });
+        this._soNewRound(this.so_rest);
+        return true;
+      }
+      if (this.so_choice === null) {
+        if (kind === "takeout") return false;
+        return this._ignore("n_so_choose", { name: P[this.so_chooser].name });
+      }
+      const cur = this.so_queue[0];
+      const p = P[cur];
+      const bull = this.so_choice === "bull";
+      if (kind === "dart") {
+        if (this.turn_darts.length >= this._soNeed()) return this._ignore("n_turn_full", { name: p.name, n: this._soNeed() });
+        const d = Dart.fromDict(data);
+        this.turn_darts.push(d);
+        this.turn_dart_events.push(this._cur_event);
+        if (bull) {
+          this.so_vals.set(cur, d.bullDistance());
+          this._say("info", "l_sel_bull", null, { name: p.name, dist: dist(d) });
+        } else {
+          this.turn_score += d.score;
+          this.so_vals.set(cur, -this.turn_score);
+          this._say("info", "xo_l_so_dart", null, { name: p.name, label: d.label, score: this.turn_score });
+        }
+        return true;
+      }
+      if (kind === "next" || kind === "takeout") {
+        if (!this.turn_darts.length) {
+          if (kind === "takeout") return false;
+          return this._ignore(bull ? "n_sel_wait_bull" : "n_so_wait", { name: p.name });
+        }
+        if (!bull) {
+          this._say("info", "xo_l_so_score", null, { name: p.name, score: this.turn_score });
+          this._callScore(this.turn_score);
+        }
+        this.so_queue.shift();
+        this.turn_darts = []; this.turn_dart_events = [];
+        this.turn_score = 0;
+        if (this.so_queue.length) {
+          this._say("turn", "xo_l_so_turn", "s_name", { name: P[this.so_queue[0]].name });
+          return true;
+        }
+        this._soResolve();
+        return true;
+      }
+      return false;
+    }
+    _soResolve() {
+      const P = this.players;
+      const keys = [...this.so_vals.keys()];
+      const worst = Math.max(...keys.map((k) => this.so_vals.get(k)));
+      const losers = keys.filter((k) => this.so_vals.get(k) === worst).sort((a, b) => a - b);
+      if (losers.length > 1) {
+        this.tiebreak += 1;
+        this._say("warn", "xo_l_so_tie", "xo_s_so_tie", { names: losers.map((i) => P[i].name) });
+        this._soNewRound(losers);
+        return;
+      }
+      const out = losers[0];
+      const place = this.so_next_place;
+      this.so_next_place -= 1;
+      P[out].place = place;
+      this.so_rest = this.so_rest.filter((i) => i !== out);
+      this._say("hit", "xo_l_so_out", "xo_s_so_out", { name: P[out].name, place });
+      this._effect("out", { player: out });
+      if (this.so_rest.length === 1) {
+        const last = this.so_rest[0];
+        P[last].place = this.so_next_place;
+        this.so_queue = [];
+        this.phase = "finished";
+        this._say("win", "xo_l_so_done", null, { name: P[last].name, place: this.so_next_place });
+        return;
+      }
+      this._soNewRound(this.so_rest);
+    }
+    _soState() {
+      if (this.so_chooser === null) return null;
+      const bull = this.so_choice === "bull";
+      const vals = [...this.so_vals.keys()].sort((a, b) => a - b).map((i) => {
+        const v = this.so_vals.get(i);
+        return { i, v: bull ? (v === Infinity ? null : Math.floor(v * 170.0 + 0.5)) : (v === 0 ? 0 : -v) };
+      });
+      return { choice: this.so_choice, chooser: this.so_chooser, rest: this.so_rest.slice(),
+        queue: this.so_queue.slice(), vals, round: this.so_round };
+    }
     summary() {
       if (this.phase !== "finished" || this.winner === null) return null;
       const ranked = this.players.slice().sort((a, b) => (a.place || 99) - (b.place || 99));
       const keys = ["name", "place", "bot", "darts", "points", "f9_points", "f9_darts", "n180", "n140", "n100", "hi_turn",
-        "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts"];
+        "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts", "avg_points", "avg_darts"];
       return { mode: "x01", winner: this.players[this.winner].name, rounds: this.leg_no + 1, settings: { ...this.settings },
         players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
     }
@@ -2868,7 +3100,9 @@ window.AFGOOIEN_MESSAGES = {
       st.bust = this.bust;
       st.leg_done = this.leg_done;
       st.waiting = (this.phase === "bulloff" && this.bo_darts.has(cur)) || (this.phase === "play" &&
-        (this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS));
+        (this.leg_done !== null || this.bust || this.turn_darts.length >= DARTS)) ||
+        (this.phase === "shootout" && this.so_queue.length > 0 && this.turn_darts.length >= this._soNeed());
+      st.shootout = this._soState();
       let route = null, instr = null;
       if (this.phase === "bulloff" && cur !== null) {
         instr = tr(lang, this.bo_darts.has(cur) ? "i_takeout" : "xo_i_bulloff", { name: this.players[cur].name });
@@ -2881,6 +3115,11 @@ window.AFGOOIEN_MESSAGES = {
           route = checkout(p.score, DARTS - this.turn_darts.length, this.settings.out_mode);
           instr = tr(lang, "xo_i_throw", { name: p.name, score: p.score });
         }
+      } else if (this.phase === "shootout" && cur !== null) {
+        const p = this.players[cur];
+        if (this.so_choice === null) instr = tr(lang, "xo_i_so_choose", { name: p.name });
+        else if (st.waiting) instr = tr(lang, "i_takeout", { name: p.name });
+        else instr = tr(lang, "xo_i_so_" + this.so_choice, { name: p.name, score: this.turn_score });
       } else if (this.phase === "finished" && this.winner !== null) {
         instr = tr(lang, "i_win", { name: this.players[this.winner].name });
       }
@@ -2893,26 +3132,30 @@ window.AFGOOIEN_MESSAGES = {
   // ================================================================ Count Up
   class CountUpGame extends BaseGame {
     get MODE() { return "countup"; }
-    defaultSettings() { return { rounds: 8 }; }
+    defaultSettings() { return { rounds: 8, elim: 0 }; }
     cleanSettings(d) {
-      const s = { rounds: intOf(d || {}, "rounds", 8) };
-      if (!(s.rounds >= 1 && s.rounds <= 30)) throw new GameError("err_settings");
+      const s = { rounds: intOf(d || {}, "rounds", 8), elim: intOf(d || {}, "elim", 0) };
+      if (!(s.rounds >= 1 && s.rounds <= 30) || ![0, 1, 2, 3, 4, 5].includes(s.elim)) throw new GameError("err_settings");
       return s;
     }
-    _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0 }); }
+    _newPlayer(name, i, bot) { return Object.assign(super._newPlayer(name, i, bot), { score: 0, rounds: [], best_round: 0, out: false }); }
+    _elim() { return this.settings.elim > 0 && this.players.length > 1; }
     start() {
       this.order = this.players.map((_, i) => i);
       this.phase = "play";
       this.turn_no = 1;
       this.turn_pos = 0;
-      this._say("start", "cu_l_new", null, { rounds: this.settings.rounds, names: this.players.map((p) => p.name) });
+      if (this._elim()) this._say("start", "cu_l_new_elim", null, { every: this.settings.elim, names: this.players.map((p) => p.name) });
+      else this._say("start", "cu_l_new", null, { rounds: this.settings.rounds, names: this.players.map((p) => p.name) });
       this._beginTurn();
     }
+    _left() { const e = this.settings.elim; return e - ((this.turn_no - 1) % e); }
     _beginTurn() {
       const p = this.players[this.order[this.turn_pos]];
       this.turn_darts = []; this.turn_dart_events = [];
       this.turn_score = 0;
-      this._say("turn", "cu_l_turn", "s_name", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
+      if (this._elim()) this._say("turn", "cu_l_turn_elim", "s_name", { name: p.name, round: this.turn_no, left: this._left() });
+      else this._say("turn", "cu_l_turn", "s_name", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
     }
     play(kind, data) {
       const p = this.players[this.order[this.turn_pos]];
@@ -2940,10 +3183,38 @@ window.AFGOOIEN_MESSAGES = {
         this.turn_pos += 1;
         if (this.turn_pos >= this.order.length) {
           this.turn_pos = 0;
-          if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
+          if (this._elim()) {
+            if (this.turn_no % this.settings.elim === 0 && this._cut()) return true;
+          } else if (this.turn_no >= this.settings.rounds) { this._finish(); return true; }
           this.turn_no += 1;
         }
         this._beginTurn();
+        return true;
+      }
+      return false;
+    }
+    _cut() {
+      const active = this.order.map((i) => this.players[i]);
+      const low = Math.min(...active.map((p) => p.score));
+      const bottom = active.filter((p) => p.score === low);
+      if (bottom.length > 1) {
+        this._say("warn", "cu_l_cut_tie", null, { names: bottom.map((p) => p.name), score: low });
+        return false;
+      }
+      const q = bottom[0];
+      q.out = true;
+      q.place = active.length;
+      this.order = this.order.filter((i) => i !== q.index);
+      this._say("hit", "cu_l_out", "cu_s_out", { name: q.name, score: q.score, place: q.place });
+      this._effect("out", { player: q.index });
+      if (this.order.length === 1) {
+        const w = this.players[this.order[0]];
+        w.place = 1;
+        this.winner = w.index;
+        this.phase = "finished";
+        this.turn_darts = []; this.turn_dart_events = [];
+        this._say("win", "cu_l_win", "cu_s_win", { name: w.name, score: w.score });
+        this._effect("win", { player: this.winner });
         return true;
       }
       return false;
@@ -2966,7 +3237,7 @@ window.AFGOOIEN_MESSAGES = {
       const ranked = this.players.slice().sort((a, b) => a.place - b.place || a.index - b.index);
       const keys = ["name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn"];
       return { mode: "countup", winner: ranked.filter((q) => q.place === 1).map((q) => q.name).join(" & "),
-        rounds: this.settings.rounds, settings: { ...this.settings },
+        rounds: this._elim() ? this.turn_no : this.settings.rounds, settings: { ...this.settings },
         players: ranked.map((q) => Object.fromEntries(keys.map((k) => [k, q[k]]))) };
     }
     state(lang) {
@@ -2974,11 +3245,13 @@ window.AFGOOIEN_MESSAGES = {
       lang = st.lang;
       const cur = this.current;
       st.waiting = this.phase === "play" && this.turn_darts.length >= DARTS;
-      st.rounds = this.settings.rounds;
+      st.rounds = this._elim() ? null : this.settings.rounds;
+      st.elim_left = this._elim() && this.phase === "play" ? this._left() : null;
       let instr = null;
       if (this.phase === "play" && cur !== null) {
         const p = this.players[cur];
         instr = st.waiting ? tr(lang, "i_takeout", { name: p.name })
+          : this._elim() ? tr(lang, "cu_i_throw_elim", { name: p.name, round: this.turn_no, left: this._left() })
           : tr(lang, "cu_i_throw", { name: p.name, round: this.turn_no, rounds: this.settings.rounds });
       } else if (this.phase === "finished" && this.winner !== null) {
         const top = this.players.filter((p) => p.place === 1).map((p) => p.name);
@@ -3837,6 +4110,11 @@ window.AFGOOIEN_MESSAGES = {
   function nextActionOther(st, me, level) {
     if (st.waiting) return { type: "next" };
     if (st.phase === "bulloff") return throwAt("Bullseye", level);
+    if (st.phase === "shootout") {
+      const so = st.shootout || {};
+      if (so.choice === null || so.choice === undefined) return { type: "shootout", choice: level >= 6 ? "score" : "bull" };
+      return throwAt(so.choice === "bull" ? "Bullseye" : "T20", level);
+    }
     if (st.mode === "x01") return throwAt(x01Target(st, me), level);
     const c = partyTarget(st, me, level);
     if (c === null) return { type: "next" };
@@ -3845,7 +4123,7 @@ window.AFGOOIEN_MESSAGES = {
 
   function nextAction(st) {
     const cur = st.current;
-    if (cur === null || cur === undefined || !["select", "play", "bulloff"].includes(st.phase)) return null;
+    if (cur === null || cur === undefined || !["select", "play", "bulloff", "shootout"].includes(st.phase)) return null;
     const me = st.players[cur];
     const level = me.bot || 0;
     if (!level) return null;
@@ -3859,7 +4137,7 @@ window.AFGOOIEN_MESSAGES = {
     if (st.darts.length >= st.settings.darts_per_turn) return { type: "next" };
     return dartAt(chooseTarget(st, me, level), level);
   }
-  const delayFor = (a) => ({ dart: 1100, next: 1800, allocate: 1500 }[a.type] || 1000);
+  const delayFor = (a) => ({ dart: 1100, next: 1800, allocate: 1500, shootout: 1500 }[a.type] || 1000);
 
   const api = { nextAction, delayFor, segmentAt, HIT, SIGMA, x01Target, partyTarget };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -3927,7 +4205,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.34";
+    s.app_version = "1.35";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -3967,6 +4245,7 @@ window.AFGOOIEN_LOCAL = (function () {
         case "correct": g.correct(cmd.index, Dart.fromDict(cmd)); break;
         case "next": g.nextPlayer(); break;
         case "allocate": g.allocate(cmd.alloc || []); break;
+        case "shootout": if (!g.choose) throw new GameError("err_unknown_cmd", { cmd: cmd.type }); g.choose(cmd.choice); break;
         case "undo": g.undo(); break;
         case "reset": g.reset(); gameId = null; break;
         case "clear_history": history = []; saveHistory(); if (g.phase === "finished") gameId = null; break;
@@ -4139,6 +4418,16 @@ window.AFGOOIEN_UI = {
     x01_sub: "Gooi je score zo snel mogelijk precies naar nul.", x_start: "Startscore", x_match: "Wedstrijd",
     x_legs_first: "First to … legs", x_legs_set: "Legs per set (first to)", x_sets: "First to … sets",
     x_in: "Inmode", x_out: "Uitmode", o_off: "Uit",
+    x_shootout: "Toernooi", xh_so: " Toernooi: is er een winnaar (3+ spelers), dan gooit de rest af om de overige plaatsen. Nummer 2 kiest: dichtst bij de bull of hoogste score in één beurt; de slechtste valt telkens af.",
+    chip_so: "Shoot-out om plaatsen", rp_so: "Shoot-out", ph_so_choose: "Shoot-out: {name} kiest het soort",
+    ph_so_bull: "Shoot-out: dichtst bij de bull · de verste valt af", ph_so_score: "Shoot-out: hoogste score in 1 beurt · de laagste valt af",
+    so_title: "Shoot-out!", so_sub: "{name} staat tweede en kiest hoe de rest om de plaatsen gooit. Wie het slechtst gooit, valt af.",
+    so_bull: "🎯 Dichtst bij de bull", so_bull_d: "1 pijl per speler", so_score: "💯 Hoogste score", so_score_d: "3 pijlen per speler",
+    so_wait: "{name} kiest het soort shoot-out…", pm_so_in: "shoot-out", pm_mm: "{n} mm", pm_so_pts: "{n} punten",
+    bs_so_choose: "{name} kiest de shoot-out", rp_cu_elim: "Ronde {n} · nog {l} tot cut", ph_cu_elim: "Toernooi: elke {n} ronde(s) valt de laagste totaalscore af",
+    cu_elim: "Toernooi (laagste valt af)", o_elim_n: "Elke {n}", chip_elim: "Laagste valt af elke {n} ronde(s)",
+    cuh_elim: "Na elk blok van {n} ronde(s) valt de speler met de laagste totaalscore af. Staan er meerdere gelijk onderaan, dan valt niemand af. Laatste speler over wint.",
+    cuh_rounds: "Zoveel mogelijk punten in een vast aantal rondes.",
     xh_double: "Double out: de laatste pijl moet een dubbel of de bullseye zijn.",
     xh_master: "Master out: uitgooien met een dubbel, triple of de bullseye.",
     xh_straight: "Straight out: uitgooien met elke pijl, als je maar precies op nul komt.",
@@ -4354,6 +4643,16 @@ window.AFGOOIEN_UI = {
     x01_sub: "Race from a set score down to exactly zero.", x_start: "Base score", x_match: "Match mode",
     x_legs_first: "First to … legs", x_legs_set: "Legs per set (first to)", x_sets: "First to … sets",
     x_in: "In mode", x_out: "Out mode", o_off: "Off",
+    x_shootout: "Tournament", xh_so: " Tournament: once there is a winner (3+ players), the rest play a shoot-out for the remaining places. Number 2 chooses: closest to the bull or highest score in one turn; the worst is out each time.",
+    chip_so: "Shoot-out for places", rp_so: "Shoot-out", ph_so_choose: "Shoot-out: {name} chooses the type",
+    ph_so_bull: "Shoot-out: closest to the bull · furthest is out", ph_so_score: "Shoot-out: highest score in 1 turn · lowest is out",
+    so_title: "Shoot-out!", so_sub: "{name} is second and chooses how the rest play for the places. The worst throw is out.",
+    so_bull: "🎯 Closest to the bull", so_bull_d: "1 dart each", so_score: "💯 Highest score", so_score_d: "3 darts each",
+    so_wait: "{name} is choosing the shoot-out…", pm_so_in: "shoot-out", pm_mm: "{n} mm", pm_so_pts: "{n} points",
+    bs_so_choose: "{name} chooses the shoot-out", rp_cu_elim: "Round {n} · {l} to cut", ph_cu_elim: "Tournament: every {n} round(s) the lowest total is out",
+    cu_elim: "Tournament (lowest is out)", o_elim_n: "Every {n}", chip_elim: "Lowest out every {n} round(s)",
+    cuh_elim: "After every block of {n} round(s) the player with the lowest total is out. If several are tied at the bottom, nobody is out. Last player standing wins.",
+    cuh_rounds: "Score as many points as you can in a fixed number of rounds.",
     xh_double: "Double out: the last dart must be a double or the bullseye.",
     xh_master: "Master out: finish on a double, treble or the bullseye.",
     xh_straight: "Straight out: finish with any dart, as long as you hit exactly zero.",
@@ -4576,7 +4875,7 @@ function buildBoard() {
   boardEls.ring = el("circle", { r: 232, class: "statusring" }, svg);
 
   svg.addEventListener("click", (ev) => {
-    if (!S || !["select", "play", "bulloff"].includes(S.phase)) return;
+    if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return;
     if (botTurn()) { $("notice").textContent = t("bot_turn"); return; }
     const p = svg.createSVGPoint();
     p.x = ev.clientX; p.y = ev.clientY;
@@ -4746,7 +5045,8 @@ function render(state) {
   }
 
   // worpen deze beurt
-  const slots = S.phase === "select" || S.phase === "bulloff" ? Math.max(1, S.darts.length) : other ? 3 : S.settings.darts_per_turn;
+  const slots = S.phase === "select" || S.phase === "bulloff" ? Math.max(1, S.darts.length)
+    : S.phase === "shootout" ? (S.shootout && S.shootout.choice === "bull" ? 1 : 3) : other ? 3 : S.settings.darts_per_turn;
   let sh = "";
   for (let i = 0; i < slots; i++) {
     const d = S.darts[i];
@@ -4759,7 +5059,8 @@ function render(state) {
 
   const th = tonHint();
   $("turnscore").innerHTML = (S.bust ? `<span>${t("turn_lbl")}</span><b class="bustv">${t("bust")}</b>`
-    : S.phase === "play" ? `<span>${t("turn_lbl")}</span><b>${S.turn_score}</b>` : `<span>${t("darts_lbl")}</span><b>${S.darts.length}</b>`) +
+    : S.phase === "play" ? `<span>${t("turn_lbl")}</span><b>${S.turn_score}</b>`
+    : S.phase === "shootout" && S.shootout && S.shootout.choice === "score" ? `<span>${t("turn_lbl")}</span><b>${(S.shootout.vals.find((v) => v.i === S.current) || { v: 0 }).v}</b>` : `<span>${t("darts_lbl")}</span><b>${S.darts.length}</b>`) +
     (th && th.text ? `<span class="tm ${th.cls}">${th.text}</span>` : "") +
     (S.queued ? `<span class="tm mid">${t("waiting", { n: S.queued })}</span>` : "");
   const bs = boardStatus();
@@ -4769,7 +5070,7 @@ function render(state) {
   $("boardreset").classList.toggle("hidden", !(S.source && S.source.enabled) || S.phase === "setup");
 
   // knoppen
-  const active = S.phase === "select" || S.phase === "play" || S.phase === "bulloff";
+  const active = S.phase === "select" || S.phase === "play" || S.phase === "bulloff" || S.phase === "shootout";
   $("misslbl").textContent = t(!other && S.phase === "play" && S.settings.miss_penalty ? "miss_pen" : "miss");
   $("miss").disabled = !active || botTurn();
   $("undo").disabled = !S.can_undo;
@@ -4782,6 +5083,7 @@ function render(state) {
   updateBoard();
 
   renderAlloc();
+  renderSoChoice();
   if (S.history_version !== undefined && S.history_version !== H.version) loadHistory();
 
   // winnaar
@@ -4796,7 +5098,7 @@ function render(state) {
     const ranked = [...S.players].sort((a, b) => a.place - b.place || a.index - b.index);
     $("ranking").innerHTML = ranked.map((p) => {
       let who = `<b>${esc(p.name)}</b>`, row;
-      if (S.mode === "x01") row = t("win_x01", { avg: fmt2(avg3(p.points, p.darts)), legs: p.legs_total, co: p.hi_checkout || "–" });
+      if (S.mode === "x01") row = t("win_x01", { avg: fmt2(xavg(p)), legs: p.legs_total, co: p.hi_checkout || "–" });
       else if (S.mode === "countup") row = t("win_cu", { score: p.score, avg: fmt2(avg3(p.points, p.darts)), best: p.best_round });
       else if (isParty()) { const v = S.views[p.index]; row = esc([String(v.big)].concat(v.meta).join(" · ")); }
       else { who += ` (${p.number})`; row = t("win_row", { kills: p.kills, ppt: fmt2(p.turns ? (p.gained + p.knocked) / p.turns : 0), tr: p.triples }); }
@@ -4810,9 +5112,18 @@ function render(state) {
 // --------------------------------------------------------- X01 / Count Up
 const isOther = () => !!(S && S.mode && S.mode !== "afgooien");
 const avg3 = (pts, darts) => (darts ? pts / darts * 3 : 0);
+// X01-gemiddelde telt alleen beurten waarin je nog niet op een finish stond (oude potjes: alles)
+const xavg = (p) => avg3(p.avg_points != null ? p.avg_points : p.points, p.avg_darts != null ? p.avg_darts : p.darts);
 function renderOther() {
   const st = S.settings;
-  if (S.mode === "x01") {
+  const so = S.mode === "x01" ? S.shootout : null;
+  const soVal = {};
+  if (so) so.vals.forEach((v) => { soVal[v.i] = v.v; });
+  if (S.mode === "x01" && S.phase === "shootout" && so) {
+    $("roundpill").textContent = t("rp_so");
+    const ch = S.players[so.chooser];
+    $("phaseinfo").textContent = so.choice === null ? t("ph_so_choose", { name: ch.name }) : t(so.choice === "bull" ? "ph_so_bull" : "ph_so_score");
+  } else if (S.mode === "x01") {
     $("roundpill").textContent = S.phase === "bulloff" ? t("rp_bulloff")
       : S.phase === "finished" ? t("rp_over")
       : st.match === "sets" ? t("rp_set_leg", { s: S.set_no, n: S.players.reduce((a, p) => a + p.legs, 0) + 1 }) : t("rp_leg", { n: S.leg_no + 1 });
@@ -4823,21 +5134,33 @@ function renderOther() {
       $("phaseinfo").innerHTML = esc(t("ph_x01", { start: st.start, out: cap(st.out_mode), in: st.in_mode !== "straight" ? t("ph_in", { m: cap(st.in_mode) }) : "", match })) +
         (S.checkout ? `<span class="tg co">${esc(t("ph_checkout", { route: S.checkout.join(" · ") }))}</span>` : "");
     }
+  } else if (S.rounds === null) {
+    $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu_elim", { n: S.turn_no, l: S.elim_left });
+    $("phaseinfo").textContent = t("ph_cu_elim", { n: st.elim });
   } else {
     $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu", { n: S.turn_no, r: st.rounds });
     $("phaseinfo").textContent = t("ph_cu", { r: st.rounds });
   }
-  const order = S.order.length ? S.order : S.players.map((p) => p.index);
+  let order = S.order.length ? S.order.slice() : S.players.map((p) => p.index);
+  if (order.length < S.players.length) order = order.concat(S.players.map((p) => p.index).filter((i) => !order.includes(i))
+    .sort((a, b) => (S.players[a].place || 99) - (S.players[b].place || 99)));
   const solo = S.players.length === 1;
   $("players").classList.toggle("solo", solo);
   $("players").innerHTML = order.map((i) => {
     const p = S.players[i];
     const c = COLORS[p.color % COLORS.length];
     const curr = i === S.current && S.phase !== "finished";
-    let big, meta = [], side = "";
+    let big, meta = [], side = "", dim = false;
     if (S.mode === "x01") {
       big = S.phase === "bulloff" ? "–" : p.score;
-      meta.push(t("pm_avg", { avg: fmt2(avg3(p.points, p.darts)) }), t("pm_darts", { n: p.darts_leg }));
+      if (S.phase === "shootout" && so) {
+        const inSo = so.rest.includes(i);
+        dim = !inSo && i !== S.winner;
+        if (i in soVal) big = so.choice === "bull" ? (soVal[i] === null ? t("miss_mm") : soVal[i]) : soVal[i];
+        else big = inSo ? "–" : `#${p.place}`;
+        if (inSo) meta.push(so.choice === "bull" && i in soVal && soVal[i] !== null ? t("pm_mm", { n: soVal[i] }) : t("pm_so_in"));
+      }
+      meta.push(t("pm_avg", { avg: fmt2(xavg(p)) }), t("pm_darts", { n: p.darts_leg }));
       if (!p.opened && S.phase === "play") meta.push(t("pm_notopen"));
       if (st.match !== "off") {
         side = (st.match === "sets" ? `<span class="ls"><small>${t("pm_sets")}</small><b>${p.sets}</b></span>` : "") +
@@ -4847,12 +5170,14 @@ function renderOther() {
       big = p.score;
       meta.push(t("pm_avg", { avg: fmt2(avg3(p.score, p.darts)) }));
       if (p.rounds.length) meta.push(t("pm_last", { n: p.rounds[p.rounds.length - 1] }));
+      if (p.out && S.phase !== "finished") { dim = true; meta.unshift(`#${p.place}`); }
     }
     if (p.place && S.phase === "finished") meta.unshift(`#${p.place}`);
     const bot = p.bot ? ` <span class="botbadge">${t("bot_badge", { l: p.bot })}</span>` : "";
-    const cls = ["player", "xp", curr ? "current" : "", cardFx(i)].join(" ");
+    const badge = p.out && S.phase !== "finished" ? `<span class="badge o">${t("badge_out")}</span>` : "";
+    const cls = ["player", "xp", curr ? "current" : "", dim ? "soout" : "", cardFx(i)].join(" ");
     return `<div class="${cls}" data-i="${i}" style="--pc:${c}">
-      <div class="name">${p.bot ? "🤖 " : ""}${esc(p.name)}</div>
+      <div class="name">${p.bot ? "🤖 " : ""}${esc(p.name)}${badge}</div>
       <div class="side">${side}</div>
       <div class="bigscore">${big}</div>
       <div class="meta">${meta.map(esc).join(" · ")}${bot}</div></div>`;
@@ -4893,6 +5218,14 @@ function renderParty() {
           tb.rows[i].map((m, k) => `<td class="mk m${m} ${tb.closed[k] ? "closed" : ""}">${sym[m]}</td>`).join("") + `<td class="pts">${p.score}</td></tr>`;
       }).join("") + "</tbody></table>";
   }
+}
+
+// ------------------------------------------------------- shoot-out keuze
+function renderSoChoice() {
+  const so = S && S.phase === "shootout" ? S.shootout : null;
+  const show = !!(so && so.choice === null && !(S.players[so.chooser] || {}).bot);
+  $("sochoice").classList.toggle("hidden", !show);
+  if (show) $("sosub").textContent = t("so_sub", { name: S.players[so.chooser].name });
 }
 
 // ------------------------------------------------------- punten verdelen
@@ -5441,16 +5774,17 @@ function updateFullBtn() { if ($("d_full")) $("d_full").textContent = t(isFull()
 
 // ------------------------------------------------- statusring en 100+-meter
 function botTurn() {
-  return !!(S && ["select", "play", "bulloff"].includes(S.phase) && S.current !== null && S.players[S.current] && S.players[S.current].bot);
+  return !!(S && ["select", "play", "bulloff", "shootout"].includes(S.phase) && S.current !== null && S.players[S.current] && S.players[S.current].bot);
 }
 // [kleur, tekst]: groen = gooien, geel = (nog) niet gooien, rood = probleem
 function boardStatus() {
-  if (!S || !["select", "play", "bulloff"].includes(S.phase)) return null;
+  if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return null;
   const src = S.source || {};
   const cur = S.players[S.current];
   if (src.enabled && !src.connected) return ["red", t("bs_noconn")];
   if (src.enabled && (src.board_offline || (src.board && /stop|error|fout|calibrat|kalibr/i.test(String(src.board))))) return ["red", t("bs_board", { b: boardName(src) })];
   if (cur && cur.bot) return ["yellow", t("bs_bot", { name: cur.name })];
+  if (S.phase === "shootout" && S.shootout && S.shootout.choice === null) return ["yellow", t("bs_so_choose", { name: cur ? cur.name : "" })];
   if (S.pending) return ["yellow", t("bs_choose")];
   if (isOther() ? S.waiting : ((S.phase === "select" && S.sel_step === "done") || (S.phase === "play" && S.darts.length >= S.settings.darts_per_turn))) {
     return ["yellow", t("bs_takeout")];
@@ -5555,6 +5889,8 @@ function aggregate(games, mode) {
       if (p.place === 1) { a.wins++; a.streak++; a.bestStreak = Math.max(a.bestStreak, a.streak); } else a.streak = 0;
       if (p.place === 2) a.seconds++;
       SUM.forEach((f) => (a[f] += p[f] || 0));
+      a.avgP = (a.avgP || 0) + ((p.avg_points != null ? p.avg_points : p.points) || 0);
+      a.avgD = (a.avgD || 0) + ((p.avg_darts != null ? p.avg_darts : p.darts) || 0);
       if (p.darts_to_target != null && (a.best === null || p.darts_to_target < a.best)) a.best = p.darts_to_target;
       if (p.hi_checkout) a.hico = Math.max(a.hico, p.hi_checkout);
       if (p.best_leg != null && (a.bestLeg === null || p.best_leg < a.bestLeg)) a.bestLeg = p.best_leg;
@@ -5574,7 +5910,7 @@ function aggregate(games, mode) {
     tpg: a.games ? a.triples / a.games : 0,
     dpg: a.games ? a.doubles / a.games : 0,
     hit: a.darts ? a.useful / a.darts : 0,
-    avg: avg3(a.points || 0, a.darts),
+    avg: avg3(a.avgP || 0, a.avgD || 0),
     f9: avg3(a.f9_points || 0, a.f9_darts || 0),
     coPct: a.co_att ? a.co_hit / a.co_att : null,
     avgScore: a.games ? (a.score || 0) / a.games : 0,
@@ -5805,13 +6141,14 @@ function otherGameRow(g, when, me) {
   const [w, ...rest] = g.players;
   const head = x ? ["c_avg", "c_f9", "c_legs", "c_hico", "c_bestleg", "c_180", "c_140", "c_100", "g_darts"]
     : ["c_score", "c_ppr", "c_bestround", "c_180", "c_140", "c_100", "g_darts"];
-  const cells = (p) => (x ? [fmt2(avg3(p.points, p.darts)), fmt2(avg3(p.f9_points, p.f9_darts)), p.legs_total, p.hi_checkout || "–",
+  const cells = (p) => (x ? [fmt2(xavg(p)), fmt2(avg3(p.f9_points, p.f9_darts)), p.legs_total, p.hi_checkout || "–",
     p.best_leg == null ? "–" : p.best_leg, p.n180, p.n140, p.n100, p.darts]
     : [p.score, fmt2(avg3(p.points, p.darts)), p.best_round, p.n180, p.n140, p.n100, p.darts]);
   const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     cells(p).map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
-  const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out` : t("chip_rounds", { n: g.rounds });
-  const wtxt = x ? `${esc(w.name)} (${fmt2(avg3(w.points, w.darts))})` : `${esc(g.winner)} (${w.score})`;
+  const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out${g.settings.shootout === "on" ? " · " + t("chip_so") : ""}`
+    : g.settings && g.settings.elim ? t("chip_elim", { n: g.settings.elim }) : t("chip_rounds", { n: g.rounds });
+  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : `${esc(g.winner)} (${w.score})`;
   return `<details class="gamerow"><summary><span class="when">${when}</span>
     <span class="gwin">🏆 ${wtxt}</span>
     <span class="rest">${rest.map((p) => `${p.place}. ${esc(p.name)}`).join(" · ")}</span>
@@ -5843,7 +6180,7 @@ function periodName() {
 function keyStat(g, p) {
   const m = gmode(g);
   if (m === "afgooien") return [t("c_kills"), String(p.kills || 0), p.kills || 0];
-  if (m === "x01") { const a = avg3(p.points, p.darts); return [t("c_avg"), fmt2(a), a]; }
+  if (m === "x01") { const a = xavg(p); return [t("c_avg"), fmt2(a), a]; }
   if (m === "countup") return [t("c_score"), String(p.score), p.score];
   return [t("c_score2"), String(p.score), p.score];
 }
@@ -6274,12 +6611,13 @@ function genClick(e) {
 }
 // Welk spel in de lobby staat (afgooien | x01 | countup) en de instellingen per spel.
 const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
-const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off" };
+const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
-const cuSet = Object.assign({ rounds: 8 }, store.get("afgooien.countup", {}));
+const cuSet = Object.assign({ rounds: 8, elim: 0 }, store.get("afgooien.countup", {}));
+if (![0, 1, 2, 3, 5].includes(cuSet.elim)) cuSet.elim = 0;
 const cap = (m) => m.charAt(0).toUpperCase() + m.slice(1);
 const modeTitle = (m, st) => (m === "x01" ? String((st || x01Set).start) : t("gm_" + (m || "afgooien")));
 function setLobbyMode(m) {
@@ -6294,6 +6632,7 @@ function x01Chips(st) {
   else c.push(t("chip_first_legs", { n: st.match === "off" ? 1 : st.legs }));
   c.push(t("chip_in", { m: cap(st.in_mode) }), t("chip_out", { m: cap(st.out_mode) }));
   c.push(st.bulloff === "off" ? t("chip_nobull") : t("chip_bull", { m: st.bulloff.toUpperCase() }));
+  if (st.shootout === "on") c.push(t("chip_so"));
   return c;
 }
 function renderLobbyMode() {
@@ -6316,8 +6655,11 @@ function renderLobbyMode() {
     g.querySelectorAll("button").forEach((b) => b.classList.toggle("on", s[g.dataset.seg] === b.dataset.v)));
   $("x01chips").innerHTML = x01Chips(s).map((c) => `<span class="chipx">${esc(c)}</span>`).join("");
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
-    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "");
+    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
   $("cu_rounds").textContent = cuSet.rounds;
+  $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
+  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === cuSet.elim));
+  $("cu_help").textContent = cuSet.elim > 0 ? t("cuh_elim", { n: cuSet.elim }) : t("cuh_rounds");
   store.set("afgooien.x01", x01Set);
   store.set("afgooien.countup", cuSet);
 }
@@ -6575,6 +6917,7 @@ function bind() {
     const st = e.target.closest("[data-step]");
     if (st) { lobbyStep(st.dataset.step, +st.dataset.d); return; }
     const sg = e.target.closest(".seg button");
+    if (sg && sg.parentElement.dataset.cuseg) { cuSet[sg.parentElement.dataset.cuseg] = +sg.dataset.v; renderLobbyMode(); return; }
     if (sg) { x01Set[sg.parentElement.dataset.seg] = sg.dataset.v; renderLobbyMode(); }
   });
   $("lobbyback").onclick = () => setView("modes");
@@ -6676,6 +7019,18 @@ function bind() {
   });
   $("allocok").onclick = () => send({ type: "allocate", alloc: Object.entries(alloc).map(([i, n]) => [+i, n]) });
   $("allocundo").onclick = () => send({ type: "undo" });
+  $("sochoice").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-so]");
+    if (b) send({ type: "shootout", choice: b.dataset.so });
+  });
+  $("soundo").onclick = () => send({ type: "undo" });
+  // klok in de bovenbalk
+  const tickClock = () => {
+    const d = new Date();
+    $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  };
+  tickClock();
+  setInterval(tickClock, 10000);
   // stem-paneel
   $("sound").onclick = (e) => {
     e.stopPropagation();
@@ -6727,7 +7082,7 @@ function bind() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { $("stats").classList.add("hidden"); $("voicepanel").classList.add("hidden"); if (fixIndex !== null) setFix(null); }
     if (!$("stats").classList.contains("hidden")) return;
-    if (!S || !["select", "play", "bulloff"].includes(S.phase)) return;
+    if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return;
     if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
     if (!$("confirm").classList.contains("hidden")) return;
     if (S.pending) { if (e.key === "Enter" && !$("allocok").disabled) $("allocok").click(); return; }

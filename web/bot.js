@@ -150,6 +150,11 @@
   function nextActionOther(st, me, level) {
     if (st.waiting) return { type: "next" };
     if (st.phase === "bulloff") return throwAt("Bullseye", level);
+    if (st.phase === "shootout") {
+      const so = st.shootout || {};
+      if (so.choice === null || so.choice === undefined) return { type: "shootout", choice: level >= 6 ? "score" : "bull" };
+      return throwAt(so.choice === "bull" ? "Bullseye" : "T20", level);
+    }
     if (st.mode === "x01") return throwAt(x01Target(st, me), level);
     const c = partyTarget(st, me, level);
     if (c === null) return { type: "next" };
@@ -158,7 +163,7 @@
 
   function nextAction(st) {
     const cur = st.current;
-    if (cur === null || cur === undefined || !["select", "play", "bulloff"].includes(st.phase)) return null;
+    if (cur === null || cur === undefined || !["select", "play", "bulloff", "shootout"].includes(st.phase)) return null;
     const me = st.players[cur];
     const level = me.bot || 0;
     if (!level) return null;
@@ -172,7 +177,7 @@
     if (st.darts.length >= st.settings.darts_per_turn) return { type: "next" };
     return dartAt(chooseTarget(st, me, level), level);
   }
-  const delayFor = (a) => ({ dart: 1100, next: 1800, allocate: 1500 }[a.type] || 1000);
+  const delayFor = (a) => ({ dart: 1100, next: 1800, allocate: 1500, shootout: 1500 }[a.type] || 1000);
 
   const api = { nextAction, delayFor, segmentAt, HIT, SIGMA, x01Target, partyTarget };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

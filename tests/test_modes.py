@@ -124,6 +124,84 @@ class CountUpTests(unittest.TestCase):
         self.assertEqual(st["players"][0]["darts"], 6)
 
 
+def turn(g, darts):
+    for n, m in darts:
+        assert d(g, n, m), g.notice
+    g.next_player()
+
+
+class TournamentTests(unittest.TestCase):
+    def test_average_skips_turns_on_a_finish(self):
+        g = X01Game()
+        g.new_game(["Ann", "Bob"], {"start": 301})
+        turn(g, [(20, 3)] * 3)            # 180, nog 121: niet op een finish bij de start van de beurt
+        turn(g, [(1, 1)] * 3)
+        turn(g, [(20, 1)] * 3)            # 121 is uitgooibaar: deze beurt telt niet mee in het gemiddelde
+        p = g.state()["players"][0]
+        self.assertEqual((p["points"], p["darts"]), (240, 6))
+        self.assertEqual((p["avg_points"], p["avg_darts"]), (180, 3))
+
+    def test_shootout_eliminates_until_last(self):
+        g = X01Game()
+        g.new_game(["A", "B", "C", "D"], {"start": 301, "shootout": "on"})
+        turn(g, [(20, 3)] * 3)            # A 121
+        turn(g, [(20, 1)] * 3)            # B 241
+        turn(g, [(5, 1)] * 3)             # C 286
+        turn(g, [(19, 3)] * 3)            # D 130
+        turn(g, [(20, 3), (11, 3), (14, 2)])   # A gooit 121 uit
+        st = g.state()
+        self.assertEqual(st["phase"], "shootout")
+        self.assertEqual(st["shootout"]["chooser"], 3)       # D staat het dichtst bij nul
+        self.assertEqual(st["current"], 3)
+        self.assertFalse(d(g, 20, 1))                         # eerst kiezen
+        self.assertFalse(g.choose("nonsense"))
+        self.assertTrue(g.choose("bull"))
+        self.assertEqual(g.state()["shootout"]["queue"], [3, 1, 2])     # kiezer eerst
+        for x in (0.02, 0.5, 0.3):                            # D dichtbij, B ver weg, C ertussen
+            self.assertTrue(g.throw({"number": 25, "multiplier": 1, "x": x, "y": 0}))
+            g.next_player()
+        st = g.state()
+        self.assertEqual(st["players"][1]["place"], 4)
+        self.assertEqual(st["shootout"]["rest"], [3, 2])
+        g.throw({"number": 25, "multiplier": 2, "x": 0.01, "y": 0}); g.next_player()
+        g.throw({"number": 0, "multiplier": 0}); g.next_player()         # mis: verste
+        st = g.state()
+        self.assertEqual(st["phase"], "finished")
+        self.assertEqual([p["place"] for p in st["players"]], [1, 4, 3, 2])
+        self.assertEqual([p["name"] for p in g.summary()["players"]], ["A", "D", "C", "B"])
+        g.undo()
+        self.assertEqual(g.state()["phase"], "shootout")
+
+    def test_shootout_needs_three_players(self):
+        g = X01Game()
+        g.new_game(["A", "B"], {"start": 101, "shootout": "on"})
+        turn(g, [(20, 3), (1, 1), (20, 2)])
+        self.assertEqual(g.state()["phase"], "finished")
+
+    def test_countup_elimination_blocks(self):
+        g = CountUpGame()
+        g.new_game(["A", "B", "C"], {"elim": 2, "rounds": 3})
+        for _ in range(2):
+            turn(g, [(20, 1)] * 3); turn(g, [(1, 1)] * 3); turn(g, [(10, 1)] * 3)
+        st = g.state()
+        self.assertEqual(st["players"][1]["place"], 3)      # B laagste na 2 rondes
+        self.assertEqual(st["order"], [0, 2])
+        self.assertIsNone(st["rounds"])
+        for _ in range(2):                                   # rondes-instelling telt niet bij een toernooi
+            turn(g, [(1, 1)] * 3); turn(g, [(10, 1)] * 3)
+        st = g.state()
+        self.assertEqual(st["phase"], "finished")
+        self.assertEqual([p["place"] for p in st["players"]], [1, 3, 2])
+        self.assertEqual(g.summary()["rounds"], 4)
+
+    def test_countup_tie_at_bottom_nobody_out(self):
+        g = CountUpGame()
+        g.new_game(["A", "B", "C"], {"elim": 1})
+        turn(g, [(20, 1)] * 3); turn(g, [(1, 1)] * 3); turn(g, [(1, 1)] * 3)
+        self.assertEqual(g.state()["order"], [0, 1, 2])
+        self.assertEqual(g.log[-2]["k"], "cu_l_cut_tie")
+
+
 class ServerModeTests(unittest.TestCase):
     def test_switch_save_and_load(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -144,6 +222,11 @@ class ServerModeTests(unittest.TestCase):
             with self.assertRaises(GameError):
                 app2.command({"type": "new_game", "mode": "tictactoe", "players": ["A", "B"]})
             self.assertEqual(app2.state()["mode"], "afgooien")      # mislukte start laat het spel staan
+            with self.assertRaises(GameError):
+                app2.command({"type": "shootout", "choice": "bull"})       # niet bij Afgooien
+            app2.command({"type": "new_game", "mode": "x01", "players": ["A", "B", "C"], "settings": {"start": 101, "shootout": "on"}})
+            st = app2.command({"type": "shootout", "choice": "bull"})
+            self.assertTrue(st["notice"])                                  # nog geen shoot-out
 
 
 if __name__ == "__main__":

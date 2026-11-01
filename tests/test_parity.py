@@ -91,19 +91,22 @@ def label_dart(label: str) -> dict:
 def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
     st = g.state()
     if st["phase"] in ("setup", "finished") or rng.random() < 0.008:
-        n = rng.randint(1, 4)
+        n = rng.randint(1, 5)
         if mode == "x01":
             settings = {"start": rng.choice([101, 101, 170, 201, 301, 501] + list(X01_SCORES[:2])),
                         "match": rng.choice(["off", "legs", "legs", "sets"]), "legs": rng.choice([1, 2, 3]),
                         "sets": rng.choice([1, 2]), "in_mode": rng.choice(["straight", "straight", "double", "master"]),
                         "out_mode": rng.choice(["double", "double", "straight", "master"]),
-                        "bulloff": rng.choice(["off", "off", "wdf", "pdc"])}
+                        "bulloff": rng.choice(["off", "off", "wdf", "pdc"]),
+                        "shootout": rng.choice(["off", "on", "on"])}
             if rng.random() < 0.03:
                 settings["start"] = 500                  # ongeldig
         else:
-            settings = {"rounds": rng.choice([1, 2, 3, 4])}
+            settings = {"rounds": rng.choice([1, 2, 3, 4]), "elim": rng.choice([0, 0, 1, 2, 3])}
             if rng.random() < 0.03:
                 settings["rounds"] = 0                   # ongeldig
+            if rng.random() < 0.03:
+                settings["elim"] = 9                     # ongeldig
         names = [f"P{i}" for i in range(n)]
         if rng.random() < 0.03:
             names = []                                   # ongeldig
@@ -112,6 +115,13 @@ def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
             cmd["bots"] = [rng.choice([0, 0, 1, 3, 6]) for _ in names]
         return cmd
     r = rng.random()
+    if st["phase"] == "shootout" and st["shootout"]["choice"] is None and rng.random() < 0.6:
+        return {"type": "choose", "choice": rng.choice(["bull", "score", "score", "x"])}
+    if rng.random() < 0.01:
+        return {"type": "choose", "choice": rng.choice(["bull", "score"])}
+    if st["phase"] == "shootout" and rng.random() < 0.3:
+        return {"type": "dart", "number": 25, "multiplier": rng.choice([1, 2]),
+                "x": rng.uniform(-0.2, 0.2), "y": rng.uniform(-0.2, 0.2)}
     if st.get("checkout") and rng.random() < 0.45:
         return {"type": "dart", **label_dart(st["checkout"][0])}
     if r < 0.7:
@@ -207,6 +217,8 @@ def run_py(g: Game, cmd: dict):
             g.undo()
         elif t == "allocate":
             g.allocate(cmd["alloc"])
+        elif t == "choose":
+            g.choose(cmd["choice"])
         elif t == "correct":
             g.correct(cmd["index"], {k: v for k, v in cmd.items() if k not in ("type", "index")})
         return None

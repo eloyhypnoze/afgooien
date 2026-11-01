@@ -6,6 +6,8 @@ kopie in JavaScript (tests/test_parity.py controleert dat).
 """
 from __future__ import annotations
 
+import math
+
 from .engine import MAX_BOT_LEVEL, Dart, GameError, label_text, tr
 
 DARTS = 3
@@ -189,6 +191,13 @@ class BaseGame:
         self.announce, self.fx, self.notice = [], [], ("n_no_pending", {})
         return False
 
+    def choose(self, choice) -> bool:
+        """Keuze van een speler (bijv. soort shoot-out bij X01)."""
+        if self.phase not in ("setup", "finished", "shootout"):
+            self.announce, self.fx = [], []
+            return self._ignore("n_no_choice")
+        return self._record(("choose", str(choice)))
+
     def correct(self, index, dart) -> bool:
         self.announce, self.fx, self.notice = [], [], None
         if self.phase == "setup":
@@ -365,7 +374,7 @@ class X01Game(BaseGame):
 
     def default_settings(self) -> dict:
         return {"start": 501, "match": "legs", "legs": 1, "sets": 1, "in_mode": "straight", "out_mode": "double",
-                "bulloff": "off"}
+                "bulloff": "off", "shootout": "off"}
 
     def clean_settings(self, d: dict | None) -> dict:
         d = d or {}
@@ -374,7 +383,8 @@ class X01Game(BaseGame):
         s["legs"] = _int(d, "legs", s["legs"])
         s["sets"] = _int(d, "sets", s["sets"])
         for k, opts in (("match", ("off", "legs", "sets")), ("in_mode", ("straight", "double", "master")),
-                        ("out_mode", ("straight", "double", "master")), ("bulloff", ("off", "wdf", "pdc"))):
+                        ("out_mode", ("straight", "double", "master")), ("bulloff", ("off", "wdf", "pdc")),
+                        ("shootout", ("off", "on"))):
             s[k] = str(d.get(k, s[k]))
             if s[k] not in opts:
                 raise GameError("err_settings")
@@ -396,12 +406,21 @@ class X01Game(BaseGame):
         self.bo_queue: list[int] = []
         self.bo_darts: dict = {}           # speler -> afstand (bull-off)
         self.tiebreak = 0
+        self.turn_on_finish = False        # stond de speler bij het begin van de beurt al op een finish?
+        # shoot-out om de plaatsen (na de winnaar, 3+ spelers)
+        self.so_choice: str | None = None  # "bull" of "score"
+        self.so_chooser: int | None = None
+        self.so_rest: list[int] = []
+        self.so_queue: list[int] = []
+        self.so_vals: dict = {}
+        self.so_next_place = 0
+        self.so_round = 0
 
     def _new_player(self, name: str, i: int, bot: int) -> dict:
         p = super()._new_player(name, i, bot)
         p.update({"score": 0, "legs": 0, "sets": 0, "legs_total": 0, "opened": False, "darts_leg": 0,
                   "f9_points": 0, "f9_darts": 0, "hi_checkout": 0, "best_leg": None, "co_att": 0, "co_hit": 0,
-                  "busts": 0})
+                  "busts": 0, "avg_points": 0, "avg_darts": 0})
         return p
 
     # ---------------------------------------------------------- start
@@ -440,6 +459,7 @@ class X01Game(BaseGame):
         self.bust = False
         self.turn_start = p["score"]
         self.turn_opened = p["opened"]
+        self.turn_on_finish = bool(p["opened"] and checkout(p["score"], DARTS, self.settings["out_mode"]))
         if first:
             s = self.settings
             if s["match"] == "sets":
@@ -456,9 +476,19 @@ class X01Game(BaseGame):
         return sum(p["legs"] for p in self.players) + 1
 
     # ----------------------------------------------------------- spelen
+    @property
+    def current(self) -> int | None:
+        if self.phase == "shootout":
+            return self.so_queue[0] if self.so_queue else self.so_chooser
+        return super().current
+
     def play(self, kind: str, data) -> bool:
         if self.phase == "bulloff":
             return self._play_bulloff(kind, data)
+        if self.phase == "shootout":
+            return self._play_shootout(kind, data)
+        if kind == "choose":
+            return self._ignore("n_no_choice")
         p = self.players[self.order[self.turn_pos]]
         waiting = self.leg_done is not None or self.bust or len(self.turn_darts) >= DARTS
         if kind == "dart":
@@ -527,6 +557,9 @@ class X01Game(BaseGame):
     def _turn_points(self, p: dict, pts: int) -> None:
         """Beurt klaar: statistieken bijwerken (pts = geldige punten, 0 bij bust)."""
         p["points"] += pts
+        if not self.turn_on_finish:
+            p["avg_points"] += pts
+            p["avg_darts"] += len(self.turn_darts)
         before = p["darts_leg"] - len(self.turn_darts)
         if before < 9:
             p["f9_points"] += pts
@@ -552,6 +585,12 @@ class X01Game(BaseGame):
         self._say("win", "xo_l_checkout", name=p["name"], label=d.label, score=co, darts=p["darts_leg"])
         if match_won:
             self.winner = idx
+            if s["shootout"] == "on" and len(self.players) >= 3:
+                p["place"] = 1
+                self._say("win", "xo_l_match", speak="s_win", name=p["name"])
+                self._effect("win", player=idx)
+                self._start_shootout()
+                return
             self.phase = "finished"
             self._place()
             self._say("win", "xo_l_match", speak="s_win", name=p["name"])
@@ -587,6 +626,9 @@ class X01Game(BaseGame):
     def _turn_points_partial(self, p: dict, missing: int) -> None:
         pts = self.turn_score
         p["points"] += pts
+        if not self.turn_on_finish:
+            p["avg_points"] += pts
+            p["avg_darts"] += DARTS
         before = p["darts_leg"] - DARTS
         if before < 9:
             p["f9_points"] += pts
@@ -606,6 +648,8 @@ class X01Game(BaseGame):
     def _play_bulloff(self, kind: str, data) -> bool:
         cur = self.order[self.turn_pos]
         p = self.players[cur]
+        if kind == "choose":
+            return self._ignore("n_no_choice")
         if kind == "dart":
             if cur in self.bo_darts:
                 return self._ignore("n_sel_done", name=p["name"])
@@ -657,13 +701,136 @@ class X01Game(BaseGame):
         self._say("start", "l_order", order=[self.players[i]["name"] for i in self.order])
         self._start_leg()
 
+    # --------------------------------------------------------- shoot-out
+    def _start_shootout(self) -> None:
+        P = self.players
+        rest = sorted((i for i in range(len(P)) if i != self.winner),
+                      key=lambda i: (-P[i]["sets"], -P[i]["legs_total"], P[i]["score"], i))
+        self.phase = "shootout"
+        self.so_rest = rest
+        self.so_chooser = rest[0]
+        self.so_choice = None
+        self.so_queue = []
+        self.so_vals = {}
+        self.so_next_place = len(P)
+        self.so_round = 0
+        self.turn_darts, self.turn_dart_events = [], []
+        self.turn_score = 0
+        self.bust = False
+        self.leg_done = None
+        self._say("turn", "xo_l_so_start", speak="xo_s_so_choose", name=P[rest[0]]["name"])
+
+    def _so_need(self) -> int:
+        return 1 if self.so_choice == "bull" else DARTS
+
+    def _so_new_round(self, who: list) -> None:
+        self.so_round += 1
+        order = [i for i in self.order if i in who]
+        if self.so_chooser in order:
+            k = order.index(self.so_chooser)
+            order = order[k:] + order[:k]
+        self.so_queue = order
+        self.so_vals = {}
+        self.turn_darts, self.turn_dart_events = [], []
+        self.turn_score = 0
+        self._say("turn", "xo_l_so_turn", speak="s_name", name=self.players[order[0]]["name"])
+
+    def _play_shootout(self, kind: str, data) -> bool:
+        P = self.players
+        if kind == "choose":
+            if self.so_choice is not None or data not in ("bull", "score"):
+                return self._ignore("n_no_choice")
+            self.so_choice = data
+            self._say("start", "xo_l_so_bull" if data == "bull" else "xo_l_so_score_pick", name=P[self.so_chooser]["name"])
+            self._so_new_round(self.so_rest)
+            return True
+        if self.so_choice is None:
+            if kind == "takeout":
+                return False
+            return self._ignore("n_so_choose", name=P[self.so_chooser]["name"])
+        cur = self.so_queue[0]
+        p = P[cur]
+        bull = self.so_choice == "bull"
+        if kind == "dart":
+            if len(self.turn_darts) >= self._so_need():
+                return self._ignore("n_turn_full", name=p["name"], n=self._so_need())
+            d = Dart.from_dict(data)
+            self.turn_darts.append(d)
+            self.turn_dart_events.append(self._cur_event)
+            if bull:
+                self.so_vals[cur] = d.bull_distance()
+                self._say("info", "l_sel_bull", name=p["name"], dist=_dist(d))
+            else:
+                self.turn_score += d.score
+                self.so_vals[cur] = -self.turn_score
+                self._say("info", "xo_l_so_dart", name=p["name"], label=d.label, score=self.turn_score)
+            return True
+        if kind in ("next", "takeout"):
+            if not self.turn_darts:
+                if kind == "takeout":
+                    return False
+                return self._ignore("n_sel_wait_bull" if bull else "n_so_wait", name=p["name"])
+            if not bull:
+                self._say("info", "xo_l_so_score", name=p["name"], score=self.turn_score)
+                self._call_score(self.turn_score)
+            self.so_queue.pop(0)
+            self.turn_darts, self.turn_dart_events = [], []
+            self.turn_score = 0
+            if self.so_queue:
+                self._say("turn", "xo_l_so_turn", speak="s_name", name=P[self.so_queue[0]]["name"])
+                return True
+            self._so_resolve()
+            return True
+        return False
+
+    def _so_resolve(self) -> None:
+        P = self.players
+        vals = self.so_vals
+        worst = max(vals.values())
+        losers = sorted(i for i in vals if vals[i] == worst)
+        if len(losers) > 1:
+            self.tiebreak += 1
+            self._say("warn", "xo_l_so_tie", speak="xo_s_so_tie", names=[P[i]["name"] for i in losers])
+            self._so_new_round(losers)
+            return
+        out = losers[0]
+        place = self.so_next_place
+        self.so_next_place -= 1
+        P[out]["place"] = place
+        self.so_rest = [i for i in self.so_rest if i != out]
+        self._say("hit", "xo_l_so_out", speak="xo_s_so_out", name=P[out]["name"], place=place)
+        self._effect("out", player=out)
+        if len(self.so_rest) == 1:
+            last = self.so_rest[0]
+            P[last]["place"] = self.so_next_place
+            self.so_queue = []
+            self.phase = "finished"
+            self._say("win", "xo_l_so_done", name=P[last]["name"], place=self.so_next_place)
+            return
+        self._so_new_round(self.so_rest)
+
+    def _so_state(self) -> dict | None:
+        if self.so_chooser is None:
+            return None
+        bull = self.so_choice == "bull"
+        vals = []
+        for i in sorted(self.so_vals):
+            v = self.so_vals[i]
+            if bull:
+                shown = None if v == math.inf else int(math.floor(v * 170.0 + 0.5))
+            else:
+                shown = -v
+            vals.append({"i": i, "v": shown})
+        return {"choice": self.so_choice, "chooser": self.so_chooser, "rest": list(self.so_rest),
+                "queue": list(self.so_queue), "vals": vals, "round": self.so_round}
+
     # ---------------------------------------------------------- export
     def summary(self) -> dict | None:
         if self.phase != "finished" or self.winner is None:
             return None
         ranked = sorted(self.players, key=lambda q: q["place"] or 99)
         keys = ("name", "place", "bot", "darts", "points", "f9_points", "f9_darts", "n180", "n140", "n100", "hi_turn",
-                "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts")
+                "hi_checkout", "best_leg", "legs_total", "sets", "co_att", "co_hit", "busts", "avg_points", "avg_darts")
         return {"mode": "x01", "winner": self.players[self.winner]["name"], "rounds": self.leg_no + 1,
                 "settings": dict(self.settings), "players": [{k: q[k] for k in keys} for q in ranked]}
 
@@ -677,7 +844,9 @@ class X01Game(BaseGame):
         st["bust"] = self.bust
         st["leg_done"] = self.leg_done
         st["waiting"] = self.phase == "bulloff" and cur in self.bo_darts or self.phase == "play" and (
-            self.leg_done is not None or self.bust or len(self.turn_darts) >= DARTS)
+            self.leg_done is not None or self.bust or len(self.turn_darts) >= DARTS) or (
+            self.phase == "shootout" and bool(self.so_queue) and len(self.turn_darts) >= self._so_need())
+        st["shootout"] = self._so_state()
         route = None
         instr = None
         if self.phase == "bulloff" and cur is not None:
@@ -694,6 +863,14 @@ class X01Game(BaseGame):
             else:
                 route = checkout(p["score"], DARTS - len(self.turn_darts), self.settings["out_mode"])
                 instr = tr(lang, "xo_i_throw", {"name": p["name"], "score": p["score"]})
+        elif self.phase == "shootout" and cur is not None:
+            p = self.players[cur]
+            if self.so_choice is None:
+                instr = tr(lang, "xo_i_so_choose", {"name": p["name"]})
+            elif st["waiting"]:
+                instr = tr(lang, "i_takeout", {"name": p["name"]})
+            else:
+                instr = tr(lang, "xo_i_so_" + self.so_choice, {"name": p["name"], "score": self.turn_score})
         elif self.phase == "finished" and self.winner is not None:
             instr = tr(lang, "i_win", {"name": self.players[self.winner]["name"]})
         st["instruction"] = instr
@@ -712,32 +889,46 @@ class CountUpGame(BaseGame):
     MODE = "countup"
 
     def default_settings(self) -> dict:
-        return {"rounds": 8}
+        return {"rounds": 8, "elim": 0}
 
     def clean_settings(self, d: dict | None) -> dict:
-        s = {"rounds": _int(d or {}, "rounds", 8)}
-        if not 1 <= s["rounds"] <= 30:
+        s = {"rounds": _int(d or {}, "rounds", 8), "elim": _int(d or {}, "elim", 0)}
+        if not 1 <= s["rounds"] <= 30 or s["elim"] not in (0, 1, 2, 3, 4, 5):
             raise GameError("err_settings")
         return s
 
     def _new_player(self, name: str, i: int, bot: int) -> dict:
         p = super()._new_player(name, i, bot)
-        p.update({"score": 0, "rounds": [], "best_round": 0})
+        p.update({"score": 0, "rounds": [], "best_round": 0, "out": False})
         return p
+
+    def _elim(self) -> bool:
+        """Toernooi: elke X rondes valt de laagste af (alleen met 2+ spelers)."""
+        return self.settings["elim"] > 0 and len(self.players) > 1
 
     def start(self) -> None:
         self.order = list(range(len(self.players)))
         self.phase = "play"
         self.turn_no = 1
         self.turn_pos = 0
-        self._say("start", "cu_l_new", rounds=self.settings["rounds"], names=[p["name"] for p in self.players])
+        if self._elim():
+            self._say("start", "cu_l_new_elim", every=self.settings["elim"], names=[p["name"] for p in self.players])
+        else:
+            self._say("start", "cu_l_new", rounds=self.settings["rounds"], names=[p["name"] for p in self.players])
         self._begin_turn()
+
+    def _left(self) -> int:
+        e = self.settings["elim"]
+        return e - (self.turn_no - 1) % e
 
     def _begin_turn(self) -> None:
         p = self.players[self.order[self.turn_pos]]
         self.turn_darts, self.turn_dart_events = [], []
         self.turn_score = 0
-        self._say("turn", "cu_l_turn", speak="s_name", name=p["name"], round=self.turn_no, rounds=self.settings["rounds"])
+        if self._elim():
+            self._say("turn", "cu_l_turn_elim", speak="s_name", name=p["name"], round=self.turn_no, left=self._left())
+        else:
+            self._say("turn", "cu_l_turn", speak="s_name", name=p["name"], round=self.turn_no, rounds=self.settings["rounds"])
 
     def play(self, kind: str, data) -> bool:
         p = self.players[self.order[self.turn_pos]]
@@ -769,11 +960,39 @@ class CountUpGame(BaseGame):
             self.turn_pos += 1
             if self.turn_pos >= n:
                 self.turn_pos = 0
-                if self.turn_no >= self.settings["rounds"]:
+                if self._elim():
+                    if self.turn_no % self.settings["elim"] == 0 and self._cut():
+                        return True
+                elif self.turn_no >= self.settings["rounds"]:
                     self._finish()
                     return True
                 self.turn_no += 1
             self._begin_turn()
+            return True
+        return False
+
+    def _cut(self) -> bool:
+        """Einde van een blok: de laagste valt af. Geeft True als het spel daarmee klaar is."""
+        active = [self.players[i] for i in self.order]
+        low = min(p["score"] for p in active)
+        bottom = [p for p in active if p["score"] == low]
+        if len(bottom) > 1:
+            self._say("warn", "cu_l_cut_tie", names=[p["name"] for p in bottom], score=low)
+            return False
+        q = bottom[0]
+        q["out"] = True
+        q["place"] = len(active)
+        self.order = [i for i in self.order if i != q["index"]]
+        self._say("hit", "cu_l_out", speak="cu_s_out", name=q["name"], score=q["score"], place=q["place"])
+        self._effect("out", player=q["index"])
+        if len(self.order) == 1:
+            w = self.players[self.order[0]]
+            w["place"] = 1
+            self.winner = w["index"]
+            self.phase = "finished"
+            self.turn_darts, self.turn_dart_events = [], []
+            self._say("win", "cu_l_win", speak="cu_s_win", name=w["name"], score=w["score"])
+            self._effect("win", player=self.winner)
             return True
         return False
 
@@ -798,7 +1017,7 @@ class CountUpGame(BaseGame):
         ranked = sorted(self.players, key=lambda q: (q["place"], q["index"]))
         keys = ("name", "place", "bot", "darts", "points", "score", "best_round", "n180", "n140", "n100", "hi_turn")
         top = [q["name"] for q in ranked if q["place"] == 1]
-        return {"mode": "countup", "winner": " & ".join(top), "rounds": self.settings["rounds"],
+        return {"mode": "countup", "winner": " & ".join(top), "rounds": self.turn_no if self._elim() else self.settings["rounds"],
                 "settings": dict(self.settings), "players": [{k: q[k] for k in keys} for q in ranked]}
 
     def state(self, lang: str = "nl") -> dict:
@@ -806,12 +1025,15 @@ class CountUpGame(BaseGame):
         lang = st["lang"]
         cur = self.current
         st["waiting"] = self.phase == "play" and len(self.turn_darts) >= DARTS
-        st["rounds"] = self.settings["rounds"]
+        st["rounds"] = None if self._elim() else self.settings["rounds"]
+        st["elim_left"] = self._left() if self._elim() and self.phase == "play" else None
         instr = None
         if self.phase == "play" and cur is not None:
             p = self.players[cur]
             if st["waiting"]:
                 instr = tr(lang, "i_takeout", {"name": p["name"]})
+            elif self._elim():
+                instr = tr(lang, "cu_i_throw_elim", {"name": p["name"], "round": self.turn_no, "left": self._left()})
             else:
                 instr = tr(lang, "cu_i_throw", {"name": p["name"], "round": self.turn_no, "rounds": self.settings["rounds"]})
         elif self.phase == "finished" and self.winner is not None:

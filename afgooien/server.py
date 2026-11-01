@@ -155,7 +155,7 @@ class App:
         return (p["bot"] if isinstance(p, dict) else p.bot) or 0
 
     def _active(self) -> bool:
-        return self.game.phase in ("select", "play", "bulloff")
+        return self.game.phase in ("select", "play", "bulloff", "shootout")
 
     def _current_is_bot(self) -> bool:
         cur = self.game.current
@@ -219,6 +219,10 @@ class App:
             g.next_player()
         elif t == "allocate":
             g.allocate(cmd.get("alloc") or [])
+        elif t == "shootout":
+            if not hasattr(g, "choose"):
+                raise GameError("err_unknown_cmd", cmd=t)
+            g.choose(cmd.get("choice"))
         elif t == "undo":
             g.undo()
         elif t == "reset":

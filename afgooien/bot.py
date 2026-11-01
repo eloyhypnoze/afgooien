@@ -238,6 +238,11 @@ def next_action_other(st: dict, me: dict, level: int, rng: random.Random) -> dic
         return {"type": "next"}
     if st["phase"] == "bulloff":
         return throw_at("Bullseye", level, rng)
+    if st["phase"] == "shootout":
+        so = st.get("shootout") or {}
+        if so.get("choice") is None:
+            return {"type": "shootout", "choice": "score" if level >= 6 else "bull"}
+        return throw_at("Bullseye" if so["choice"] == "bull" else "T20", level, rng)
     if st["mode"] == "x01":
         return throw_at(x01_target(st, me), level, rng)
     code = party_target(st, me, level)
@@ -249,7 +254,7 @@ def next_action_other(st: dict, me: dict, level: int, rng: random.Random) -> dic
 def next_action(st: dict, rng: random.Random) -> dict | None:
     """Volgende opdracht voor de bot die aan de beurt is, of None als er geen bot aan de beurt is."""
     cur = st.get("current")
-    if cur is None or st["phase"] not in ("select", "play", "bulloff"):
+    if cur is None or st["phase"] not in ("select", "play", "bulloff", "shootout"):
         return None
     me = st["players"][cur]
     level = me.get("bot") or 0
@@ -272,4 +277,4 @@ def next_action(st: dict, rng: random.Random) -> dict | None:
 
 def delay_for(action: dict) -> float:
     """Wachttijd in seconden vóór de bot deze actie doet (zodat je het kunt volgen)."""
-    return {"dart": 1.1, "next": 1.8, "allocate": 1.5}.get(action["type"], 1.0)
+    return {"dart": 1.1, "next": 1.8, "allocate": 1.5, "shootout": 1.5}.get(action["type"], 1.0)

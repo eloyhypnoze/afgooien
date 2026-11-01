@@ -32,6 +32,7 @@
     <button id="nav-settings" class="navlink" data-i18n="nav_settings"></button>
   </nav>
   <div class="status">
+    <span id="clock" class="clock"></span>
     <span id="src" class="pill">…</span>
     <button id="phonebtn" class="iconbtn" data-i18n-title="qr_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10.5 18h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <a id="remotebtn" class="remotebtn hidden" href="/m">🎯 <span data-i18n="rem_ctrl"></span></a>
@@ -292,6 +293,8 @@
               <div class="seg" data-seg="out_mode"><button data-v="straight">Straight</button><button data-v="double">Double</button><button data-v="master">Master</button></div></div>
             <div class="xrow"><span class="xl">Bull-off</span>
               <div class="seg" data-seg="bulloff"><button data-v="off" data-i18n="o_off"></button><button data-v="wdf">WDF</button><button data-v="pdc">PDC</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_shootout"></span>
+              <div class="seg" data-seg="shootout"><button data-v="off" data-i18n="o_off"></button><button data-v="on">Shoot-out</button></div></div>
             <p class="sub small" id="x_help"></p>
           </div>
         </div>
@@ -299,8 +302,11 @@
           <div class="cardhead"><h2>Count Up</h2><span class="tag tag-practice" data-i18n="tag_practice"></span></div>
           <p class="sub" data-i18n="cu_sub"></p>
           <div class="xset">
-            <div class="xrow"><span class="xl" data-i18n="cu_rounds"></span>
+            <div class="xrow"><span class="xl" data-i18n="cu_elim"></span>
+              <div class="seg" data-cuseg="elim"><button data-v="0" data-i18n="o_off"></button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="5">5</button></div></div>
+            <div class="xrow" id="cu_roundsrow"><span class="xl" data-i18n="cu_rounds"></span>
               <div class="stepper big"><button data-step="rounds" data-d="-1">−</button><span class="val" id="cu_rounds"></span><button data-step="rounds" data-d="1">+</button></div></div>
+            <p class="sub small" id="cu_help"></p>
           </div>
         </div>
         <div class="card rulescard gencard hidden" id="gencard">
@@ -400,6 +406,18 @@
       <button id="winhome" class="ghost" data-i18n="win_home"></button>
       <button id="winstats" class="ghost" data-i18n="scoreboard_btn"></button>
     </div>
+  </div>
+</div>
+
+<div id="sochoice" class="overlay hidden">
+  <div class="card allocbox sobox">
+    <h2 data-i18n="so_title"></h2>
+    <p id="sosub" class="sub"></p>
+    <div class="sobtns">
+      <button class="sobtn" data-so="bull"><b data-i18n="so_bull"></b><small data-i18n="so_bull_d"></small></button>
+      <button class="sobtn" data-so="score"><b data-i18n="so_score"></b><small data-i18n="so_score_d"></small></button>
+    </div>
+    <div class="row"><button id="soundo" class="ghost" data-i18n="undo_full"></button></div>
   </div>
 </div>
 

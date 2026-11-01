@@ -151,10 +151,18 @@ N legs), inmode en uitmode (Straight / Double / Master) en bull-off (Uit / WDF =
 het midden begint / PDC = alleen bull en bullseye tellen). Bust = terug naar de score van het
 begin van je beurt. Onder de instructie staat de uitgooi-route (bijv. "T20 · T20 · Bull") en
 het eerste vak licht op het bord op. De beginner wisselt per leg. Statistieken: 3-pijls-
-gemiddelde, first 9, 180/140+/100+, hoogste finish, beste leg, uitgooi% en busts.
+gemiddelde, first 9, 180/140+/100+, hoogste finish, beste leg, uitgooi% en busts. Het
+gemiddelde telt alleen beurten waarin je nog niet op een finish stond (je rest was aan het
+begin van de beurt niet uit te gooien in 3 pijlen).
+**Toernooi (shoot-out)**, vanaf 3 spelers: is er een winnaar, dan gooit de rest om de overige
+plaatsen. De nummer 2 (dichtst bij nul) kiest: dichtst bij de bull (1 pijl) of hoogste score in
+één beurt (3 pijlen). Wie het slechtst gooit valt af en krijgt de laatste vrije plaats; bij
+gelijkspel onderaan gooien alleen die spelers opnieuw. Dit gaat door tot er één over is.
 
 **Count Up**: elke pijl telt zijn gewone score; na het aantal rondes (standaard 8) wint de
-hoogste. Ook solo te spelen.
+hoogste. Ook solo te spelen. **Toernooi**: kies 1, 2, 3 of 5: na elk blok van zoveel rondes valt
+de speler met de laagste totaalscore af (staan er meerdere gelijk onderaan, dan valt niemand af).
+De laatste speler die overblijft wint.
 
 **Cricket**: sluit 15 t/m 20 en de bull (3 marks; dubbel = 2, triple = 3). Normaal, cut-throat
 of zonder punten; maximaal aantal rondes instelbaar. Een marks-tabel staat onder de spelers.
@@ -313,6 +321,9 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.35**: klok in de bovenbalk; X01-gemiddelde telt alleen beurten waarin je nog niet op een finish
+  stond; toernooimodus bij X01 (shoot-out om de plaatsen) en Count Up (laagste valt af na elk blok rondes),
+  ook te bedienen vanaf de telefoon
 - **1.34**: een andere stem kiezen had geen effect: de browser speelde de bewaarde opname van de vorige stem af;
   opgelost
 - **1.33**: volumeknop bij de stem; willekeurige gooivolgorde (behalve bij Afgooien en X01 met bull-off, daar

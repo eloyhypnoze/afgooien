@@ -127,7 +127,7 @@ function buildBoard() {
   boardEls.ring = el("circle", { r: 232, class: "statusring" }, svg);
 
   svg.addEventListener("click", (ev) => {
-    if (!S || !["select", "play", "bulloff"].includes(S.phase)) return;
+    if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return;
     if (botTurn()) { $("notice").textContent = t("bot_turn"); return; }
     const p = svg.createSVGPoint();
     p.x = ev.clientX; p.y = ev.clientY;
@@ -297,7 +297,8 @@ function render(state) {
   }
 
   // worpen deze beurt
-  const slots = S.phase === "select" || S.phase === "bulloff" ? Math.max(1, S.darts.length) : other ? 3 : S.settings.darts_per_turn;
+  const slots = S.phase === "select" || S.phase === "bulloff" ? Math.max(1, S.darts.length)
+    : S.phase === "shootout" ? (S.shootout && S.shootout.choice === "bull" ? 1 : 3) : other ? 3 : S.settings.darts_per_turn;
   let sh = "";
   for (let i = 0; i < slots; i++) {
     const d = S.darts[i];
@@ -310,7 +311,8 @@ function render(state) {
 
   const th = tonHint();
   $("turnscore").innerHTML = (S.bust ? `<span>${t("turn_lbl")}</span><b class="bustv">${t("bust")}</b>`
-    : S.phase === "play" ? `<span>${t("turn_lbl")}</span><b>${S.turn_score}</b>` : `<span>${t("darts_lbl")}</span><b>${S.darts.length}</b>`) +
+    : S.phase === "play" ? `<span>${t("turn_lbl")}</span><b>${S.turn_score}</b>`
+    : S.phase === "shootout" && S.shootout && S.shootout.choice === "score" ? `<span>${t("turn_lbl")}</span><b>${(S.shootout.vals.find((v) => v.i === S.current) || { v: 0 }).v}</b>` : `<span>${t("darts_lbl")}</span><b>${S.darts.length}</b>`) +
     (th && th.text ? `<span class="tm ${th.cls}">${th.text}</span>` : "") +
     (S.queued ? `<span class="tm mid">${t("waiting", { n: S.queued })}</span>` : "");
   const bs = boardStatus();
@@ -320,7 +322,7 @@ function render(state) {
   $("boardreset").classList.toggle("hidden", !(S.source && S.source.enabled) || S.phase === "setup");
 
   // knoppen
-  const active = S.phase === "select" || S.phase === "play" || S.phase === "bulloff";
+  const active = S.phase === "select" || S.phase === "play" || S.phase === "bulloff" || S.phase === "shootout";
   $("misslbl").textContent = t(!other && S.phase === "play" && S.settings.miss_penalty ? "miss_pen" : "miss");
   $("miss").disabled = !active || botTurn();
   $("undo").disabled = !S.can_undo;
@@ -333,6 +335,7 @@ function render(state) {
   updateBoard();
 
   renderAlloc();
+  renderSoChoice();
   if (S.history_version !== undefined && S.history_version !== H.version) loadHistory();
 
   // winnaar
@@ -347,7 +350,7 @@ function render(state) {
     const ranked = [...S.players].sort((a, b) => a.place - b.place || a.index - b.index);
     $("ranking").innerHTML = ranked.map((p) => {
       let who = `<b>${esc(p.name)}</b>`, row;
-      if (S.mode === "x01") row = t("win_x01", { avg: fmt2(avg3(p.points, p.darts)), legs: p.legs_total, co: p.hi_checkout || "–" });
+      if (S.mode === "x01") row = t("win_x01", { avg: fmt2(xavg(p)), legs: p.legs_total, co: p.hi_checkout || "–" });
       else if (S.mode === "countup") row = t("win_cu", { score: p.score, avg: fmt2(avg3(p.points, p.darts)), best: p.best_round });
       else if (isParty()) { const v = S.views[p.index]; row = esc([String(v.big)].concat(v.meta).join(" · ")); }
       else { who += ` (${p.number})`; row = t("win_row", { kills: p.kills, ppt: fmt2(p.turns ? (p.gained + p.knocked) / p.turns : 0), tr: p.triples }); }
@@ -361,9 +364,18 @@ function render(state) {
 // --------------------------------------------------------- X01 / Count Up
 const isOther = () => !!(S && S.mode && S.mode !== "afgooien");
 const avg3 = (pts, darts) => (darts ? pts / darts * 3 : 0);
+// X01-gemiddelde telt alleen beurten waarin je nog niet op een finish stond (oude potjes: alles)
+const xavg = (p) => avg3(p.avg_points != null ? p.avg_points : p.points, p.avg_darts != null ? p.avg_darts : p.darts);
 function renderOther() {
   const st = S.settings;
-  if (S.mode === "x01") {
+  const so = S.mode === "x01" ? S.shootout : null;
+  const soVal = {};
+  if (so) so.vals.forEach((v) => { soVal[v.i] = v.v; });
+  if (S.mode === "x01" && S.phase === "shootout" && so) {
+    $("roundpill").textContent = t("rp_so");
+    const ch = S.players[so.chooser];
+    $("phaseinfo").textContent = so.choice === null ? t("ph_so_choose", { name: ch.name }) : t(so.choice === "bull" ? "ph_so_bull" : "ph_so_score");
+  } else if (S.mode === "x01") {
     $("roundpill").textContent = S.phase === "bulloff" ? t("rp_bulloff")
       : S.phase === "finished" ? t("rp_over")
       : st.match === "sets" ? t("rp_set_leg", { s: S.set_no, n: S.players.reduce((a, p) => a + p.legs, 0) + 1 }) : t("rp_leg", { n: S.leg_no + 1 });
@@ -374,21 +386,33 @@ function renderOther() {
       $("phaseinfo").innerHTML = esc(t("ph_x01", { start: st.start, out: cap(st.out_mode), in: st.in_mode !== "straight" ? t("ph_in", { m: cap(st.in_mode) }) : "", match })) +
         (S.checkout ? `<span class="tg co">${esc(t("ph_checkout", { route: S.checkout.join(" · ") }))}</span>` : "");
     }
+  } else if (S.rounds === null) {
+    $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu_elim", { n: S.turn_no, l: S.elim_left });
+    $("phaseinfo").textContent = t("ph_cu_elim", { n: st.elim });
   } else {
     $("roundpill").textContent = S.phase === "finished" ? t("rp_over") : t("rp_cu", { n: S.turn_no, r: st.rounds });
     $("phaseinfo").textContent = t("ph_cu", { r: st.rounds });
   }
-  const order = S.order.length ? S.order : S.players.map((p) => p.index);
+  let order = S.order.length ? S.order.slice() : S.players.map((p) => p.index);
+  if (order.length < S.players.length) order = order.concat(S.players.map((p) => p.index).filter((i) => !order.includes(i))
+    .sort((a, b) => (S.players[a].place || 99) - (S.players[b].place || 99)));
   const solo = S.players.length === 1;
   $("players").classList.toggle("solo", solo);
   $("players").innerHTML = order.map((i) => {
     const p = S.players[i];
     const c = COLORS[p.color % COLORS.length];
     const curr = i === S.current && S.phase !== "finished";
-    let big, meta = [], side = "";
+    let big, meta = [], side = "", dim = false;
     if (S.mode === "x01") {
       big = S.phase === "bulloff" ? "–" : p.score;
-      meta.push(t("pm_avg", { avg: fmt2(avg3(p.points, p.darts)) }), t("pm_darts", { n: p.darts_leg }));
+      if (S.phase === "shootout" && so) {
+        const inSo = so.rest.includes(i);
+        dim = !inSo && i !== S.winner;
+        if (i in soVal) big = so.choice === "bull" ? (soVal[i] === null ? t("miss_mm") : soVal[i]) : soVal[i];
+        else big = inSo ? "–" : `#${p.place}`;
+        if (inSo) meta.push(so.choice === "bull" && i in soVal && soVal[i] !== null ? t("pm_mm", { n: soVal[i] }) : t("pm_so_in"));
+      }
+      meta.push(t("pm_avg", { avg: fmt2(xavg(p)) }), t("pm_darts", { n: p.darts_leg }));
       if (!p.opened && S.phase === "play") meta.push(t("pm_notopen"));
       if (st.match !== "off") {
         side = (st.match === "sets" ? `<span class="ls"><small>${t("pm_sets")}</small><b>${p.sets}</b></span>` : "") +
@@ -398,12 +422,14 @@ function renderOther() {
       big = p.score;
       meta.push(t("pm_avg", { avg: fmt2(avg3(p.score, p.darts)) }));
       if (p.rounds.length) meta.push(t("pm_last", { n: p.rounds[p.rounds.length - 1] }));
+      if (p.out && S.phase !== "finished") { dim = true; meta.unshift(`#${p.place}`); }
     }
     if (p.place && S.phase === "finished") meta.unshift(`#${p.place}`);
     const bot = p.bot ? ` <span class="botbadge">${t("bot_badge", { l: p.bot })}</span>` : "";
-    const cls = ["player", "xp", curr ? "current" : "", cardFx(i)].join(" ");
+    const badge = p.out && S.phase !== "finished" ? `<span class="badge o">${t("badge_out")}</span>` : "";
+    const cls = ["player", "xp", curr ? "current" : "", dim ? "soout" : "", cardFx(i)].join(" ");
     return `<div class="${cls}" data-i="${i}" style="--pc:${c}">
-      <div class="name">${p.bot ? "🤖 " : ""}${esc(p.name)}</div>
+      <div class="name">${p.bot ? "🤖 " : ""}${esc(p.name)}${badge}</div>
       <div class="side">${side}</div>
       <div class="bigscore">${big}</div>
       <div class="meta">${meta.map(esc).join(" · ")}${bot}</div></div>`;
@@ -444,6 +470,14 @@ function renderParty() {
           tb.rows[i].map((m, k) => `<td class="mk m${m} ${tb.closed[k] ? "closed" : ""}">${sym[m]}</td>`).join("") + `<td class="pts">${p.score}</td></tr>`;
       }).join("") + "</tbody></table>";
   }
+}
+
+// ------------------------------------------------------- shoot-out keuze
+function renderSoChoice() {
+  const so = S && S.phase === "shootout" ? S.shootout : null;
+  const show = !!(so && so.choice === null && !(S.players[so.chooser] || {}).bot);
+  $("sochoice").classList.toggle("hidden", !show);
+  if (show) $("sosub").textContent = t("so_sub", { name: S.players[so.chooser].name });
 }
 
 // ------------------------------------------------------- punten verdelen
@@ -992,16 +1026,17 @@ function updateFullBtn() { if ($("d_full")) $("d_full").textContent = t(isFull()
 
 // ------------------------------------------------- statusring en 100+-meter
 function botTurn() {
-  return !!(S && ["select", "play", "bulloff"].includes(S.phase) && S.current !== null && S.players[S.current] && S.players[S.current].bot);
+  return !!(S && ["select", "play", "bulloff", "shootout"].includes(S.phase) && S.current !== null && S.players[S.current] && S.players[S.current].bot);
 }
 // [kleur, tekst]: groen = gooien, geel = (nog) niet gooien, rood = probleem
 function boardStatus() {
-  if (!S || !["select", "play", "bulloff"].includes(S.phase)) return null;
+  if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return null;
   const src = S.source || {};
   const cur = S.players[S.current];
   if (src.enabled && !src.connected) return ["red", t("bs_noconn")];
   if (src.enabled && (src.board_offline || (src.board && /stop|error|fout|calibrat|kalibr/i.test(String(src.board))))) return ["red", t("bs_board", { b: boardName(src) })];
   if (cur && cur.bot) return ["yellow", t("bs_bot", { name: cur.name })];
+  if (S.phase === "shootout" && S.shootout && S.shootout.choice === null) return ["yellow", t("bs_so_choose", { name: cur ? cur.name : "" })];
   if (S.pending) return ["yellow", t("bs_choose")];
   if (isOther() ? S.waiting : ((S.phase === "select" && S.sel_step === "done") || (S.phase === "play" && S.darts.length >= S.settings.darts_per_turn))) {
     return ["yellow", t("bs_takeout")];
@@ -1106,6 +1141,8 @@ function aggregate(games, mode) {
       if (p.place === 1) { a.wins++; a.streak++; a.bestStreak = Math.max(a.bestStreak, a.streak); } else a.streak = 0;
       if (p.place === 2) a.seconds++;
       SUM.forEach((f) => (a[f] += p[f] || 0));
+      a.avgP = (a.avgP || 0) + ((p.avg_points != null ? p.avg_points : p.points) || 0);
+      a.avgD = (a.avgD || 0) + ((p.avg_darts != null ? p.avg_darts : p.darts) || 0);
       if (p.darts_to_target != null && (a.best === null || p.darts_to_target < a.best)) a.best = p.darts_to_target;
       if (p.hi_checkout) a.hico = Math.max(a.hico, p.hi_checkout);
       if (p.best_leg != null && (a.bestLeg === null || p.best_leg < a.bestLeg)) a.bestLeg = p.best_leg;
@@ -1125,7 +1162,7 @@ function aggregate(games, mode) {
     tpg: a.games ? a.triples / a.games : 0,
     dpg: a.games ? a.doubles / a.games : 0,
     hit: a.darts ? a.useful / a.darts : 0,
-    avg: avg3(a.points || 0, a.darts),
+    avg: avg3(a.avgP || 0, a.avgD || 0),
     f9: avg3(a.f9_points || 0, a.f9_darts || 0),
     coPct: a.co_att ? a.co_hit / a.co_att : null,
     avgScore: a.games ? (a.score || 0) / a.games : 0,
@@ -1356,13 +1393,14 @@ function otherGameRow(g, when, me) {
   const [w, ...rest] = g.players;
   const head = x ? ["c_avg", "c_f9", "c_legs", "c_hico", "c_bestleg", "c_180", "c_140", "c_100", "g_darts"]
     : ["c_score", "c_ppr", "c_bestround", "c_180", "c_140", "c_100", "g_darts"];
-  const cells = (p) => (x ? [fmt2(avg3(p.points, p.darts)), fmt2(avg3(p.f9_points, p.f9_darts)), p.legs_total, p.hi_checkout || "–",
+  const cells = (p) => (x ? [fmt2(xavg(p)), fmt2(avg3(p.f9_points, p.f9_darts)), p.legs_total, p.hi_checkout || "–",
     p.best_leg == null ? "–" : p.best_leg, p.n180, p.n140, p.n100, p.darts]
     : [p.score, fmt2(avg3(p.points, p.darts)), p.best_round, p.n180, p.n140, p.n100, p.darts]);
   const detail = g.players.map((p) => `<tr class="${me && nkey(p.name) === me ? "me" : ""}"><td class="l">${p.place}.</td><td class="l name">${p.bot ? "🤖 " : ""}${esc(p.name)}</td>` +
     cells(p).map((c) => `<td>${c}</td>`).join("") + "</tr>").join("");
-  const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out` : t("chip_rounds", { n: g.rounds });
-  const wtxt = x ? `${esc(w.name)} (${fmt2(avg3(w.points, w.darts))})` : `${esc(g.winner)} (${w.score})`;
+  const what = x ? `${g.settings.start} · ${cap(g.settings.out_mode)} out${g.settings.shootout === "on" ? " · " + t("chip_so") : ""}`
+    : g.settings && g.settings.elim ? t("chip_elim", { n: g.settings.elim }) : t("chip_rounds", { n: g.rounds });
+  const wtxt = x ? `${esc(w.name)} (${fmt2(xavg(w))})` : `${esc(g.winner)} (${w.score})`;
   return `<details class="gamerow"><summary><span class="when">${when}</span>
     <span class="gwin">🏆 ${wtxt}</span>
     <span class="rest">${rest.map((p) => `${p.place}. ${esc(p.name)}`).join(" · ")}</span>
@@ -1394,7 +1432,7 @@ function periodName() {
 function keyStat(g, p) {
   const m = gmode(g);
   if (m === "afgooien") return [t("c_kills"), String(p.kills || 0), p.kills || 0];
-  if (m === "x01") { const a = avg3(p.points, p.darts); return [t("c_avg"), fmt2(a), a]; }
+  if (m === "x01") { const a = xavg(p); return [t("c_avg"), fmt2(a), a]; }
   if (m === "countup") return [t("c_score"), String(p.score), p.score];
   return [t("c_score2"), String(p.score), p.score];
 }
@@ -1825,12 +1863,13 @@ function genClick(e) {
 }
 // Welk spel in de lobby staat (afgooien | x01 | countup) en de instellingen per spel.
 const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
-const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off" };
+const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
 const x01Set = Object.assign({}, X01_DEF, store.get("afgooien.x01", {}));
-const cuSet = Object.assign({ rounds: 8 }, store.get("afgooien.countup", {}));
+const cuSet = Object.assign({ rounds: 8, elim: 0 }, store.get("afgooien.countup", {}));
+if (![0, 1, 2, 3, 5].includes(cuSet.elim)) cuSet.elim = 0;
 const cap = (m) => m.charAt(0).toUpperCase() + m.slice(1);
 const modeTitle = (m, st) => (m === "x01" ? String((st || x01Set).start) : t("gm_" + (m || "afgooien")));
 function setLobbyMode(m) {
@@ -1845,6 +1884,7 @@ function x01Chips(st) {
   else c.push(t("chip_first_legs", { n: st.match === "off" ? 1 : st.legs }));
   c.push(t("chip_in", { m: cap(st.in_mode) }), t("chip_out", { m: cap(st.out_mode) }));
   c.push(st.bulloff === "off" ? t("chip_nobull") : t("chip_bull", { m: st.bulloff.toUpperCase() }));
+  if (st.shootout === "on") c.push(t("chip_so"));
   return c;
 }
 function renderLobbyMode() {
@@ -1867,8 +1907,11 @@ function renderLobbyMode() {
     g.querySelectorAll("button").forEach((b) => b.classList.toggle("on", s[g.dataset.seg] === b.dataset.v)));
   $("x01chips").innerHTML = x01Chips(s).map((c) => `<span class="chipx">${esc(c)}</span>`).join("");
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
-    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "");
+    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
   $("cu_rounds").textContent = cuSet.rounds;
+  $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
+  document.querySelectorAll("#cucard [data-cuseg] button").forEach((b) => b.classList.toggle("on", +b.dataset.v === cuSet.elim));
+  $("cu_help").textContent = cuSet.elim > 0 ? t("cuh_elim", { n: cuSet.elim }) : t("cuh_rounds");
   store.set("afgooien.x01", x01Set);
   store.set("afgooien.countup", cuSet);
 }
@@ -2126,6 +2169,7 @@ function bind() {
     const st = e.target.closest("[data-step]");
     if (st) { lobbyStep(st.dataset.step, +st.dataset.d); return; }
     const sg = e.target.closest(".seg button");
+    if (sg && sg.parentElement.dataset.cuseg) { cuSet[sg.parentElement.dataset.cuseg] = +sg.dataset.v; renderLobbyMode(); return; }
     if (sg) { x01Set[sg.parentElement.dataset.seg] = sg.dataset.v; renderLobbyMode(); }
   });
   $("lobbyback").onclick = () => setView("modes");
@@ -2227,6 +2271,18 @@ function bind() {
   });
   $("allocok").onclick = () => send({ type: "allocate", alloc: Object.entries(alloc).map(([i, n]) => [+i, n]) });
   $("allocundo").onclick = () => send({ type: "undo" });
+  $("sochoice").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-so]");
+    if (b) send({ type: "shootout", choice: b.dataset.so });
+  });
+  $("soundo").onclick = () => send({ type: "undo" });
+  // klok in de bovenbalk
+  const tickClock = () => {
+    const d = new Date();
+    $("clock").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  };
+  tickClock();
+  setInterval(tickClock, 10000);
   // stem-paneel
   $("sound").onclick = (e) => {
     e.stopPropagation();
@@ -2278,7 +2334,7 @@ function bind() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { $("stats").classList.add("hidden"); $("voicepanel").classList.add("hidden"); if (fixIndex !== null) setFix(null); }
     if (!$("stats").classList.contains("hidden")) return;
-    if (!S || !["select", "play", "bulloff"].includes(S.phase)) return;
+    if (!S || !["select", "play", "bulloff", "shootout"].includes(S.phase)) return;
     if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
     if (!$("confirm").classList.contains("hidden")) return;
     if (S.pending) { if (e.key === "Enter" && !$("allocok").disabled) $("allocok").click(); return; }

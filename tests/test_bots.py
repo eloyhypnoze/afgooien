@@ -83,6 +83,8 @@ def run_other(mode, levels, settings, rng):
             raise AssertionError("bot deed niets")
         if a["type"] == "dart":
             g.throw({k: v for k, v in a.items() if k != "type"})
+        elif a["type"] == "shootout":
+            g.choose(a["choice"])
         else:
             g.next_player()
     raise AssertionError("potje eindigde niet")
@@ -107,6 +109,37 @@ class OtherBotTests(unittest.TestCase):
             for level in (1, 4, 6):
                 g = run_other("x01", [level, level], settings, rng)
                 self.assertIsNotNone(g.summary())
+
+    def test_tournament_modes_finish_with_bots(self):
+        rng = random.Random(8)
+        for level in (1, 3, 6):
+            g = run_other("x01", [level, 2, 5, 4], {"start": 101, "shootout": "on"}, rng)
+            self.assertEqual(sorted(p["place"] for p in g.players), [1, 2, 3, 4])
+            g = run_other("countup", [level, 2, 5], {"elim": 1}, rng)
+            self.assertEqual(sorted(p["place"] for p in g.players), [1, 2, 3])
+
+    def test_js_tournament_bots_finish(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js niet gevonden")
+        js = """
+const w = require(%r), b = require(%r);
+const out = [];
+for (const [mode, st, lv] of [["x01", {start: 101, shootout: "on"}, [1, 6, 3, 2]], ["x01", {start: 101, shootout: "on"}, [6, 6, 6]],
+                              ["countup", {elim: 2}, [1, 6, 3]]]) {
+  const g = w.makeGame(mode); g.newGame(lv.map((_, i) => "B" + i), st, lv);
+  let n = 0;
+  while (g.phase !== "finished" && n++ < 20000) {
+    const a = b.nextAction(g.state());
+    if (a.type === "dart") { const d = { ...a }; delete d.type; g.throw_(d); }
+    else if (a.type === "shootout") g.choose(a.choice); else g.nextPlayer();
+  }
+  out.push(g.players.map((p) => p.place).sort().join(","));
+}
+console.log(JSON.stringify(out));
+""" % tuple(os.path.join(HERE, "..", "web", f) for f in ("games.js", "bot.js"))
+        out = json.loads(subprocess.run([node, "-e", js], capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(out, ["1,2,3,4", "1,2,3", "1,2,3"])
 
     def test_x01_strong_bot_beats_weak(self):
         rng = random.Random(11)

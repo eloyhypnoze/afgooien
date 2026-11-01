@@ -91,3 +91,10 @@ body.mob { font-size: 15px; padding: env(safe-area-inset-top) 0 env(safe-area-in
 .mbtn { display: block; text-align: center; text-decoration: none; border-radius: 12px; padding: .75em 1em; margin-top: .55rem; font-weight: 800; }
 a.primary.mbtn { color: #fff; background: linear-gradient(180deg, #3b78ff, var(--accent2)); }
 a.ghost.mbtn { color: var(--text); background: var(--panel2); border: 1px solid var(--line2); }
+
+/* shoot-out keuze */
+.sobtns { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.sobtn { display: flex; flex-direction: column; gap: .3rem; align-items: center; padding: 1rem .5rem; border-radius: 14px;
+  background: var(--panel2); border: 2px solid var(--line2, var(--line)); color: var(--text); font-size: 1rem; }
+.sobtn:active { border-color: var(--accent); }
+.sobtn small { color: var(--muted); font-size: .78rem; }
