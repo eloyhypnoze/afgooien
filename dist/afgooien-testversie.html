@@ -216,6 +216,9 @@ button.mode:hover { border-color: rgba(47,107,255,.6); background: #1b2236; }
 .preg .pa { display: flex; gap: .4rem; }
 .preg .pa button { padding: .4em .75em; font-size: .85rem; }
 .preg .pa .danger { color: #ff9a92; border-color: rgba(240,82,82,.35); }
+.preg .rnform { display: flex; gap: .35rem; align-items: center; }
+.preg .rnform input { width: 11rem; max-width: 100%; padding: .35em .55em; font-size: 1rem; font-weight: 700; }
+.preg .rnform button { padding: .35em .7em; font-size: .85rem; }
 .savedchips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .1rem 0 .7rem; }
 .savedchips:empty { display: none; }
 .savedchips .lbl { width: 100%; font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
@@ -733,6 +736,7 @@ button.pill:hover { border-color: var(--accent); }
 .topnav .status > .adwrap { flex: 0 1 auto; min-width: 2.5em; }
 .topnav .adwrap #src { max-width: 26vw; min-width: 0; }
 .adpanel { right: auto; left: 50%; transform: translateX(-50%); }
+.preg:has(.rnform) .pa { display: none; }
 
 </style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -4348,6 +4352,37 @@ window.AFGOOIEN_LOCAL = (function () {
     else { const p = findP(n); if (!p) throw new GameError("err_no_player"); if (t === "player_delete") reg.players.splice(reg.players.indexOf(p), 1); reg.since[pk(n)] = nowIso(); }
     savePlayers();
   }
+  function renamePlayer(name, newName) {
+    const p = findP(name);
+    if (!p) throw new GameError("err_no_player");
+    const n = String(newName || "").trim().slice(0, 24);
+    if (!n) throw new GameError("err_name_required");
+    const other = findP(n);
+    if (other && other !== p) throw new GameError("err_name_exists", { name: n });
+    const old = p.name, ok = pk(old);
+    p.name = n;
+    if (ok !== pk(n)) { if (ok in reg.since) { reg.since[pk(n)] = reg.since[ok]; delete reg.since[ok]; } else delete reg.since[pk(n)]; }
+    savePlayers();
+    let hit = false;
+    for (const h of history) {
+      let found = false;
+      for (const q of h.players || []) if (q && !q.bot && pk(q.name || "") === ok) { q.name = n; found = true; }
+      if (found && h.winner) h.winner = String(h.winner).split(" & ").map((x) => (pk(x) === ok ? n : x)).join(" & ");
+      hit = hit || found;
+    }
+    if (hit) saveHistory();
+    const st = g.events && g.events[0];
+    if (st && st[0] === "start" && st[1] && Array.isArray(st[1].names)) {
+      const names = st[1].names.slice(), bots = st[1].bots || [];
+      const idx = names.map((x, i) => (pk(x) === ok && !bots[i] ? i : -1)).filter((i) => i >= 0);
+      const clash = names.some((x, i) => pk(x) === pk(n) && !idx.includes(i));
+      if (idx.length && !clash) {
+        idx.forEach((i) => { names[i] = n; });
+        g.events[0] = ["start", Object.assign({}, st[1], { names })];
+        g._rebuild();
+      }
+    }
+  }
   function saveHistory() { hver++; try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) { /* */ } }
   function sync() {
     if (!gameId) return;
@@ -4369,7 +4404,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.39";
+    s.app_version = "1.40";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4405,6 +4440,7 @@ window.AFGOOIEN_LOCAL = (function () {
           break;
         }
         case "player_add": case "player_delete": case "player_reset": playerCmd(cmd.type, cmd.name); break;
+        case "player_rename": renamePlayer(cmd.name, cmd.new_name); break;
         case "dart": g.throw_(Dart.fromDict(cmd)); break;
         case "correct": g.correct(cmd.index, Dart.fromDict(cmd)); break;
         case "next": g.nextPlayer(); break;
@@ -4481,6 +4517,7 @@ window.AFGOOIEN_UI = {
     set_data_dir: "Alles wordt bewaard in: {dir}. Die map blijft bestaan als je een nieuwe versie uitpakt.",
     set_data_dirx: "de gegevensmap",
     set_reset: "Stats resetten", set_delete: "Verwijderen", set_noplayers: "Nog geen opgeslagen spelers.",
+    set_rename: "Naam", set_rename_ok: "Opslaan",
     set_pstats: "{games} · {wins}× gewonnen ({pct}) · {kills} afgegooid", set_pnone: "Nog geen potjes (sinds laatste reset)",
     q_delete: "{name} verwijderen? Zijn statistieken tellen dan niet meer mee.", q_reset: "Statistieken van {name} resetten?",
     err_failed: "Dat lukte niet",
@@ -4726,6 +4763,7 @@ window.AFGOOIEN_UI = {
     set_data_dir: "Everything is stored in: {dir}. That folder stays when you unpack a new version.",
     set_data_dirx: "the data folder",
     set_reset: "Reset stats", set_delete: "Delete", set_noplayers: "No saved players yet.",
+    set_rename: "Name", set_rename_ok: "Save",
     set_pstats: "{games} · {wins}× won ({pct}) · {kills} knocked out", set_pnone: "No games yet (since last reset)",
     q_delete: "Delete {name}? Their stats will no longer count.", q_reset: "Reset {name}'s stats?",
     err_failed: "That didn't work",
@@ -6724,7 +6762,8 @@ function renderSettings() {
     return `<div class="preg"><div class="av" style="background:${c}">${esc(p.name.slice(0, 1).toUpperCase())}</div>
       <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div></div>
       <input class="pmail" type="email" data-name="${esc(p.name)}" value="${esc(p.email || "")}" placeholder="${esc(t("pl_email_ph"))}" spellcheck="false">
-      <div class="pa"><button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
+      <div class="pa"><button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
+      <button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
       <button class="ghost danger" data-act="player_delete" data-name="${esc(p.name)}">${t("set_delete")}</button></div></div>`;
   }).join("") : `<div class="statsempty">${t("set_noplayers")}</div>`;
   $("datainfo").textContent = LOCAL ? t("set_data_local") : t("set_data_dir", { dir: (S && S.data_dir) || t("set_data_dirx") });
@@ -6745,6 +6784,40 @@ function addSaved(name) {
   const empty = rows.find((li) => !li.querySelector("input").value.trim());
   if (empty) { empty.querySelector("input").value = name; empty.querySelector("select").value = "0"; empty.classList.remove("isbot"); }
   else if (rows.length < 8) addName(name, 0);
+  renderChips();
+}
+// naam wijzigen: het naamveld van de speler wordt even een invulveld
+function startRename(row, name) {
+  const pn = row && row.querySelector(".pn");
+  if (!pn || pn.querySelector("form")) return;
+  pn.innerHTML = `<form class="rnform"><input maxlength="24" spellcheck="false" autocomplete="off" value="${esc(name)}">
+    <button type="submit" class="primary">${t("set_rename_ok")}</button><button type="button" class="ghost" data-rncancel>✕</button></form>`;
+  const inp = pn.querySelector("input");
+  inp.focus(); inp.select();
+  inp.addEventListener("keydown", (e) => { if (e.key === "Escape") renderSettings(); });
+  pn.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nn = inp.value.trim();
+    if (!nn || nn === name) { renderSettings(); return; }
+    renamePlayer(name, nn);
+  });
+}
+async function renamePlayer(old, nn) {
+  $("regerr").textContent = "";
+  const ok = await send({ type: "player_rename", name: old, new_name: nn });
+  if (!ok) { $("regerr").textContent = $("setuperr").textContent || t("err_failed"); $("setuperr").textContent = ""; }
+  else {
+    // ook in de lobby en op de spelerspagina meteen de nieuwe naam
+    const same = (x) => nkey(x || "") === nkey(old);
+    store.set("afgooien.players", (store.get("afgooien.players", []) || []).map((r) => (r && !r.bot && same(r.name) ? { ...r, name: nn } : r)));
+    [...$("names").children].forEach((li) => {
+      const i = li.querySelector("input"), sel = li.querySelector("select");
+      if (i && same(i.value.trim()) && !(sel && +sel.value)) i.value = nn;
+    });
+    if (same(plSel)) { plSel = nn; store.set("afgooien.plSel", plSel); }
+  }
+  await loadHistory(true);
+  renderSettings();
   renderChips();
 }
 async function playerAction(act, name) {
@@ -7132,9 +7205,11 @@ function bind() {
     playerAction("player_add", n);
   });
   $("playerlist").addEventListener("click", (e) => {
+    if (e.target.closest("[data-rncancel]")) { renderSettings(); return; }
     const b = e.target.closest("button[data-act]");
     if (!b) return;
     const name = b.dataset.name, act = b.dataset.act;
+    if (act === "player_rename") { startRename(b.closest(".preg"), name); return; }
     const q = t(act === "player_delete" ? "q_delete" : "q_reset", { name });
     confirmDialog(q, () => playerAction(act, name));
   });

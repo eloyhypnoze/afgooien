@@ -52,6 +52,37 @@ window.AFGOOIEN_LOCAL = (function () {
     else { const p = findP(n); if (!p) throw new GameError("err_no_player"); if (t === "player_delete") reg.players.splice(reg.players.indexOf(p), 1); reg.since[pk(n)] = nowIso(); }
     savePlayers();
   }
+  function renamePlayer(name, newName) {
+    const p = findP(name);
+    if (!p) throw new GameError("err_no_player");
+    const n = String(newName || "").trim().slice(0, 24);
+    if (!n) throw new GameError("err_name_required");
+    const other = findP(n);
+    if (other && other !== p) throw new GameError("err_name_exists", { name: n });
+    const old = p.name, ok = pk(old);
+    p.name = n;
+    if (ok !== pk(n)) { if (ok in reg.since) { reg.since[pk(n)] = reg.since[ok]; delete reg.since[ok]; } else delete reg.since[pk(n)]; }
+    savePlayers();
+    let hit = false;
+    for (const h of history) {
+      let found = false;
+      for (const q of h.players || []) if (q && !q.bot && pk(q.name || "") === ok) { q.name = n; found = true; }
+      if (found && h.winner) h.winner = String(h.winner).split(" & ").map((x) => (pk(x) === ok ? n : x)).join(" & ");
+      hit = hit || found;
+    }
+    if (hit) saveHistory();
+    const st = g.events && g.events[0];
+    if (st && st[0] === "start" && st[1] && Array.isArray(st[1].names)) {
+      const names = st[1].names.slice(), bots = st[1].bots || [];
+      const idx = names.map((x, i) => (pk(x) === ok && !bots[i] ? i : -1)).filter((i) => i >= 0);
+      const clash = names.some((x, i) => pk(x) === pk(n) && !idx.includes(i));
+      if (idx.length && !clash) {
+        idx.forEach((i) => { names[i] = n; });
+        g.events[0] = ["start", Object.assign({}, st[1], { names })];
+        g._rebuild();
+      }
+    }
+  }
   function saveHistory() { hver++; try { localStorage.setItem(HKEY, JSON.stringify(history)); } catch (e) { /* */ } }
   function sync() {
     if (!gameId) return;
@@ -109,6 +140,7 @@ window.AFGOOIEN_LOCAL = (function () {
           break;
         }
         case "player_add": case "player_delete": case "player_reset": playerCmd(cmd.type, cmd.name); break;
+        case "player_rename": renamePlayer(cmd.name, cmd.new_name); break;
         case "dart": g.throw_(Dart.fromDict(cmd)); break;
         case "correct": g.correct(cmd.index, Dart.fromDict(cmd)); break;
         case "next": g.nextPlayer(); break;

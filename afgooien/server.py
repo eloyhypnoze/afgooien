@@ -212,6 +212,8 @@ class App:
             humans = [self._pname(i) for i in range(len(g.players)) if not self._pbot(i)]
             if self.players.ensure(humans):
                 self.history.version += 1
+        elif t == "player_rename":
+            self._rename_player(cmd.get("name"), cmd.get("new_name"))
         elif t in ("player_add", "player_delete", "player_reset"):
             getattr(self.players, t.split("_", 1)[1])(cmd.get("name"))
             self.history.version += 1
@@ -303,6 +305,30 @@ class App:
             self.dart_log.write({"type": "correct", "game": self.game_id, "event": ev_i, "player": self._player_name(),
                                  "from": old, "to": dart.to_dict(), "from_source": "autodarts" if raw else "hand",
                                  "autodarts": raw})
+
+    def _rename_player(self, name, new_name) -> None:
+        """Naam wijzigen: in de spelerslijst, in alle opgeslagen potjes én in het potje op het scherm,
+        zodat de statistieken gewoon bij dezelfde speler blijven."""
+        g = self.game
+        start = g.events[0] if getattr(g, "events", None) else None
+        names = bots = None
+        if start and start[0] == "start" and isinstance(start[1], dict):
+            names = list(start[1].get("names") or [])
+            bots = list(start[1].get("bots") or [])
+        old, new = self.players.rename(name, new_name)   # controleert of de nieuwe naam vrij is
+        if old != new:
+            self.history.rename(old, new)
+        if names:
+            ok = old.strip().lower()
+            hit = [i for i, n in enumerate(names) if n.strip().lower() == ok and not (bots[i] if i < len(bots) else 0)]
+            clash = any(n.strip().lower() == new.lower() and i not in hit for i, n in enumerate(names))
+            if hit and not clash:
+                for i in hit:
+                    names[i] = new
+                g.events[0] = ("start", {**start[1], "names": names})
+                g._rebuild()
+                g.version += 1
+        self.history.version += 1
 
     def _board_cmd(self, action: str) -> None:
         """Start, stop, herstart of kalibreer de Board Manager, op de achtergrond (kalibreren duurt even)."""

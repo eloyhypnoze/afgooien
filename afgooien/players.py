@@ -99,6 +99,27 @@ class PlayerStore:
             p.pop("email", None)
         self._save()
 
+    def rename(self, name: str, new_name: str) -> tuple[str, str]:
+        """Geef een speler een andere naam. Geeft (oude naam, nieuwe naam)."""
+        p = self.find(name)
+        if not p:
+            raise GameError("err_no_player")
+        n = self._clean(new_name)
+        other = self.find(n)
+        if other is not None and other is not p:
+            raise GameError("err_name_exists", name=n)
+        old = p["name"]
+        p["name"] = n
+        ok, nk = _key(old), _key(n)
+        if ok != nk:                       # het "tellen vanaf"-moment verhuist mee met de speler
+            if ok in self.since:
+                self.since[nk] = self.since.pop(ok)
+            else:
+                self.since.pop(nk, None)
+        self.players.sort(key=lambda q: _key(q["name"]))
+        self._save()
+        return old, n
+
     def reset(self, name: str) -> None:
         if not self.find(name):
             raise GameError("err_no_player")

@@ -333,6 +333,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.40**: naam van een opgeslagen speler wijzigen (Instellingen → Spelers → ✎ Naam); statistieken,
+  oude potjes en een lopend potje gaan mee naar de nieuwe naam
 - **1.39**: klik op de Autodarts-statuspil voor bediening van de Board Manager: detectie aan/uit, reset,
   camera's kalibreren en de Board Manager herstarten
 - **1.38**: nieuw spel Vrij gooien (oneindig, gemiddelde live, zelf stoppen en opslaan)

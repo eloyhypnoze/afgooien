@@ -54,6 +54,25 @@ class History:
         self._save()
         return True
 
+    def rename(self, old: str, new: str) -> int:
+        """Zet een spelersnaam om in alle opgeslagen potjes (bots blijven ongemoeid). Geeft het aantal potjes."""
+        ok = str(old).strip().lower()
+        changed = 0
+        for g in self.games:
+            hit = False
+            for p in g.get("players") or []:
+                if isinstance(p, dict) and not p.get("bot") and str(p.get("name", "")).strip().lower() == ok:
+                    p["name"] = new
+                    hit = True
+            if hit:
+                w = str(g.get("winner") or "")
+                if w:
+                    g["winner"] = " & ".join(new if x.strip().lower() == ok else x for x in w.split(" & "))
+                changed += 1
+        if changed:
+            self._save()
+        return changed
+
     def clear(self) -> None:
         self.games = []
         self._save()

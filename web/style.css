@@ -209,6 +209,9 @@ button.mode:hover { border-color: rgba(47,107,255,.6); background: #1b2236; }
 .preg .pa { display: flex; gap: .4rem; }
 .preg .pa button { padding: .4em .75em; font-size: .85rem; }
 .preg .pa .danger { color: #ff9a92; border-color: rgba(240,82,82,.35); }
+.preg .rnform { display: flex; gap: .35rem; align-items: center; }
+.preg .rnform input { width: 11rem; max-width: 100%; padding: .35em .55em; font-size: 1rem; font-weight: 700; }
+.preg .rnform button { padding: .35em .7em; font-size: .85rem; }
 .savedchips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .1rem 0 .7rem; }
 .savedchips:empty { display: none; }
 .savedchips .lbl { width: 100%; font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
@@ -726,3 +729,4 @@ button.pill:hover { border-color: var(--accent); }
 .topnav .status > .adwrap { flex: 0 1 auto; min-width: 2.5em; }
 .topnav .adwrap #src { max-width: 26vw; min-width: 0; }
 .adpanel { right: auto; left: 50%; transform: translateX(-50%); }
+.preg:has(.rnform) .pa { display: none; }

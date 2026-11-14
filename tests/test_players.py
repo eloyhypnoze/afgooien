@@ -49,6 +49,40 @@ class PlayerStoreTests(unittest.TestCase):
             self.assertEqual([p["name"] for p in data["players"]], ["Eloy"])
             self.assertEqual(app.state()["data_dir"], str(d))
 
+    def test_rename_keeps_stats_history_and_running_game(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            app = App(WEB, d / "s.json", d / "h.json", None, d / "spelers.json", d)
+            app.command({"type": "player_add", "name": "Sanne"})
+            # afgerond potje van Eloy tegen een bot
+            app.command({"type": "new_game", "mode": "x01", "players": ["Eloy", "Bot"], "bots": [0, 3],
+                         "settings": {"start": 101}})
+            for n, m in ((20, 3), (1, 1), (20, 2)):
+                app.command({"type": "dart", "number": n, "multiplier": m})
+            self.assertEqual(app.history.games[-1]["winner"], "Eloy")
+            app.command({"type": "player_reset", "name": "Eloy"})
+            since = app.players.since["eloy"]
+            # nieuw potje loopt nog als de naam verandert
+            app.command({"type": "new_game", "mode": "countup", "players": ["Eloy", "Sanne"], "settings": {"rounds": 1}})
+            app.command({"type": "dart", "number": 20, "multiplier": 3})
+            with self.assertRaises(GameError):
+                app.command({"type": "player_rename", "name": "Eloy", "new_name": "sanne"})   # bestaat al
+            with self.assertRaises(GameError):
+                app.command({"type": "player_rename", "name": "Nobody", "new_name": "X"})
+            st = app.command({"type": "player_rename", "name": "eloy", "new_name": "Eloy V"})
+            self.assertEqual([p["name"] for p in app.players.players], ["Eloy V", "Sanne"])
+            self.assertEqual(app.players.since, {"eloy v": since})
+            g = app.history.games[-1]
+            self.assertEqual(([p["name"] for p in g["players"]], g["winner"]), (["Eloy V", "Bot"], "Eloy V"))
+            self.assertEqual(st["players"][0]["name"], "Eloy V")       # potje op het scherm
+            self.assertEqual(st["players"][0]["score"], 60)            # worpen blijven staan
+            again = App(WEB, d / "s.json", d / "h.json", None, d / "spelers.json", d)
+            self.assertEqual(again.history.games[-1]["winner"], "Eloy V")
+            self.assertEqual(again.players.find("eloy v")["name"], "Eloy V")
+            # alleen hoofdletters aanpassen mag ook
+            app.command({"type": "player_rename", "name": "Sanne", "new_name": "SANNE"})
+            self.assertEqual(app.players.find("sanne")["name"], "SANNE")
+
     def test_migrate_old_data(self):
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             (Path(a) / "geschiedenis.json").write_text("[]")

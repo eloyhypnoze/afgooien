@@ -1787,7 +1787,8 @@ function renderSettings() {
     return `<div class="preg"><div class="av" style="background:${c}">${esc(p.name.slice(0, 1).toUpperCase())}</div>
       <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div></div>
       <input class="pmail" type="email" data-name="${esc(p.name)}" value="${esc(p.email || "")}" placeholder="${esc(t("pl_email_ph"))}" spellcheck="false">
-      <div class="pa"><button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
+      <div class="pa"><button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
+      <button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
       <button class="ghost danger" data-act="player_delete" data-name="${esc(p.name)}">${t("set_delete")}</button></div></div>`;
   }).join("") : `<div class="statsempty">${t("set_noplayers")}</div>`;
   $("datainfo").textContent = LOCAL ? t("set_data_local") : t("set_data_dir", { dir: (S && S.data_dir) || t("set_data_dirx") });
@@ -1808,6 +1809,40 @@ function addSaved(name) {
   const empty = rows.find((li) => !li.querySelector("input").value.trim());
   if (empty) { empty.querySelector("input").value = name; empty.querySelector("select").value = "0"; empty.classList.remove("isbot"); }
   else if (rows.length < 8) addName(name, 0);
+  renderChips();
+}
+// naam wijzigen: het naamveld van de speler wordt even een invulveld
+function startRename(row, name) {
+  const pn = row && row.querySelector(".pn");
+  if (!pn || pn.querySelector("form")) return;
+  pn.innerHTML = `<form class="rnform"><input maxlength="24" spellcheck="false" autocomplete="off" value="${esc(name)}">
+    <button type="submit" class="primary">${t("set_rename_ok")}</button><button type="button" class="ghost" data-rncancel>✕</button></form>`;
+  const inp = pn.querySelector("input");
+  inp.focus(); inp.select();
+  inp.addEventListener("keydown", (e) => { if (e.key === "Escape") renderSettings(); });
+  pn.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nn = inp.value.trim();
+    if (!nn || nn === name) { renderSettings(); return; }
+    renamePlayer(name, nn);
+  });
+}
+async function renamePlayer(old, nn) {
+  $("regerr").textContent = "";
+  const ok = await send({ type: "player_rename", name: old, new_name: nn });
+  if (!ok) { $("regerr").textContent = $("setuperr").textContent || t("err_failed"); $("setuperr").textContent = ""; }
+  else {
+    // ook in de lobby en op de spelerspagina meteen de nieuwe naam
+    const same = (x) => nkey(x || "") === nkey(old);
+    store.set("afgooien.players", (store.get("afgooien.players", []) || []).map((r) => (r && !r.bot && same(r.name) ? { ...r, name: nn } : r)));
+    [...$("names").children].forEach((li) => {
+      const i = li.querySelector("input"), sel = li.querySelector("select");
+      if (i && same(i.value.trim()) && !(sel && +sel.value)) i.value = nn;
+    });
+    if (same(plSel)) { plSel = nn; store.set("afgooien.plSel", plSel); }
+  }
+  await loadHistory(true);
+  renderSettings();
   renderChips();
 }
 async function playerAction(act, name) {
@@ -2195,9 +2230,11 @@ function bind() {
     playerAction("player_add", n);
   });
   $("playerlist").addEventListener("click", (e) => {
+    if (e.target.closest("[data-rncancel]")) { renderSettings(); return; }
     const b = e.target.closest("button[data-act]");
     if (!b) return;
     const name = b.dataset.name, act = b.dataset.act;
+    if (act === "player_rename") { startRename(b.closest(".preg"), name); return; }
     const q = t(act === "player_delete" ? "q_delete" : "q_reset", { name });
     confirmDialog(q, () => playerAction(act, name));
   });
