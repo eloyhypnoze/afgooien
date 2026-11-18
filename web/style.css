@@ -702,6 +702,36 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* muziek */
+.musicpanel { width: 340px; display: grid; gap: .55rem; }
+.musicpanel h3 { margin: 0; font: 900 italic 1.15rem/1 var(--display); }
+.mu_form { display: flex; gap: .4rem; }
+.mu_form input { flex: 1; min-width: 0; padding: .5em .65em; }
+.mu_form button { padding: .45em .9em; }
+.mu_err { margin: 0; color: #ff9a92; font-size: .85rem; }
+.mu_err:empty { display: none; }
+.mu_now { font-size: .9rem; color: var(--muted); min-height: 1.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_now b { color: var(--text); }
+.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
+.mu_ctl button { min-width: 2.7rem; padding: .45em .6em; font-size: 1.05rem; }
+.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
+.mu_ctl button:disabled { opacity: .4; }
+.mu_sl { display: grid; gap: .2rem; font-size: .88rem; }
+.mu_sl input { width: 100%; }
+.mu_favhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
+.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; max-height: 9.5rem; overflow: auto; }
+.mu_favs li { display: flex; gap: .35rem; align-items: center; }
+.mu_favs li button.mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .4em .6em; font-size: .88rem; }
+.mu_favs li button.mu_fd { padding: .4em .55em; font-size: .8rem; }
+.mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }
+/* de YouTube-speler: klein maar zichtbaar (minimaal 200x200 volgens de regels van YouTube) */
+.musicdock { position: fixed; z-index: 4; width: 224px; background: rgba(10,14,30,.92); border: 1px solid var(--line2, rgba(255,255,255,.14));
+  border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.musicdock iframe, .musicdock #ytplayer { display: block; width: 224px; height: 200px; border: 0; }
+.mdbar { display: flex; align-items: center; gap: .3rem; padding: .3rem .4rem .35rem .6rem; }
+.md_title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md_btn { padding: .2em .45em; font-size: .9rem; min-width: 0; }
+html.remote .musicdock { display: none; }
 /* Autodarts-bediening onder de statuspil */
 .adwrap { position: relative; display: flex; min-width: 0; }
 button.pill { cursor: pointer; font: inherit; font-size: .8rem; line-height: inherit; }
@@ -730,3 +760,6 @@ button.pill:hover { border-color: var(--accent); }
 .topnav .adwrap #src { max-width: 26vw; min-width: 0; }
 .adpanel { right: auto; left: 50%; transform: translateX(-50%); }
 .preg:has(.rnform) .pa { display: none; }
+.musicdock.compact .mdbar { display: none; }
+.musicpanel .check { display: flex; gap: .5rem; align-items: center; font-size: .88rem; }
+.musicpanel .check input { width: auto; margin: 0; }

@@ -100,3 +100,28 @@ a.ghost.mbtn { color: var(--text); background: var(--panel2); border: 1px solid 
 .sobtn small { color: var(--muted); font-size: .78rem; }
 .mstop { display: block; width: calc(100% - 1.4rem); margin: .2rem .7rem 0; background: rgba(62,224,143,.14); border-color: rgba(62,224,143,.45); }
 .mstop.hidden { display: none; }
+
+/* muziek */
+.mmusic summary { font-weight: 800; cursor: pointer; list-style: none; display: flex; align-items: center; gap: .4rem; }
+.mmusic summary::-webkit-details-marker { display: none; }
+.mmusic[open] summary { margin-bottom: .6rem; }
+.mmu_sum { flex: 1; min-width: 0; font-weight: 500; color: var(--muted); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.mmusic > * + * { margin-top: .55rem; }
+.mu_form { display: flex; gap: .4rem; }
+.mu_form input { flex: 1; min-width: 0; padding: .6em .7em; font-size: 1rem; }
+.mu_err { margin: 0; color: #ff9a92; font-size: .85rem; }
+.mu_err:empty { display: none; }
+.mu_now { font-size: .9rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_now b { color: var(--text); }
+.mu_ctl { display: flex; gap: .35rem; justify-content: space-between; }
+.mu_ctl button { flex: 1; padding: .6em 0; font-size: 1.1rem; }
+.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
+.mu_ctl button:disabled { opacity: .4; }
+.mu_sl { display: grid; gap: .25rem; font-size: .9rem; }
+.mu_sl input { width: 100%; }
+.mu_favhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
+.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.mu_favs li { display: flex; gap: .35rem; }
+.mu_favs .mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .5em .6em; }
+.mu_favs .mu_fd { padding: .5em .7em; }
+.mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }

@@ -26,6 +26,7 @@ function t(key, p) {
 function applyI18n() {
   document.documentElement.lang = LANG;
   document.querySelectorAll("[data-i18n]").forEach((e) => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
 }
 
 // ------------------------------------------------------------------ server
@@ -353,7 +354,76 @@ function render(state) {
   }
   renderAlloc();
   renderSo();
+  renderMusicM();
   renderPlayers();
+}
+// muziek bedienen (afspelen gebeurt op het grote scherm)
+const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5", "yt": "mu_eyt" };
+function renderMusicM() {
+  const m = S && S.music;
+  if (!m) { $("mmusic").classList.add("hidden"); return; }
+  const has = !!(m.video || m.list);
+  const title = m.title || (has ? t("mu_loading") : "");
+  $("mmu_sum").textContent = has ? (m.playing ? "▶ " : "⏸ ") + title : "";
+  $("mmu_now").innerHTML = !has ? esc(t("mu_none"))
+    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+  $("mmu_err").textContent = m.err && MU_ERR[m.err] ? t(MU_ERR[m.err]) : "";
+  $("mmu_pp").textContent = m.playing ? "⏸" : "▶";
+  document.querySelectorAll("#mmusic [data-mu]").forEach((b) => { b.disabled = !has; });
+  $("mmu_shuf").classList.toggle("on", !!m.shuffle);
+  $("mmu_shuf").disabled = !m.list;
+  if (document.activeElement !== $("mmu_vol")) $("mmu_vol").value = m.volume;
+  $("mmu_vol_val").textContent = m.volume + "%";
+  const cv = S.tts && S.tts.volume != null ? S.tts.volume : 1;
+  if (document.activeElement !== $("mmu_cvol")) $("mmu_cvol").value = cv;
+  $("mmu_cvol_val").textContent = Math.round(cv * 100) + "%";
+  $("mmu_duck").checked = !!m.duck;
+  $("mmu_favs").dataset.empty = t("mu_nofavs");
+  const fk = JSON.stringify(m.favs) + LANG;
+  if ($("mmu_favs").dataset.k !== fk) {
+    $("mmu_favs").dataset.k = fk;
+    $("mmu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
+      <button class="ghost mu_fd" data-favdel="${i}">✕</button></li>`).join("");
+  }
+  $("mmu_favadd").disabled = !has;
+}
+async function musicSendM(cmd) {
+  $("mmu_err").textContent = "";
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+    const j = await r.json();
+    if (!j.ok) { $("mmu_err").textContent = j.error; buzz(80); return false; }
+    render(j.state);
+    return true;
+  } catch (e) { $("mmu_err").textContent = t("no_conn"); return false; }
+}
+function bindMusicM() {
+  $("mmusic").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mu]");
+    if (b && !b.disabled) {
+      buzz(10);
+      const a = b.dataset.mu, m = S.music;
+      if (a === "toggle") musicSendM({ type: "music_ctl", action: m.playing ? "pause" : "play" });
+      else if (a === "shuffle") musicSendM({ type: "music_set", shuffle: !m.shuffle });
+      else musicSendM({ type: "music_ctl", action: a });
+      return;
+    }
+    const f = e.target.closest("[data-fav]");
+    if (f) { buzz(10); musicSendM({ type: "music_fav", action: "play", index: +f.dataset.fav }); return; }
+    const fd = e.target.closest("[data-favdel]");
+    if (fd) musicSendM({ type: "music_fav", action: "del", index: +fd.dataset.favdel });
+  });
+  $("mmu_form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = $("mmu_url").value.trim();
+    if (url && await musicSendM({ type: "music_load", url })) { $("mmu_url").value = ""; $("mmu_url").blur(); }
+  });
+  $("mmu_vol").addEventListener("input", () => { $("mmu_vol_val").textContent = $("mmu_vol").value + "%"; });
+  $("mmu_vol").addEventListener("change", () => musicSendM({ type: "music_set", volume: +$("mmu_vol").value }));
+  $("mmu_cvol").addEventListener("input", () => { $("mmu_cvol_val").textContent = Math.round($("mmu_cvol").value * 100) + "%"; });
+  $("mmu_cvol").addEventListener("change", () => musicSendM({ type: "voice_config", volume: +$("mmu_cvol").value }));
+  $("mmu_duck").addEventListener("change", () => musicSendM({ type: "music_set", duck: $("mmu_duck").checked }));
+  $("mmu_favadd").onclick = () => musicSendM({ type: "music_fav", action: "add" });
 }
 function renderSo() {
   const so = S && S.phase === "shootout" ? S.shootout : null;
@@ -512,6 +582,7 @@ function bind() {
     renderAlloc();
   });
   $("mstop").onclick = () => { if (window.confirm(t("q_free_stop"))) send({ type: "finish" }); };
+  bindMusicM();
   $("mso").addEventListener("click", (e) => {
     const b = e.target.closest("[data-so]");
     if (b) { buzz(15); send({ type: "shootout", choice: b.dataset.so }); }

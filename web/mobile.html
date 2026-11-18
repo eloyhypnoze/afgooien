@@ -83,6 +83,21 @@
   <a class="primary wide mbtn" href="/?remote=1" data-i18n="mob_newgame"></a>
 </section>
 
+<details id="mmusic" class="mcard mmusic">
+  <summary>🎵 <span data-i18n="mob_music"></span> <span id="mmu_sum" class="mmu_sum"></span></summary>
+  <form id="mmu_form" class="mu_form"><input id="mmu_url" autocomplete="off" spellcheck="false" inputmode="url" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
+  <p id="mmu_err" class="mu_err"></p>
+  <div id="mmu_now" class="mu_now"></div>
+  <div class="mu_ctl">
+    <button data-mu="prev">⏮</button><button data-mu="toggle" id="mmu_pp" class="primary">⏯</button><button data-mu="next">⏭</button><button data-mu="stop">⏹</button><button data-mu="shuffle" id="mmu_shuf">🔀</button>
+  </div>
+  <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mmu_vol_val"></b></span><input id="mmu_vol" type="range" min="0" max="100" step="5"></label>
+  <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mmu_cvol_val"></b></span><input id="mmu_cvol" type="range" min="0" max="1" step="0.05"></label>
+  <label class="check"><input id="mmu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
+  <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mmu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
+  <ul id="mmu_favs" class="mu_favs"></ul>
+</details>
+
 <section class="mscore">
   <div class="mscorehead" data-i18n="mob_score"></div>
   <div id="mplayers"></div>

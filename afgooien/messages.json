@@ -283,7 +283,10 @@
     "x_bm_restart_ok": "Board Manager herstart: even wachten tot de camera's weer draaien",
     "x_bm_fail": "Autodarts deed het niet ({info}). Probeer het in de Board Manager zelf.",
     "x_bm_busy": "Even geduld: Autodarts is nog bezig",
-    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen"
+    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen",
+    "err_music_link": "Dat is geen link van YouTube of YouTube Music. Deel een nummer of afspeellijst en kies 'Link kopiëren'.",
+    "err_music_private": "'Nummers die ik leuk vind' is altijd privé. Maak er een openbare of verborgen afspeellijst van.",
+    "err_music_none": "Er speelt nu geen muziek"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -569,6 +572,9 @@
     "x_bm_restart_ok": "Board Manager restarted: wait a moment for the cameras to come back",
     "x_bm_fail": "Autodarts did not respond ({info}). Try it in the Board Manager itself.",
     "x_bm_busy": "Please wait: Autodarts is still busy",
-    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control"
+    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control",
+    "err_music_link": "That is not a YouTube or YouTube Music link. Share a song or playlist and choose 'Copy link'.",
+    "err_music_private": "'Liked music' is always private. Make a public or unlisted playlist instead.",
+    "err_music_none": "No music is playing right now"
   }
 }

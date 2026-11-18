@@ -2,6 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Afgooien – testversie</title>
 <style>
@@ -709,6 +710,36 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
+/* muziek */
+.musicpanel { width: 340px; display: grid; gap: .55rem; }
+.musicpanel h3 { margin: 0; font: 900 italic 1.15rem/1 var(--display); }
+.mu_form { display: flex; gap: .4rem; }
+.mu_form input { flex: 1; min-width: 0; padding: .5em .65em; }
+.mu_form button { padding: .45em .9em; }
+.mu_err { margin: 0; color: #ff9a92; font-size: .85rem; }
+.mu_err:empty { display: none; }
+.mu_now { font-size: .9rem; color: var(--muted); min-height: 1.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_now b { color: var(--text); }
+.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
+.mu_ctl button { min-width: 2.7rem; padding: .45em .6em; font-size: 1.05rem; }
+.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
+.mu_ctl button:disabled { opacity: .4; }
+.mu_sl { display: grid; gap: .2rem; font-size: .88rem; }
+.mu_sl input { width: 100%; }
+.mu_favhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
+.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; max-height: 9.5rem; overflow: auto; }
+.mu_favs li { display: flex; gap: .35rem; align-items: center; }
+.mu_favs li button.mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .4em .6em; font-size: .88rem; }
+.mu_favs li button.mu_fd { padding: .4em .55em; font-size: .8rem; }
+.mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }
+/* de YouTube-speler: klein maar zichtbaar (minimaal 200x200 volgens de regels van YouTube) */
+.musicdock { position: fixed; z-index: 4; width: 224px; background: rgba(10,14,30,.92); border: 1px solid var(--line2, rgba(255,255,255,.14));
+  border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.musicdock iframe, .musicdock #ytplayer { display: block; width: 224px; height: 200px; border: 0; }
+.mdbar { display: flex; align-items: center; gap: .3rem; padding: .3rem .4rem .35rem .6rem; }
+.md_title { flex: 1; min-width: 0; font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md_btn { padding: .2em .45em; font-size: .9rem; min-width: 0; }
+html.remote .musicdock { display: none; }
 /* Autodarts-bediening onder de statuspil */
 .adwrap { position: relative; display: flex; min-width: 0; }
 button.pill { cursor: pointer; font: inherit; font-size: .8rem; line-height: inherit; }
@@ -737,6 +768,9 @@ button.pill:hover { border-color: var(--accent); }
 .topnav .adwrap #src { max-width: 26vw; min-width: 0; }
 .adpanel { right: auto; left: 50%; transform: translateX(-50%); }
 .preg:has(.rnform) .pa { display: none; }
+.musicdock.compact .mdbar { display: none; }
+.musicpanel .check { display: flex; gap: .5rem; align-items: center; font-size: .88rem; }
+.musicpanel .check input { width: auto; margin: 0; }
 
 </style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -788,6 +822,30 @@ button.pill:hover { border-color: var(--accent); }
     <span class="zoom" data-i18n-title="tip_ui">
       <button id="zoomout" class="iconbtn">A−</button><button id="zoomin" class="iconbtn">A+</button>
     </span>
+    <div class="voicewrap musicwrap">
+      <button id="musicbtn" class="iconbtn" data-i18n-title="mu_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="2.6" fill="currentColor"/><circle cx="16.5" cy="15.5" r="2.6" fill="currentColor"/></svg></button>
+      <div id="musicpanel" class="voicepanel musicpanel hidden">
+        <h3>🎵 <span data-i18n="mu_title"></span></h3>
+        <form id="mu_form" class="mu_form"><input id="mu_url" autocomplete="off" spellcheck="false" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
+        <p id="mu_err" class="mu_err"></p>
+        <div id="mu_now" class="mu_now"></div>
+        <div class="mu_ctl">
+          <button data-mu="prev" data-i18n-title="mu_prev">⏮</button>
+          <button data-mu="toggle" id="mu_pp" class="primary" data-i18n-title="mu_pp">⏯</button>
+          <button data-mu="next" data-i18n-title="mu_next">⏭</button>
+          <button data-mu="stop" data-i18n-title="mu_stop">⏹</button>
+          <button data-mu="shuffle" id="mu_shuf" data-i18n-title="mu_shuffle">🔀</button>
+        </div>
+        <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mu_vol_val"></b></span>
+          <input id="mu_vol" type="range" min="0" max="100" step="5"></label>
+        <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mu_cvol_val"></b></span>
+          <input id="mu_cvol" type="range" min="0" max="1" step="0.05"></label>
+        <label class="check"><input id="mu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
+        <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
+        <ul id="mu_favs" class="mu_favs"></ul>
+        <p class="hint" data-i18n="mu_hint"></p>
+      </div>
+    </div>
     <div class="voicewrap">
       <button id="sound" class="iconbtn" data-i18n-title="tip_voice"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><g class="ico-on" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></g><g class="ico-off" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 9.5l5 5M21 9.5l-5 5"/></g></svg></button>
       <div id="voicepanel" class="voicepanel hidden"><div id="voicebox" class="voicebox">
@@ -1148,6 +1206,12 @@ button.pill:hover { border-color: var(--accent); }
     </div>
   </section>
 </main>
+
+<div id="musicdock" class="musicdock hidden" aria-label="YouTube">
+  <div id="ytplayer"></div>
+  <div class="mdbar"><span id="md_title" class="md_title"></span>
+    <button id="md_pp" class="md_btn" data-i18n-title="mu_pp">⏯</button><button id="md_next" class="md_btn" data-i18n-title="mu_next">⏭</button></div>
+</div>
 
 <div id="winner" class="overlay hidden">
   <div class="card win">
@@ -1541,7 +1605,10 @@ window.AFGOOIEN_MESSAGES = {
     "x_bm_restart_ok": "Board Manager herstart: even wachten tot de camera's weer draaien",
     "x_bm_fail": "Autodarts deed het niet ({info}). Probeer het in de Board Manager zelf.",
     "x_bm_busy": "Even geduld: Autodarts is nog bezig",
-    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen"
+    "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen",
+    "err_music_link": "Dat is geen link van YouTube of YouTube Music. Deel een nummer of afspeellijst en kies 'Link kopiëren'.",
+    "err_music_private": "'Nummers die ik leuk vind' is altijd privé. Maak er een openbare of verborgen afspeellijst van.",
+    "err_music_none": "Er speelt nu geen muziek"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1827,7 +1894,10 @@ window.AFGOOIEN_MESSAGES = {
     "x_bm_restart_ok": "Board Manager restarted: wait a moment for the cameras to come back",
     "x_bm_fail": "Autodarts did not respond ({info}). Try it in the Board Manager itself.",
     "x_bm_busy": "Please wait: Autodarts is still busy",
-    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control"
+    "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control",
+    "err_music_link": "That is not a YouTube or YouTube Music link. Share a song or playlist and choose 'Copy link'.",
+    "err_music_private": "'Liked music' is always private. Make a public or unlisted playlist instead.",
+    "err_music_none": "No music is playing right now"
   }
 }
 ;
@@ -4404,7 +4474,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.40";
+    s.app_version = "1.41";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4518,6 +4588,16 @@ window.AFGOOIEN_UI = {
     set_data_dirx: "de gegevensmap",
     set_reset: "Stats resetten", set_delete: "Verwijderen", set_noplayers: "Nog geen opgeslagen spelers.",
     set_rename: "Naam", set_rename_ok: "Opslaan",
+    mu_tip: "Muziek", mu_title: "Muziek", mu_ph: "Plak een link van YouTube Music of YouTube",
+    mu_prev: "Vorige", mu_pp: "Afspelen / pauze", mu_next: "Volgende", mu_stop: "Stoppen", mu_shuffle: "Shuffle (afspeellijst)",
+    mu_vol: "Muziek", mu_cvol: "Commentator", mu_duck: "Muziek zachter als de commentator praat",
+    mu_favs: "Favorieten", mu_favadd: "☆ Bewaar huidige", mu_nofavs: "Nog geen favorieten",
+    mu_none: "Er speelt niets. Plak hierboven een link.", mu_playing: "Speelt nu: {t}", mu_paused: "Gepauzeerd: {t}",
+    mu_loading: "Laden…", mu_list: "afspeellijst",
+    mu_e101: "Dit nummer mag niet buiten YouTube worden afgespeeld (overgeslagen)", mu_e100: "Niet gevonden of privé",
+    mu_e2: "Ongeldige link", mu_e5: "Kan dit niet afspelen", mu_eyt: "YouTube is niet bereikbaar (internet?)",
+    mu_hint: "Tip: in YouTube Music bij een nummer of afspeellijst op Delen → Link kopiëren tikken en hier (of op je telefoon) plakken. Afspeellijsten moeten openbaar of verborgen zijn, niet privé. Zolang er muziek speelt, staat er een klein YouTube-spelertje in beeld; dat is een regel van YouTube.",
+    mob_music: "Muziek",
     set_pstats: "{games} · {wins}× gewonnen ({pct}) · {kills} afgegooid", set_pnone: "Nog geen potjes (sinds laatste reset)",
     q_delete: "{name} verwijderen? Zijn statistieken tellen dan niet meer mee.", q_reset: "Statistieken van {name} resetten?",
     err_failed: "Dat lukte niet",
@@ -4764,6 +4844,16 @@ window.AFGOOIEN_UI = {
     set_data_dirx: "the data folder",
     set_reset: "Reset stats", set_delete: "Delete", set_noplayers: "No saved players yet.",
     set_rename: "Name", set_rename_ok: "Save",
+    mu_tip: "Music", mu_title: "Music", mu_ph: "Paste a YouTube Music or YouTube link",
+    mu_prev: "Previous", mu_pp: "Play / pause", mu_next: "Next", mu_stop: "Stop", mu_shuffle: "Shuffle (playlist)",
+    mu_vol: "Music", mu_cvol: "Commentator", mu_duck: "Lower the music while the commentator speaks",
+    mu_favs: "Favourites", mu_favadd: "☆ Save current", mu_nofavs: "No favourites yet",
+    mu_none: "Nothing is playing. Paste a link above.", mu_playing: "Now playing: {t}", mu_paused: "Paused: {t}",
+    mu_loading: "Loading…", mu_list: "playlist",
+    mu_e101: "This track may not be played outside YouTube (skipped)", mu_e100: "Not found or private",
+    mu_e2: "Invalid link", mu_e5: "Cannot play this", mu_eyt: "YouTube cannot be reached (internet?)",
+    mu_hint: "Tip: in YouTube Music tap Share → Copy link on a song or playlist and paste it here (or on your phone). Playlists must be public or unlisted, not private. While music plays, a small YouTube player stays on screen; that is a YouTube rule.",
+    mob_music: "Music",
     set_pstats: "{games} · {wins}× won ({pct}) · {kills} knocked out", set_pnone: "No games yet (since last reset)",
     q_delete: "Delete {name}? Their stats will no longer count.", q_reset: "Reset {name}'s stats?",
     err_failed: "That didn't work",
@@ -5195,6 +5285,8 @@ function render(state) {
     lastSayN = S.say.n;
   }
   refreshVoiceUi();
+  renderMusic();
+  applyMusic();
   if (view === "settings") { fillUpdate(); fillMail(); }
   const mk = JSON.stringify(S.mail || {});
   if (mk !== lastMailKey) { lastMailKey = mk; if (view === "players" && S.phase === "setup") renderPlayerMain(); }
@@ -5617,10 +5709,13 @@ async function serverSay(list) {
 function sayPhrases(list, force) {
   const vs = vset();
   if (REMOTE || (!vs.on && !force) || !list.length) return;
-  if (serverVoice() && ttsAudio) { serverSay(list); return; }
+  if (serverVoice() && ttsAudio) { const end = musDuck(); serverSay(list).finally(end); return; }
   if (!hasSpeech) return;
   try {
     speechSynthesis.cancel();
+    const end = musDuck();
+    let pending = 0;
+    const done = () => { if (--pending <= 0) end(); };
     const v = pickVoice();
     const rate = +vs.rate || 1;
     for (const phrase of list) {
@@ -5634,10 +5729,246 @@ function sayPhrases(list, force) {
         u.pitch = Math.max(0.1, voiceCfg.pitch * (big && last ? 0.9 : 1));
         u.rate = rate * (big ? (last ? 0.78 : 0.9) : 1);
         u.volume = Math.min(1, Math.max(0, vs.volume ?? 1));
+        pending++;
+        u.onend = done; u.onerror = done;
         speechSynthesis.speak(u);
       });
     }
   } catch (e) { /* geen stem beschikbaar */ }
+}
+
+// ------------------------------------------------------- muziek (YouTube / YouTube Music)
+// De server bewaart wát er moet spelen; alleen het grote scherm speelt het af met de officiële
+// YouTube-speler (klein maar zichtbaar in beeld). Telefoon en menu bedienen via de server.
+const MUS = { yt: null, ready: false, apiP: null, seq: null, duckN: 0, vol: null, ramp: null, rep: "", err: null,
+  errRun: 0, needShuffle: false };
+const musicHere = () => !REMOTE && !LOCAL;
+function ytApi() {
+  if (MUS.apiP) return MUS.apiP;
+  MUS.apiP = new Promise((res, rej) => {
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (prev) try { prev(); } catch (e) { /* */ } res(window.YT); };
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    s.async = true;
+    s.onerror = () => { MUS.apiP = null; s.remove(); rej(new Error("yt")); };
+    document.head.appendChild(s);
+    setTimeout(() => rej(new Error("yt")), 20000);
+  });
+  return MUS.apiP;
+}
+async function ytPlayer() {
+  if (MUS.yt && MUS.ready) return MUS.yt;
+  const YT = await ytApi();
+  if (!MUS.yt) {
+    await new Promise((res) => {
+      MUS.yt = new YT.Player("ytplayer", {
+        width: 224, height: 200,
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3, origin: location.origin },
+        events: { onReady: () => { MUS.ready = true; res(); }, onStateChange: musState, onError: musError },
+      });
+    });
+  }
+  return MUS.yt;
+}
+function musTarget() {
+  const m = S && S.music;
+  if (!m) return 0;
+  return Math.round(m.volume * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
+}
+function musVolume(smooth) {
+  const p = MUS.yt;
+  if (!p || !MUS.ready) return;
+  const to = musTarget();
+  if (MUS.vol === to) return;
+  clearInterval(MUS.ramp);
+  const from = MUS.vol === null ? to : MUS.vol;
+  if (!smooth || from === to) { MUS.vol = to; try { p.setVolume(to); } catch (e) { /* */ } return; }
+  let i = 0;
+  MUS.ramp = setInterval(() => {
+    i++;
+    const v = Math.round(from + (to - from) * i / 6);
+    try { p.setVolume(v); } catch (e) { /* */ }
+    MUS.vol = v;
+    if (i >= 6) clearInterval(MUS.ramp);
+  }, 45);
+}
+// stem: muziek even zachter (tijdens het praten)
+function musDuck() {
+  if (!musicHere() || !MUS.yt) return () => {};
+  MUS.duckN++;
+  musVolume(true);
+  let done = false;
+  const end = () => { if (done) return; done = true; MUS.duckN = Math.max(0, MUS.duckN - 1); setTimeout(() => musVolume(true), 250); };
+  setTimeout(end, 20000);              // vangnet als het einde nooit gemeld wordt
+  return end;
+}
+function musReport() {
+  const p = MUS.yt;
+  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list)) return;
+  let st = -1, title = "";
+  try { st = p.getPlayerState(); title = (p.getVideoData() || {}).title || ""; } catch (e) { /* */ }
+  const o = { playing: st === 1 || st === 3, title, err: MUS.err };
+  const k = JSON.stringify(o);
+  if (k === MUS.rep) return;
+  MUS.rep = k;
+  fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "music_status", ...o }) }).catch(() => {});
+}
+function musState(e) {
+  const p = MUS.yt;
+  if (e.data === 1) {
+    MUS.errRun = 0;
+    if (MUS.err && MUS.err !== "101") MUS.err = null;
+    if (MUS.needShuffle) {
+      MUS.needShuffle = false;
+      try { p.setLoop(true); p.setShuffle(true); p.playVideoAt(0); } catch (err) { /* */ }
+    }
+    musVolume(false);
+  }
+  musReport();
+}
+function musError(e) {
+  const code = String(e.data);
+  MUS.err = code === "150" ? "101" : code;
+  const m = S && S.music;
+  if (m && m.list && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
+  musReport();
+}
+async function applyMusic() {
+  if (!musicHere() || !S || !S.music) return;
+  const m = S.music;
+  const has = !!(m.video || m.list);
+  $("musicdock").classList.toggle("hidden", !has);
+  if (has) placeDock();
+  if (MUS.seq === m.seq) { musVolume(true); return; }
+  const first = MUS.seq === null;
+  MUS.seq = m.seq;
+  if (!has) { if (MUS.yt && MUS.ready) try { MUS.yt.stopVideo(); } catch (e) { /* */ } MUS.rep = ""; return; }
+  const op = first ? "load" : m.op;
+  let p;
+  try { p = await ytPlayer(); } catch (e) { MUS.err = "yt"; renderMusic(); return; }
+  if (MUS.seq !== m.seq) return;                     // inmiddels alweer iets anders gekozen
+  try {
+    if (op === "load") {
+      MUS.err = null; MUS.errRun = 0; MUS.rep = "";
+      const radio = m.list && /^RD/.test(m.list) && m.video;   // mixen: gewoon het nummer
+      if (m.list && !radio) {
+        const o = { list: m.list, listType: "playlist", index: 0 };
+        if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
+        MUS.needShuffle = !!m.shuffle && m.playing;
+        try { p.setLoop(true); } catch (e) { /* */ }
+      } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
+    } else if (op === "play") p.playVideo();
+    else if (op === "pause") p.pauseVideo();
+    else if (op === "next") { if (m.list) p.nextVideo(); else p.seekTo(0, true); }
+    else if (op === "prev") { if (m.list) p.previousVideo(); else p.seekTo(0, true); }
+    else if (op === "shuffle") { p.setShuffle(!!m.shuffle); }
+  } catch (e) { /* speler nog niet klaar */ }
+  MUS.vol = null;
+  musVolume(false);
+}
+function placeDock() {
+  const d = $("musicdock");
+  if (d.classList.contains("hidden")) return;
+  const inGame = !$("game").classList.contains("hidden");
+  const a = inGame && document.querySelector("#game .dartbar"), b = inGame && document.querySelector("#game .statusrow");
+  const ra = a && a.getBoundingClientRect(), rb = b && b.getBoundingClientRect();
+  const gap = ra && rb ? rb.top - ra.bottom : 0;
+  // weinig ruimte: alleen de speler (200 hoog), bediening zit in het muziekmenu
+  d.classList.toggle("compact", inGame && gap < 236 + 12);
+  const W = d.offsetWidth || 224, H = d.offsetHeight || 236;
+  let x = innerWidth - W - 16, y = innerHeight - H - 16;           // buiten het spel: rechtsonder
+  if (ra && rb) {                                                  // in het spel: rechts naast het bord
+    x = Math.min(innerWidth - W - 8, Math.max(8, ra.right - W));
+    y = gap >= H + 12 ? ra.bottom + (gap - H) / 2 : Math.max(ra.top, rb.top - H - 6);
+  }
+  d.style.left = Math.round(x) + "px";
+  d.style.top = Math.round(y) + "px";
+}
+const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5", "yt": "mu_eyt" };
+function renderMusic() {
+  if (LOCAL) { $("musicbtn").classList.add("hidden"); return; }
+  const m = (S && S.music) || null;
+  if (!m) return;
+  const has = !!(m.video || m.list);
+  $("musicbtn").classList.toggle("on", has && m.playing);
+  const title = m.title || (has ? t("mu_loading") : "");
+  $("mu_now").innerHTML = !has ? esc(t("mu_none"))
+    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+  $("md_title").textContent = title;
+  const err = (musicHere() ? MUS.err : null) || m.err;
+  $("mu_err").textContent = err && MU_ERR[err] ? t(MU_ERR[err]) : "";
+  $("mu_pp").textContent = m.playing ? "⏸" : "▶";
+  $("md_pp").textContent = m.playing ? "⏸" : "▶";
+  document.querySelectorAll("#musicpanel [data-mu]").forEach((b) => { b.disabled = !has; });
+  $("mu_shuf").classList.toggle("on", !!m.shuffle);
+  $("mu_shuf").disabled = !m.list;
+  if (document.activeElement !== $("mu_vol")) $("mu_vol").value = m.volume;
+  $("mu_vol_val").textContent = m.volume + "%";
+  const cv = vset().volume ?? 1;
+  if (document.activeElement !== $("mu_cvol")) $("mu_cvol").value = cv;
+  $("mu_cvol_val").textContent = Math.round(cv * 100) + "%";
+  $("mu_duck").checked = !!m.duck;
+  $("mu_favs").dataset.empty = t("mu_nofavs");
+  const fk = JSON.stringify(m.favs) + LANG;
+  if ($("mu_favs").dataset.k !== fk) {
+    $("mu_favs").dataset.k = fk;
+    $("mu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
+      <button class="ghost mu_fd" data-favdel="${i}" title="${esc(t("set_delete"))}">✕</button></li>`).join("");
+  }
+  $("mu_favadd").disabled = !has;
+}
+async function musicSend(cmd) {
+  $("mu_err").textContent = "";
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+    const j = await r.json();
+    if (!j.ok) { $("mu_err").textContent = j.error; return false; }
+    render(j.state);
+    return true;
+  } catch (e) { $("mu_err").textContent = t("no_conn"); return false; }
+}
+function bindMusic() {
+  $("musicbtn").onclick = (e) => {
+    e.stopPropagation();
+    $("voicepanel").classList.add("hidden");
+    $("adpanel").classList.add("hidden");
+    renderMusic();
+    $("musicpanel").classList.toggle("hidden");
+    if (!$("musicpanel").classList.contains("hidden") && !(S.music.video || S.music.list)) setTimeout(() => $("mu_url").focus(), 30);
+  };
+  $("musicpanel").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const b = e.target.closest("[data-mu]");
+    if (b && !b.disabled) {
+      const a = b.dataset.mu, m = S.music;
+      if (a === "toggle") musicSend({ type: "music_ctl", action: m.playing ? "pause" : "play" });
+      else if (a === "shuffle") musicSend({ type: "music_set", shuffle: !m.shuffle });
+      else musicSend({ type: "music_ctl", action: a });
+      return;
+    }
+    const f = e.target.closest("[data-fav]");
+    if (f) { musicSend({ type: "music_fav", action: "play", index: +f.dataset.fav }); return; }
+    const fd = e.target.closest("[data-favdel]");
+    if (fd) musicSend({ type: "music_fav", action: "del", index: +fd.dataset.favdel });
+  });
+  $("mu_form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = $("mu_url").value.trim();
+    if (!url) return;
+    if (await musicSend({ type: "music_load", url })) $("mu_url").value = "";
+  });
+  $("mu_vol").addEventListener("input", () => { $("mu_vol_val").textContent = $("mu_vol").value + "%"; });
+  $("mu_vol").addEventListener("change", () => musicSend({ type: "music_set", volume: +$("mu_vol").value }));
+  $("mu_cvol").addEventListener("input", () => { $("mu_cvol_val").textContent = Math.round($("mu_cvol").value * 100) + "%"; });
+  $("mu_cvol").addEventListener("change", () => { voiceSave({ volume: +$("mu_cvol").value }); });
+  $("mu_duck").addEventListener("change", () => musicSend({ type: "music_set", duck: $("mu_duck").checked }));
+  $("mu_favadd").onclick = () => musicSend({ type: "music_fav", action: "add" });
+  $("md_pp").onclick = () => musicSend({ type: "music_ctl", action: S.music.playing ? "pause" : "play" });
+  $("md_next").onclick = () => musicSend({ type: "music_ctl", action: "next" });
+  document.addEventListener("click", () => $("musicpanel").classList.add("hidden"));
+  addEventListener("resize", placeDock);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter
@@ -6691,7 +7022,7 @@ function openStats() {
 // ------------------------------------------------------------ schermen
 const DART_ICON = `<svg viewBox="0 0 64 20" aria-hidden="true"><path d="M2 10 L13 8.6 L13 11.4 Z" fill="#cfd6e2"/><rect x="13" y="7.6" width="22" height="4.8" rx="2" fill="#e9edf5"/><rect x="35" y="9" width="10" height="2" fill="#9aa4b5"/><path d="M45 10 L51 3 L63 3 L57 10 L63 17 L51 17 Z" fill="#e9edf5"/></svg>`;
 let view = store.get("afgooien.view", "home");     // home | modes | lobby
-function setView(v) { view = v; store.set("afgooien.view", v); showView(); }
+function setView(v) { view = v; store.set("afgooien.view", v); showView(); requestAnimationFrame(placeDock); }
 function showView() {
   const inGame = !!S && S.phase !== "setup";
   $("view-home").classList.toggle("hidden", inGame || view !== "home");
@@ -7353,15 +7684,18 @@ function bind() {
   // stem-paneel
   $("sound").onclick = (e) => {
     e.stopPropagation();
+    $("musicpanel").classList.add("hidden");
     $("voicepanel").appendChild($("voicebox"));   // zelfde bediening als bij Instellingen
     fillVoices(); $("voicepanel").classList.toggle("hidden");
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
+  bindMusic();
   $("src").onclick = (e) => {
     e.stopPropagation();
     const src = (S && S.source) || {};
     if (!src.enabled || src.mode === "test") return;
     $("voicepanel").classList.add("hidden");
+    $("musicpanel").classList.add("hidden");
     renderAdPanel();
     $("adpanel").classList.toggle("hidden");
   };

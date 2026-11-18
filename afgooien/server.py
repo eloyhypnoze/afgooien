@@ -27,6 +27,7 @@ from .players import PlayerStore
 from .tts import CloudError, VoiceManager
 from .updater import Updater, UpdateError
 from .mailer import Mailer, MailError
+from .music import Music
 
 mimetypes.add_type("font/woff", ".woff")
 mimetypes.add_type("font/woff2", ".woff2")
@@ -56,6 +57,7 @@ class App:
         self.config = self._load_config()
         self.tts = VoiceManager(data_dir, self.config, self._save_config)
         self.mailer = Mailer(self.config, self._save_config)
+        self.music = Music(self.config, self._save_config)
         self.updater = Updater(self.web_dir.parent, __version__, self.config, self._save_config, data_dir=data_dir)
         self.say: dict = {"n": 0, "phrases": []}
         self.power_enabled = False        # aan/uit-knop (alleen op de Pi, via run.py --power)     # testzinnen (bijv. vanaf de telefoon) voor het grote scherm
@@ -127,6 +129,7 @@ class App:
             s["power"] = self.power_enabled
             s["update"] = self.updater.info()
             s["mail"] = self.mailer.info()
+            s["music"] = self.music.info()
             if self.extra_notice and not s["notice"]:
                 s["notice"] = tr(self.lang, *self.extra_notice)
             s["key"] = "%d.%d" % self.key()
@@ -194,6 +197,12 @@ class App:
 
     # ---------------------------------------------------------- commands
     def command(self, cmd: dict) -> dict:
+        if cmd.get("type") == "music_status":          # melding van het grote scherm: geen spel, niets opslaan
+            with self.lock:
+                if self.music.status(cmd):
+                    self.status_version += 1
+                    self.changed.notify_all()
+                return self.state()
         with self.lock:
             self.extra_notice = None
             self._apply(cmd)
@@ -247,6 +256,8 @@ class App:
             self.board_msg = self.extra_notice
         elif t == "board_cmd":
             self._board_cmd(str(cmd.get("action") or ""))
+        elif t in ("music_load", "music_ctl", "music_set", "music_fav"):
+            self.music.command(cmd)
         elif t == "voice_config":
             self.tts.update(cmd)
         elif t == "say":

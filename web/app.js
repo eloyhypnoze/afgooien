@@ -220,6 +220,8 @@ function render(state) {
     lastSayN = S.say.n;
   }
   refreshVoiceUi();
+  renderMusic();
+  applyMusic();
   if (view === "settings") { fillUpdate(); fillMail(); }
   const mk = JSON.stringify(S.mail || {});
   if (mk !== lastMailKey) { lastMailKey = mk; if (view === "players" && S.phase === "setup") renderPlayerMain(); }
@@ -642,10 +644,13 @@ async function serverSay(list) {
 function sayPhrases(list, force) {
   const vs = vset();
   if (REMOTE || (!vs.on && !force) || !list.length) return;
-  if (serverVoice() && ttsAudio) { serverSay(list); return; }
+  if (serverVoice() && ttsAudio) { const end = musDuck(); serverSay(list).finally(end); return; }
   if (!hasSpeech) return;
   try {
     speechSynthesis.cancel();
+    const end = musDuck();
+    let pending = 0;
+    const done = () => { if (--pending <= 0) end(); };
     const v = pickVoice();
     const rate = +vs.rate || 1;
     for (const phrase of list) {
@@ -659,10 +664,246 @@ function sayPhrases(list, force) {
         u.pitch = Math.max(0.1, voiceCfg.pitch * (big && last ? 0.9 : 1));
         u.rate = rate * (big ? (last ? 0.78 : 0.9) : 1);
         u.volume = Math.min(1, Math.max(0, vs.volume ?? 1));
+        pending++;
+        u.onend = done; u.onerror = done;
         speechSynthesis.speak(u);
       });
     }
   } catch (e) { /* geen stem beschikbaar */ }
+}
+
+// ------------------------------------------------------- muziek (YouTube / YouTube Music)
+// De server bewaart wát er moet spelen; alleen het grote scherm speelt het af met de officiële
+// YouTube-speler (klein maar zichtbaar in beeld). Telefoon en menu bedienen via de server.
+const MUS = { yt: null, ready: false, apiP: null, seq: null, duckN: 0, vol: null, ramp: null, rep: "", err: null,
+  errRun: 0, needShuffle: false };
+const musicHere = () => !REMOTE && !LOCAL;
+function ytApi() {
+  if (MUS.apiP) return MUS.apiP;
+  MUS.apiP = new Promise((res, rej) => {
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (prev) try { prev(); } catch (e) { /* */ } res(window.YT); };
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    s.async = true;
+    s.onerror = () => { MUS.apiP = null; s.remove(); rej(new Error("yt")); };
+    document.head.appendChild(s);
+    setTimeout(() => rej(new Error("yt")), 20000);
+  });
+  return MUS.apiP;
+}
+async function ytPlayer() {
+  if (MUS.yt && MUS.ready) return MUS.yt;
+  const YT = await ytApi();
+  if (!MUS.yt) {
+    await new Promise((res) => {
+      MUS.yt = new YT.Player("ytplayer", {
+        width: 224, height: 200,
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3, origin: location.origin },
+        events: { onReady: () => { MUS.ready = true; res(); }, onStateChange: musState, onError: musError },
+      });
+    });
+  }
+  return MUS.yt;
+}
+function musTarget() {
+  const m = S && S.music;
+  if (!m) return 0;
+  return Math.round(m.volume * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
+}
+function musVolume(smooth) {
+  const p = MUS.yt;
+  if (!p || !MUS.ready) return;
+  const to = musTarget();
+  if (MUS.vol === to) return;
+  clearInterval(MUS.ramp);
+  const from = MUS.vol === null ? to : MUS.vol;
+  if (!smooth || from === to) { MUS.vol = to; try { p.setVolume(to); } catch (e) { /* */ } return; }
+  let i = 0;
+  MUS.ramp = setInterval(() => {
+    i++;
+    const v = Math.round(from + (to - from) * i / 6);
+    try { p.setVolume(v); } catch (e) { /* */ }
+    MUS.vol = v;
+    if (i >= 6) clearInterval(MUS.ramp);
+  }, 45);
+}
+// stem: muziek even zachter (tijdens het praten)
+function musDuck() {
+  if (!musicHere() || !MUS.yt) return () => {};
+  MUS.duckN++;
+  musVolume(true);
+  let done = false;
+  const end = () => { if (done) return; done = true; MUS.duckN = Math.max(0, MUS.duckN - 1); setTimeout(() => musVolume(true), 250); };
+  setTimeout(end, 20000);              // vangnet als het einde nooit gemeld wordt
+  return end;
+}
+function musReport() {
+  const p = MUS.yt;
+  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list)) return;
+  let st = -1, title = "";
+  try { st = p.getPlayerState(); title = (p.getVideoData() || {}).title || ""; } catch (e) { /* */ }
+  const o = { playing: st === 1 || st === 3, title, err: MUS.err };
+  const k = JSON.stringify(o);
+  if (k === MUS.rep) return;
+  MUS.rep = k;
+  fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "music_status", ...o }) }).catch(() => {});
+}
+function musState(e) {
+  const p = MUS.yt;
+  if (e.data === 1) {
+    MUS.errRun = 0;
+    if (MUS.err && MUS.err !== "101") MUS.err = null;
+    if (MUS.needShuffle) {
+      MUS.needShuffle = false;
+      try { p.setLoop(true); p.setShuffle(true); p.playVideoAt(0); } catch (err) { /* */ }
+    }
+    musVolume(false);
+  }
+  musReport();
+}
+function musError(e) {
+  const code = String(e.data);
+  MUS.err = code === "150" ? "101" : code;
+  const m = S && S.music;
+  if (m && m.list && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
+  musReport();
+}
+async function applyMusic() {
+  if (!musicHere() || !S || !S.music) return;
+  const m = S.music;
+  const has = !!(m.video || m.list);
+  $("musicdock").classList.toggle("hidden", !has);
+  if (has) placeDock();
+  if (MUS.seq === m.seq) { musVolume(true); return; }
+  const first = MUS.seq === null;
+  MUS.seq = m.seq;
+  if (!has) { if (MUS.yt && MUS.ready) try { MUS.yt.stopVideo(); } catch (e) { /* */ } MUS.rep = ""; return; }
+  const op = first ? "load" : m.op;
+  let p;
+  try { p = await ytPlayer(); } catch (e) { MUS.err = "yt"; renderMusic(); return; }
+  if (MUS.seq !== m.seq) return;                     // inmiddels alweer iets anders gekozen
+  try {
+    if (op === "load") {
+      MUS.err = null; MUS.errRun = 0; MUS.rep = "";
+      const radio = m.list && /^RD/.test(m.list) && m.video;   // mixen: gewoon het nummer
+      if (m.list && !radio) {
+        const o = { list: m.list, listType: "playlist", index: 0 };
+        if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
+        MUS.needShuffle = !!m.shuffle && m.playing;
+        try { p.setLoop(true); } catch (e) { /* */ }
+      } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
+    } else if (op === "play") p.playVideo();
+    else if (op === "pause") p.pauseVideo();
+    else if (op === "next") { if (m.list) p.nextVideo(); else p.seekTo(0, true); }
+    else if (op === "prev") { if (m.list) p.previousVideo(); else p.seekTo(0, true); }
+    else if (op === "shuffle") { p.setShuffle(!!m.shuffle); }
+  } catch (e) { /* speler nog niet klaar */ }
+  MUS.vol = null;
+  musVolume(false);
+}
+function placeDock() {
+  const d = $("musicdock");
+  if (d.classList.contains("hidden")) return;
+  const inGame = !$("game").classList.contains("hidden");
+  const a = inGame && document.querySelector("#game .dartbar"), b = inGame && document.querySelector("#game .statusrow");
+  const ra = a && a.getBoundingClientRect(), rb = b && b.getBoundingClientRect();
+  const gap = ra && rb ? rb.top - ra.bottom : 0;
+  // weinig ruimte: alleen de speler (200 hoog), bediening zit in het muziekmenu
+  d.classList.toggle("compact", inGame && gap < 236 + 12);
+  const W = d.offsetWidth || 224, H = d.offsetHeight || 236;
+  let x = innerWidth - W - 16, y = innerHeight - H - 16;           // buiten het spel: rechtsonder
+  if (ra && rb) {                                                  // in het spel: rechts naast het bord
+    x = Math.min(innerWidth - W - 8, Math.max(8, ra.right - W));
+    y = gap >= H + 12 ? ra.bottom + (gap - H) / 2 : Math.max(ra.top, rb.top - H - 6);
+  }
+  d.style.left = Math.round(x) + "px";
+  d.style.top = Math.round(y) + "px";
+}
+const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5", "yt": "mu_eyt" };
+function renderMusic() {
+  if (LOCAL) { $("musicbtn").classList.add("hidden"); return; }
+  const m = (S && S.music) || null;
+  if (!m) return;
+  const has = !!(m.video || m.list);
+  $("musicbtn").classList.toggle("on", has && m.playing);
+  const title = m.title || (has ? t("mu_loading") : "");
+  $("mu_now").innerHTML = !has ? esc(t("mu_none"))
+    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+  $("md_title").textContent = title;
+  const err = (musicHere() ? MUS.err : null) || m.err;
+  $("mu_err").textContent = err && MU_ERR[err] ? t(MU_ERR[err]) : "";
+  $("mu_pp").textContent = m.playing ? "⏸" : "▶";
+  $("md_pp").textContent = m.playing ? "⏸" : "▶";
+  document.querySelectorAll("#musicpanel [data-mu]").forEach((b) => { b.disabled = !has; });
+  $("mu_shuf").classList.toggle("on", !!m.shuffle);
+  $("mu_shuf").disabled = !m.list;
+  if (document.activeElement !== $("mu_vol")) $("mu_vol").value = m.volume;
+  $("mu_vol_val").textContent = m.volume + "%";
+  const cv = vset().volume ?? 1;
+  if (document.activeElement !== $("mu_cvol")) $("mu_cvol").value = cv;
+  $("mu_cvol_val").textContent = Math.round(cv * 100) + "%";
+  $("mu_duck").checked = !!m.duck;
+  $("mu_favs").dataset.empty = t("mu_nofavs");
+  const fk = JSON.stringify(m.favs) + LANG;
+  if ($("mu_favs").dataset.k !== fk) {
+    $("mu_favs").dataset.k = fk;
+    $("mu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
+      <button class="ghost mu_fd" data-favdel="${i}" title="${esc(t("set_delete"))}">✕</button></li>`).join("");
+  }
+  $("mu_favadd").disabled = !has;
+}
+async function musicSend(cmd) {
+  $("mu_err").textContent = "";
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+    const j = await r.json();
+    if (!j.ok) { $("mu_err").textContent = j.error; return false; }
+    render(j.state);
+    return true;
+  } catch (e) { $("mu_err").textContent = t("no_conn"); return false; }
+}
+function bindMusic() {
+  $("musicbtn").onclick = (e) => {
+    e.stopPropagation();
+    $("voicepanel").classList.add("hidden");
+    $("adpanel").classList.add("hidden");
+    renderMusic();
+    $("musicpanel").classList.toggle("hidden");
+    if (!$("musicpanel").classList.contains("hidden") && !(S.music.video || S.music.list)) setTimeout(() => $("mu_url").focus(), 30);
+  };
+  $("musicpanel").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const b = e.target.closest("[data-mu]");
+    if (b && !b.disabled) {
+      const a = b.dataset.mu, m = S.music;
+      if (a === "toggle") musicSend({ type: "music_ctl", action: m.playing ? "pause" : "play" });
+      else if (a === "shuffle") musicSend({ type: "music_set", shuffle: !m.shuffle });
+      else musicSend({ type: "music_ctl", action: a });
+      return;
+    }
+    const f = e.target.closest("[data-fav]");
+    if (f) { musicSend({ type: "music_fav", action: "play", index: +f.dataset.fav }); return; }
+    const fd = e.target.closest("[data-favdel]");
+    if (fd) musicSend({ type: "music_fav", action: "del", index: +fd.dataset.favdel });
+  });
+  $("mu_form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = $("mu_url").value.trim();
+    if (!url) return;
+    if (await musicSend({ type: "music_load", url })) $("mu_url").value = "";
+  });
+  $("mu_vol").addEventListener("input", () => { $("mu_vol_val").textContent = $("mu_vol").value + "%"; });
+  $("mu_vol").addEventListener("change", () => musicSend({ type: "music_set", volume: +$("mu_vol").value }));
+  $("mu_cvol").addEventListener("input", () => { $("mu_cvol_val").textContent = Math.round($("mu_cvol").value * 100) + "%"; });
+  $("mu_cvol").addEventListener("change", () => { voiceSave({ volume: +$("mu_cvol").value }); });
+  $("mu_duck").addEventListener("change", () => musicSend({ type: "music_set", duck: $("mu_duck").checked }));
+  $("mu_favadd").onclick = () => musicSend({ type: "music_fav", action: "add" });
+  $("md_pp").onclick = () => musicSend({ type: "music_ctl", action: S.music.playing ? "pause" : "play" });
+  $("md_next").onclick = () => musicSend({ type: "music_ctl", action: "next" });
+  document.addEventListener("click", () => $("musicpanel").classList.add("hidden"));
+  addEventListener("resize", placeDock);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter
@@ -1716,7 +1957,7 @@ function openStats() {
 // ------------------------------------------------------------ schermen
 const DART_ICON = `<svg viewBox="0 0 64 20" aria-hidden="true"><path d="M2 10 L13 8.6 L13 11.4 Z" fill="#cfd6e2"/><rect x="13" y="7.6" width="22" height="4.8" rx="2" fill="#e9edf5"/><rect x="35" y="9" width="10" height="2" fill="#9aa4b5"/><path d="M45 10 L51 3 L63 3 L57 10 L63 17 L51 17 Z" fill="#e9edf5"/></svg>`;
 let view = store.get("afgooien.view", "home");     // home | modes | lobby
-function setView(v) { view = v; store.set("afgooien.view", v); showView(); }
+function setView(v) { view = v; store.set("afgooien.view", v); showView(); requestAnimationFrame(placeDock); }
 function showView() {
   const inGame = !!S && S.phase !== "setup";
   $("view-home").classList.toggle("hidden", inGame || view !== "home");
@@ -2378,15 +2619,18 @@ function bind() {
   // stem-paneel
   $("sound").onclick = (e) => {
     e.stopPropagation();
+    $("musicpanel").classList.add("hidden");
     $("voicepanel").appendChild($("voicebox"));   // zelfde bediening als bij Instellingen
     fillVoices(); $("voicepanel").classList.toggle("hidden");
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
+  bindMusic();
   $("src").onclick = (e) => {
     e.stopPropagation();
     const src = (S && S.source) || {};
     if (!src.enabled || src.mode === "test") return;
     $("voicepanel").classList.add("hidden");
+    $("musicpanel").classList.add("hidden");
     renderAdPanel();
     $("adpanel").classList.toggle("hidden");
   };

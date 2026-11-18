@@ -237,6 +237,17 @@ daarna gewoon mee.
 Onder "Spelregels aanpassen" kun je het aantal punten, pijlen per beurt, de
 regel voor "af" en elk van de extra regels (5-7) aan- of uitzetten.
 
+## Muziek tijdens het darten
+
+Klik rechtsboven op 🎵 (of open **Muziek** op de telefoonpagina). Plak een link van een nummer of
+afspeellijst uit YouTube Music of YouTube (in de app: Delen → Link kopiëren) en druk op ▶. Je hebt
+afspelen/pauze, vorige, volgende, stoppen en shuffle, een volume voor de muziek en voor de commentator,
+en de muziek gaat vanzelf zachter als de commentator praat (uit te zetten). Bewaar je vaste lijsten bij
+**Favorieten**. Het grote scherm speelt af met de officiële YouTube-speler; die blijft klein in beeld zolang
+er muziek speelt (dat is een regel van YouTube). Afspeellijsten moeten openbaar of verborgen zijn, niet
+privé ("Nummers die ik leuk vind" kan dus niet). Zonder YouTube Premium kan YouTube reclame tonen, en
+sommige nummers mogen van de platenmaatschappij niet buiten YouTube spelen: die worden overgeslagen.
+
 ## Autodarts bedienen vanuit Afgooien
 
 Klik bovenin op de statuspil ("Autodarts verbonden · …"). Daar zet je de detectie **aan** of **uit**,
@@ -333,6 +344,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.41**: muziek tijdens het darten via YouTube Music / YouTube (🎵 rechtsboven en op de telefoon), met
+  eigen volume, volume van de commentator en muziek die vanzelf zachter gaat als de commentator praat
 - **1.40**: naam van een opgeslagen speler wijzigen (Instellingen → Spelers → ✎ Naam); statistieken,
   oude potjes en een lopend potje gaan mee naar de nieuwe naam
 - **1.39**: klik op de Autodarts-statuspil voor bediening van de Board Manager: detectie aan/uit, reset,
