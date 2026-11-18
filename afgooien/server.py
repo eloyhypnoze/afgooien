@@ -28,6 +28,7 @@ from .tts import CloudError, VoiceManager
 from .updater import Updater, UpdateError
 from .mailer import Mailer, MailError
 from .music import Music
+from .youtube import YouTubeAccount, YTError
 
 mimetypes.add_type("font/woff", ".woff")
 mimetypes.add_type("font/woff2", ".woff2")
@@ -58,6 +59,8 @@ class App:
         self.tts = VoiceManager(data_dir, self.config, self._save_config)
         self.mailer = Mailer(self.config, self._save_config)
         self.music = Music(self.config, self._save_config)
+        self.yt = YouTubeAccount(self.config, self._save_config)
+        self.yt.on_change = self._yt_changed
         self.updater = Updater(self.web_dir.parent, __version__, self.config, self._save_config, data_dir=data_dir)
         self.say: dict = {"n": 0, "phrases": []}
         self.power_enabled = False        # aan/uit-knop (alleen op de Pi, via run.py --power)     # testzinnen (bijv. vanaf de telefoon) voor het grote scherm
@@ -130,6 +133,7 @@ class App:
             s["update"] = self.updater.info()
             s["mail"] = self.mailer.info()
             s["music"] = self.music.info()
+            s["youtube"] = self.yt.info()
             if self.extra_notice and not s["notice"]:
                 s["notice"] = tr(self.lang, *self.extra_notice)
             s["key"] = "%d.%d" % self.key()
@@ -196,7 +200,35 @@ class App:
         timer.start()
 
     # ---------------------------------------------------------- commands
+    def _yt_changed(self) -> None:
+        with self.lock:
+            self.status_version += 1
+            self.changed.notify_all()
+
+    def _yt_command(self, cmd: dict) -> None:
+        """YouTube-account: buiten het slot, want dit praat met Google."""
+        t = cmd.get("type")
+        try:
+            if t == "yt_client":
+                self.yt.set_client(cmd.get("client_id"), cmd.get("client_secret"))
+            elif t == "yt_login":
+                self.yt.start_login()
+            elif t == "yt_login_cancel":
+                self.yt.cancel_login()
+            elif t == "yt_logout":
+                self.yt.logout()
+            else:
+                raise GameError("err_unknown_cmd", cmd=t)
+        except YTError as e:
+            raise GameError("err_yt", code=e.code)
+
     def command(self, cmd: dict) -> dict:
+        if str(cmd.get("type") or "").startswith("yt_"):
+            self._yt_command(cmd)
+            with self.lock:
+                self.status_version += 1
+                self.changed.notify_all()
+                return self.state()
         if cmd.get("type") == "music_status":          # melding van het grote scherm: geen spel, niets opslaan
             with self.lock:
                 if self.music.status(cmd):
@@ -518,6 +550,8 @@ def make_handler(app: App):
                 self.send_header("Cache-Control", "no-store")
                 self.end_headers()
                 return self.wfile.write(data)
+            if path.startswith("/api/yt/"):
+                return self._yt_get(path)
             if path == "/qr.svg":
                 from .qr import QR
                 body = QR(app.mobile_url()).svg().encode("utf-8")
@@ -566,6 +600,43 @@ def make_handler(app: App):
                 return self._json({"ok": False, "error": "onbekend"}, 400)
             err = power_action(action)
             return self._json({"ok": err is None, "error": err}, 200 if err is None else 500)
+
+        def _yt_get(self, path: str):
+            """Zoeken en je eigen afspeellijsten (alleen vanuit je eigen netwerk)."""
+            from urllib.parse import parse_qs
+            if not self._local():
+                return self._json({"ok": False, "error": "not_local"}, 403)
+            q = parse_qs(self.path.split("?", 1)[1] if "?" in self.path else "")
+            arg = lambda k: (q.get(k) or [""])[0]   # noqa: E731
+            if path == "/api/yt/qr.svg":
+                from .qr import QR
+                login = app.yt.login
+                if not login:
+                    return self.send_error(HTTPStatus.NOT_FOUND)
+                body = QR(login["url"]).svg().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "image/svg+xml")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                return self.wfile.write(body)
+            try:
+                if path == "/api/yt/playlists":
+                    data = app.yt.playlists()
+                elif path == "/api/yt/items":
+                    lid = arg("list")
+                    if not lid or len(lid) > 80 or not all(c.isalnum() or c in "_-" for c in lid):
+                        return self._json({"ok": False, "error": "bad_request"}, 400)
+                    data = app.yt.items(lid)
+                elif path == "/api/yt/search":
+                    data = app.yt.search(arg("q"), arg("type") or "video")
+                else:
+                    return self.send_error(HTTPStatus.NOT_FOUND)
+            except YTError as e:
+                if e.code == "relogin":
+                    app._yt_changed()
+                return self._json({"ok": False, "error": e.code})
+            return self._json({"ok": True, "items": data})
 
         def _local(self) -> bool:
             import ipaddress

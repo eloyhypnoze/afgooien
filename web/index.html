@@ -58,10 +58,12 @@
     <div class="voicewrap musicwrap">
       <button id="musicbtn" class="iconbtn" data-i18n-title="mu_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="2.6" fill="currentColor"/><circle cx="16.5" cy="15.5" r="2.6" fill="currentColor"/></svg></button>
       <div id="musicpanel" class="voicepanel musicpanel hidden">
-        <h3>🎵 <span data-i18n="mu_title"></span></h3>
-        <form id="mu_form" class="mu_form"><input id="mu_url" autocomplete="off" spellcheck="false" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
-        <p id="mu_err" class="mu_err"></p>
-        <div id="mu_now" class="mu_now"></div>
+        <div class="mu_head"><h3>🎵 <span data-i18n="mu_title"></span></h3><span id="mu_acct" class="mu_acct"></span>
+          <button id="mu_close" class="ghost small" data-i18n-title="close">✕</button></div>
+        <div class="mu_nowbar">
+          <img id="mu_art" class="mu_art" alt="">
+          <div class="mu_nowtxt"><div id="mu_now" class="mu_now"></div><div id="mu_sub" class="mu_sub"></div></div>
+        </div>
         <div class="mu_ctl">
           <button data-mu="prev" data-i18n-title="mu_prev">⏮</button>
           <button data-mu="toggle" id="mu_pp" class="primary" data-i18n-title="mu_pp">⏯</button>
@@ -69,14 +71,48 @@
           <button data-mu="stop" data-i18n-title="mu_stop">⏹</button>
           <button data-mu="shuffle" id="mu_shuf" data-i18n-title="mu_shuffle">🔀</button>
         </div>
-        <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mu_vol_val"></b></span>
-          <input id="mu_vol" type="range" min="0" max="100" step="5"></label>
-        <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mu_cvol_val"></b></span>
-          <input id="mu_cvol" type="range" min="0" max="1" step="0.05"></label>
-        <label class="check"><input id="mu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
-        <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
-        <ul id="mu_favs" class="mu_favs"></ul>
-        <p class="hint" data-i18n="mu_hint"></p>
+        <div class="mu_tabs">
+          <button data-tab="search">🔎 <span data-i18n="mu_t_search"></span></button>
+          <button data-tab="mine">📚 <span data-i18n="mu_t_mine"></span></button>
+          <button data-tab="favs">⭐ <span data-i18n="mu_t_favs"></span></button>
+          <button data-tab="link">🔗 <span data-i18n="mu_t_link"></span></button>
+          <button data-tab="vol">🔊 <span data-i18n="mu_t_vol"></span></button>
+        </div>
+        <p id="mu_err" class="mu_err"></p>
+        <div class="mu_body">
+          <div class="mu_pane" data-pane="search">
+            <form id="mu_sform" class="mu_form"><input id="mu_q" autocomplete="off" spellcheck="false" data-i18n-ph="mu_q_ph"><button class="primary" type="submit">🔎</button></form>
+            <div class="mu_seg"><button data-sk="video" class="on" data-i18n="mu_songs"></button><button data-sk="playlist" data-i18n="mu_lists"></button></div>
+            <div id="mu_sgate" class="mu_gate hidden"></div>
+            <ul id="mu_results" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="mine">
+            <div id="mu_login" class="mu_gate"></div>
+            <div id="mu_plhead" class="mu_plhead hidden"><span data-i18n="mu_mylists"></span><button id="mu_plrefresh" class="ghost small" data-i18n-title="mu_refresh">⟳</button></div>
+            <ul id="mu_pls" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="tracks">
+            <div class="mu_trhead"><button id="mu_back" class="ghost small">‹</button><b id="mu_trtitle"></b></div>
+            <div class="mu_trbtns"><button id="mu_playall" class="primary">▶ <span data-i18n="mu_playall"></span></button>
+              <button id="mu_shufall" class="ghost">🔀 <span data-i18n="mu_shufall"></span></button></div>
+            <ul id="mu_tracks" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="favs">
+            <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
+            <ul id="mu_favs" class="mu_favs"></ul>
+          </div>
+          <div class="mu_pane" data-pane="link">
+            <form id="mu_form" class="mu_form"><input id="mu_url" autocomplete="off" spellcheck="false" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
+            <p class="hint" data-i18n="mu_hint"></p>
+          </div>
+          <div class="mu_pane" data-pane="vol">
+            <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mu_vol_val"></b></span>
+              <input id="mu_vol" type="range" min="0" max="100" step="5"></label>
+            <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mu_cvol_val"></b></span>
+              <input id="mu_cvol" type="range" min="0" max="1" step="0.05"></label>
+            <label class="check"><input id="mu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
+          </div>
+        </div>
       </div>
     </div>
     <div class="voicewrap">
@@ -224,6 +260,19 @@
             <button id="ml_test" class="ghost" data-i18n="ml_test"></button>
           </div>
           <p id="ml_msg" class="hint"></p>
+        </div>
+        <div class="card" id="ytcard">
+          <div class="cardhead"><h2 data-i18n="yt_title"></h2><span id="yt_state" class="pill"></span></div>
+          <p class="sub small" data-i18n="yt_sub"></p>
+          <details class="ytsteps"><summary data-i18n="yt_how"></summary><ol id="yt_steps"></ol></details>
+          <label class="setrange2"><span data-i18n="yt_cid"></span><input id="yt_cid" spellcheck="false" autocomplete="off" placeholder="…apps.googleusercontent.com"></label>
+          <label class="setrange2"><span data-i18n="yt_secret"></span><input id="yt_secret" type="password" autocomplete="off"></label>
+          <div class="row left">
+            <button id="yt_save" class="primary" data-i18n="ml_save"></button>
+            <button id="yt_loginbtn" class="ghost" data-i18n="yt_login"></button>
+            <button id="yt_logout" class="ghost danger" data-i18n="yt_logout"></button>
+          </div>
+          <p id="yt_msg" class="hint"></p>
         </div>
         <div class="card">
           <div class="cardhead"><h2 data-i18n="set_data"></h2></div>

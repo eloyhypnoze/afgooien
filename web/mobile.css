@@ -125,3 +125,4 @@ a.ghost.mbtn { color: var(--text); background: var(--panel2); border: 1px solid 
 .mu_favs .mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .5em .6em; }
 .mu_favs .mu_fd { padding: .5em .7em; }
 .mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }
+.mmu_full { display: block; text-align: center; text-decoration: none; }

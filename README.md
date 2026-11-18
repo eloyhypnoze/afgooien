@@ -239,7 +239,9 @@ regel voor "af" en elk van de extra regels (5-7) aan- of uitzetten.
 
 ## Muziek tijdens het darten
 
-Klik rechtsboven op 🎵 (of open **Muziek** op de telefoonpagina). Plak een link van een nummer of
+Klik rechtsboven op 🎵 (of open **Muziek** op de telefoonpagina). Met je eigen YouTube-account (zie hieronder)
+kun je daar **zoeken** en je **eigen afspeellijsten** en "Vind ik leuk" kiezen, ook privé-lijsten. Zonder
+account kun je een link plakken van een nummer of
 afspeellijst uit YouTube Music of YouTube (in de app: Delen → Link kopiëren) en druk op ▶. Je hebt
 afspelen/pauze, vorige, volgende, stoppen en shuffle, een volume voor de muziek en voor de commentator,
 en de muziek gaat vanzelf zachter als de commentator praat (uit te zetten). Bewaar je vaste lijsten bij
@@ -247,6 +249,15 @@ en de muziek gaat vanzelf zachter als de commentator praat (uit te zetten). Bewa
 er muziek speelt (dat is een regel van YouTube). Afspeellijsten moeten openbaar of verborgen zijn, niet
 privé ("Nummers die ik leuk vind" kan dus niet). Zonder YouTube Premium kan YouTube reclame tonen, en
 sommige nummers mogen van de platenmaatschappij niet buiten YouTube spelen: die worden overgeslagen.
+
+### YouTube-account koppelen (eenmalig)
+
+Afgooien gebruikt de officiële YouTube Data API met je eigen, gratis Google Cloud-project. Je logt in
+zoals op een smart-tv: de Pi toont een code, die vul je op je telefoon in bij google.com/device.
+Afgooien krijgt alleen leesrechten en de sleutels blijven op de Pi. De stappen staan in de app bij
+**Instellingen → YouTube Music-account → Zo maak je een eigen koppeling**. Zet de publicatiestatus van je
+app op "In productie", anders moet je elke 7 dagen opnieuw inloggen. Zoeken kost YouTube-quotum: ongeveer
+100 zoekopdrachten per dag; je afspeellijsten openen kan veel vaker.
 
 ## Autodarts bedienen vanuit Afgooien
 
@@ -344,6 +355,8 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.42**: inloggen met je YouTube-account in de muziekknop: zoeken, je eigen afspeellijsten (ook privé) en
+  "Vind ik leuk", nummers per afspeellijst kiezen; muziekvenster met tabbladen
 - **1.41**: muziek tijdens het darten via YouTube Music / YouTube (🎵 rechtsboven en op de telefoon), met
   eigen volume, volume van de commentator en muziek die vanzelf zachter gaat als de commentator praat
 - **1.40**: naam van een opgeslagen speler wijzigen (Instellingen → Spelers → ✎ Naam); statistieken,

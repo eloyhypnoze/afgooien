@@ -711,27 +711,66 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
 /* muziek */
-.musicpanel { width: 340px; display: grid; gap: .55rem; }
-.musicpanel h3 { margin: 0; font: 900 italic 1.15rem/1 var(--display); }
+.musicpanel { width: min(470px, 96vw); display: grid; gap: .55rem; max-height: calc(100vh - 80px); grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+.mu_head { display: flex; align-items: center; gap: .6rem; }
+.mu_head h3 { margin: 0; font: 900 italic 1.2rem/1 var(--display); }
+.mu_acct { flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_head .small { padding: .25em .55em; }
+.mu_nowbar { display: flex; gap: .7rem; align-items: center; min-height: 3.2rem; }
+.mu_art { width: 5.4rem; height: 3.05rem; object-fit: cover; border-radius: 8px; flex: none; background: rgba(255,255,255,.06); }
+.mu_nowtxt { min-width: 0; flex: 1; }
+.mu_now { font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.mu_now b { color: var(--text); }
+.mu_sub { font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
+.mu_ctl button { min-width: 2.9rem; padding: .45em .6em; font-size: 1.05rem; }
+.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
+.mu_ctl button:disabled { opacity: .4; }
+.mu_tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); padding-bottom: .35rem; overflow-x: auto; }
+.mu_tabs button { flex: 1 1 auto; padding: .4em .35em; font-size: .8rem; background: transparent; border-color: transparent; white-space: nowrap; }
+.mu_tabs button.on { background: rgba(255,255,255,.08); border-color: var(--line2, rgba(255,255,255,.18)); }
+.mu_body { overflow: auto; min-height: 9rem; max-height: 46vh; padding-right: .15rem; }
+.mu_pane { display: grid; gap: .55rem; align-content: start; }
 .mu_form { display: flex; gap: .4rem; }
 .mu_form input { flex: 1; min-width: 0; padding: .5em .65em; }
 .mu_form button { padding: .45em .9em; }
+.mu_seg { display: flex; gap: .3rem; }
+.mu_seg button { flex: 1; padding: .35em .5em; font-size: .82rem; }
+.mu_seg button.on { border-color: var(--accent); color: var(--accent); }
 .mu_err { margin: 0; color: #ff9a92; font-size: .85rem; }
 .mu_err:empty { display: none; }
-.mu_now { font-size: .9rem; color: var(--muted); min-height: 1.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mu_now b { color: var(--text); }
-.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
-.mu_ctl button { min-width: 2.7rem; padding: .45em .6em; font-size: 1.05rem; }
-.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
-.mu_ctl button:disabled { opacity: .4; }
+.mu_list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.mu_list .mu_info { color: var(--muted); font-size: .88rem; padding: .4rem .2rem; }
+.mu_row { display: flex; gap: .6rem; align-items: center; width: 100%; text-align: left; padding: .35rem .45rem; background: transparent;
+  border: 1px solid transparent; border-radius: 10px; }
+.mu_row:hover, .mu_row:focus-visible { background: rgba(255,255,255,.06); border-color: var(--line); }
+.mu_row img, .mu_noart { width: 3.6rem; height: 2.05rem; object-fit: cover; border-radius: 6px; flex: none; background: rgba(255,255,255,.07);
+  display: grid; place-items: center; color: var(--muted); }
+.mu_rt { display: grid; min-width: 0; line-height: 1.25; }
+.mu_rt b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_rt small { font-size: .76rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_gate { display: grid; gap: .5rem; justify-items: start; font-size: .9rem; }
+.mu_gate p { margin: 0; }
+.mu_errl { color: #ff9a92; }
+.mu_code { font: 900 2rem/1 var(--display); letter-spacing: .12em; padding: .5rem .8rem; border-radius: 12px; background: rgba(255,255,255,.07); }
+.mu_qr { display: flex; align-items: center; gap: .6rem; color: var(--muted); font-size: .85rem; }
+.mu_qr img { width: 96px; height: 96px; background: #fff; border-radius: 8px; padding: 4px; }
+.mu_plhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
+.mu_trhead { display: flex; align-items: center; gap: .5rem; }
+.mu_trhead b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_trbtns { display: flex; gap: .4rem; }
+.mu_trbtns button { padding: .45em .8em; font-size: .88rem; }
 .mu_sl { display: grid; gap: .2rem; font-size: .88rem; }
 .mu_sl input { width: 100%; }
 .mu_favhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
-.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; max-height: 9.5rem; overflow: auto; }
+.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
 .mu_favs li { display: flex; gap: .35rem; align-items: center; }
 .mu_favs li button.mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .4em .6em; font-size: .88rem; }
 .mu_favs li button.mu_fd { padding: .4em .55em; font-size: .8rem; }
 .mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }
+.ytsteps summary { cursor: pointer; font-weight: 700; font-size: .9rem; }
+.ytsteps ol { margin: .5rem 0 .2rem 1.1rem; padding: 0; display: grid; gap: .35rem; font-size: .88rem; color: var(--muted); }
+html.remote .musicpanel { position: fixed; left: 2vw; right: 2vw; top: 64px; width: auto; transform: none; max-height: calc(100vh - 80px); }
 /* de YouTube-speler: klein maar zichtbaar (minimaal 200x200 volgens de regels van YouTube) */
 .musicdock { position: fixed; z-index: 4; width: 224px; background: rgba(10,14,30,.92); border: 1px solid var(--line2, rgba(255,255,255,.14));
   border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
@@ -825,10 +864,12 @@ button.pill:hover { border-color: var(--accent); }
     <div class="voicewrap musicwrap">
       <button id="musicbtn" class="iconbtn" data-i18n-title="mu_tip"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17.5V6l10-2v11.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="2.6" fill="currentColor"/><circle cx="16.5" cy="15.5" r="2.6" fill="currentColor"/></svg></button>
       <div id="musicpanel" class="voicepanel musicpanel hidden">
-        <h3>🎵 <span data-i18n="mu_title"></span></h3>
-        <form id="mu_form" class="mu_form"><input id="mu_url" autocomplete="off" spellcheck="false" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
-        <p id="mu_err" class="mu_err"></p>
-        <div id="mu_now" class="mu_now"></div>
+        <div class="mu_head"><h3>🎵 <span data-i18n="mu_title"></span></h3><span id="mu_acct" class="mu_acct"></span>
+          <button id="mu_close" class="ghost small" data-i18n-title="close">✕</button></div>
+        <div class="mu_nowbar">
+          <img id="mu_art" class="mu_art" alt="">
+          <div class="mu_nowtxt"><div id="mu_now" class="mu_now"></div><div id="mu_sub" class="mu_sub"></div></div>
+        </div>
         <div class="mu_ctl">
           <button data-mu="prev" data-i18n-title="mu_prev">⏮</button>
           <button data-mu="toggle" id="mu_pp" class="primary" data-i18n-title="mu_pp">⏯</button>
@@ -836,14 +877,48 @@ button.pill:hover { border-color: var(--accent); }
           <button data-mu="stop" data-i18n-title="mu_stop">⏹</button>
           <button data-mu="shuffle" id="mu_shuf" data-i18n-title="mu_shuffle">🔀</button>
         </div>
-        <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mu_vol_val"></b></span>
-          <input id="mu_vol" type="range" min="0" max="100" step="5"></label>
-        <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mu_cvol_val"></b></span>
-          <input id="mu_cvol" type="range" min="0" max="1" step="0.05"></label>
-        <label class="check"><input id="mu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
-        <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
-        <ul id="mu_favs" class="mu_favs"></ul>
-        <p class="hint" data-i18n="mu_hint"></p>
+        <div class="mu_tabs">
+          <button data-tab="search">🔎 <span data-i18n="mu_t_search"></span></button>
+          <button data-tab="mine">📚 <span data-i18n="mu_t_mine"></span></button>
+          <button data-tab="favs">⭐ <span data-i18n="mu_t_favs"></span></button>
+          <button data-tab="link">🔗 <span data-i18n="mu_t_link"></span></button>
+          <button data-tab="vol">🔊 <span data-i18n="mu_t_vol"></span></button>
+        </div>
+        <p id="mu_err" class="mu_err"></p>
+        <div class="mu_body">
+          <div class="mu_pane" data-pane="search">
+            <form id="mu_sform" class="mu_form"><input id="mu_q" autocomplete="off" spellcheck="false" data-i18n-ph="mu_q_ph"><button class="primary" type="submit">🔎</button></form>
+            <div class="mu_seg"><button data-sk="video" class="on" data-i18n="mu_songs"></button><button data-sk="playlist" data-i18n="mu_lists"></button></div>
+            <div id="mu_sgate" class="mu_gate hidden"></div>
+            <ul id="mu_results" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="mine">
+            <div id="mu_login" class="mu_gate"></div>
+            <div id="mu_plhead" class="mu_plhead hidden"><span data-i18n="mu_mylists"></span><button id="mu_plrefresh" class="ghost small" data-i18n-title="mu_refresh">⟳</button></div>
+            <ul id="mu_pls" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="tracks">
+            <div class="mu_trhead"><button id="mu_back" class="ghost small">‹</button><b id="mu_trtitle"></b></div>
+            <div class="mu_trbtns"><button id="mu_playall" class="primary">▶ <span data-i18n="mu_playall"></span></button>
+              <button id="mu_shufall" class="ghost">🔀 <span data-i18n="mu_shufall"></span></button></div>
+            <ul id="mu_tracks" class="mu_list"></ul>
+          </div>
+          <div class="mu_pane" data-pane="favs">
+            <div class="mu_favhead"><span data-i18n="mu_favs"></span><button id="mu_favadd" class="ghost small" data-i18n="mu_favadd"></button></div>
+            <ul id="mu_favs" class="mu_favs"></ul>
+          </div>
+          <div class="mu_pane" data-pane="link">
+            <form id="mu_form" class="mu_form"><input id="mu_url" autocomplete="off" spellcheck="false" data-i18n-ph="mu_ph"><button class="primary" type="submit">▶</button></form>
+            <p class="hint" data-i18n="mu_hint"></p>
+          </div>
+          <div class="mu_pane" data-pane="vol">
+            <label class="mu_sl"><span>🎵 <span data-i18n="mu_vol"></span> <b id="mu_vol_val"></b></span>
+              <input id="mu_vol" type="range" min="0" max="100" step="5"></label>
+            <label class="mu_sl"><span>🗣 <span data-i18n="mu_cvol"></span> <b id="mu_cvol_val"></b></span>
+              <input id="mu_cvol" type="range" min="0" max="1" step="0.05"></label>
+            <label class="check"><input id="mu_duck" type="checkbox"> <span data-i18n="mu_duck"></span></label>
+          </div>
+        </div>
       </div>
     </div>
     <div class="voicewrap">
@@ -991,6 +1066,19 @@ button.pill:hover { border-color: var(--accent); }
             <button id="ml_test" class="ghost" data-i18n="ml_test"></button>
           </div>
           <p id="ml_msg" class="hint"></p>
+        </div>
+        <div class="card" id="ytcard">
+          <div class="cardhead"><h2 data-i18n="yt_title"></h2><span id="yt_state" class="pill"></span></div>
+          <p class="sub small" data-i18n="yt_sub"></p>
+          <details class="ytsteps"><summary data-i18n="yt_how"></summary><ol id="yt_steps"></ol></details>
+          <label class="setrange2"><span data-i18n="yt_cid"></span><input id="yt_cid" spellcheck="false" autocomplete="off" placeholder="…apps.googleusercontent.com"></label>
+          <label class="setrange2"><span data-i18n="yt_secret"></span><input id="yt_secret" type="password" autocomplete="off"></label>
+          <div class="row left">
+            <button id="yt_save" class="primary" data-i18n="ml_save"></button>
+            <button id="yt_loginbtn" class="ghost" data-i18n="yt_login"></button>
+            <button id="yt_logout" class="ghost danger" data-i18n="yt_logout"></button>
+          </div>
+          <p id="yt_msg" class="hint"></p>
         </div>
         <div class="card">
           <div class="cardhead"><h2 data-i18n="set_data"></h2></div>
@@ -1608,7 +1696,9 @@ window.AFGOOIEN_MESSAGES = {
     "x_bm_off": "Autodarts staat uit in Afgooien: er is geen Board Manager om te bedienen",
     "err_music_link": "Dat is geen link van YouTube of YouTube Music. Deel een nummer of afspeellijst en kies 'Link kopiëren'.",
     "err_music_private": "'Nummers die ik leuk vind' is altijd privé. Maak er een openbare of verborgen afspeellijst van.",
-    "err_music_none": "Er speelt nu geen muziek"
+    "err_music_none": "Er speelt nu geen muziek",
+    "err_music_nofav": "Alleen links kun je als favoriet bewaren; je eigen afspeellijsten staan al onder Mijn muziek",
+    "err_yt": "YouTube: {code}"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1897,7 +1987,9 @@ window.AFGOOIEN_MESSAGES = {
     "x_bm_off": "Autodarts is off in Afgooien: there is no Board Manager to control",
     "err_music_link": "That is not a YouTube or YouTube Music link. Share a song or playlist and choose 'Copy link'.",
     "err_music_private": "'Liked music' is always private. Make a public or unlisted playlist instead.",
-    "err_music_none": "No music is playing right now"
+    "err_music_none": "No music is playing right now",
+    "err_music_nofav": "Only links can be saved as favourites; your own playlists are already under My music",
+    "err_yt": "YouTube: {code}"
   }
 }
 ;
@@ -4474,7 +4566,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.41";
+    s.app_version = "1.42";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4592,12 +4684,38 @@ window.AFGOOIEN_UI = {
     mu_prev: "Vorige", mu_pp: "Afspelen / pauze", mu_next: "Volgende", mu_stop: "Stoppen", mu_shuffle: "Shuffle (afspeellijst)",
     mu_vol: "Muziek", mu_cvol: "Commentator", mu_duck: "Muziek zachter als de commentator praat",
     mu_favs: "Favorieten", mu_favadd: "☆ Bewaar huidige", mu_nofavs: "Nog geen favorieten",
-    mu_none: "Er speelt niets. Plak hierboven een link.", mu_playing: "Speelt nu: {t}", mu_paused: "Gepauzeerd: {t}",
+    mu_none: "Er speelt niets. Zoek een nummer of kies een afspeellijst.", mu_playing: "Speelt nu: {t}", mu_paused: "Gepauzeerd: {t}",
     mu_loading: "Laden…", mu_list: "afspeellijst",
     mu_e101: "Dit nummer mag niet buiten YouTube worden afgespeeld (overgeslagen)", mu_e100: "Niet gevonden of privé",
     mu_e2: "Ongeldige link", mu_e5: "Kan dit niet afspelen", mu_eyt: "YouTube is niet bereikbaar (internet?)",
     mu_hint: "Tip: in YouTube Music bij een nummer of afspeellijst op Delen → Link kopiëren tikken en hier (of op je telefoon) plakken. Afspeellijsten moeten openbaar of verborgen zijn, niet privé. Zolang er muziek speelt, staat er een klein YouTube-spelertje in beeld; dat is een regel van YouTube.",
     mob_music: "Muziek",
+    mmu_full: "Zoeken & mijn afspeellijsten", close: "Sluiten", mu_t_search: "Zoeken", mu_t_mine: "Mijn muziek", mu_t_favs: "Favorieten", mu_t_link: "Link", mu_t_vol: "Volume",
+    mu_q_ph: "Zoek een nummer, artiest of afspeellijst", mu_songs: "Nummers", mu_lists: "Afspeellijsten",
+    mu_mylists: "Je afspeellijsten", mu_refresh: "Vernieuwen", mu_likes: "👍 Vind ik leuk", mu_playall: "Alles afspelen", mu_shufall: "Shuffle",
+    mu_tracks_n: "{n} nummers", mu_noresults: "Niets gevonden", mu_searching: "Zoeken…", mu_loadingl: "Laden…",
+    mu_needcfg: "Koppel eerst je eigen YouTube-account bij Instellingen → YouTube Music-account. Daarna kun je hier zoeken en je eigen afspeellijsten kiezen.",
+    mu_tocfg: "Naar Instellingen", mu_needlogin: "Log in met je YouTube-account om te zoeken en je eigen afspeellijsten te zien.",
+    mu_loginbtn: "Inloggen met YouTube", mu_code_t: "Ga op je telefoon naar {url} en vul deze code in:", mu_code_scan: "of scan:", mu_cancel: "Annuleren",
+    mu_waiting: "Wachten tot je op je telefoon toestemming geeft…", mu_acct: "👤 {name}", mu_from: "uit {name}",
+    yt_title: "YouTube Music-account", yt_sub: "Log in met je eigen YouTube-account om in de muziekknop te zoeken en je eigen afspeellijsten te kiezen. Afgooien kan alleen meekijken (alleen-lezen) en de sleutels blijven op de Pi.",
+    yt_how: "Zo maak je een eigen koppeling (eenmalig, ±10 minuten, gratis)", yt_cid: "Client-ID", yt_secret: "Clientgeheim",
+    yt_secret_saved: "opgeslagen (leeg laten = houden)", yt_login: "Inloggen", yt_logout: "Uitloggen", yt_notcfg: "niet gekoppeld",
+    yt_cfg: "klaar om in te loggen", yt_in: "ingelogd: {name}", yt_saved: "Opgeslagen.", yt_tip_phone: "Tip: open dit scherm op je telefoon (☰ Menu → Instellingen) om de lange client-ID te plakken.",
+    yt_steps: ["Ga op een computer of je telefoon naar console.cloud.google.com en maak een nieuw project, bijvoorbeeld \"Afgooien\".",
+      "Zoek bovenin \"YouTube Data API v3\" en klik op Inschakelen.",
+      "Open \"Google Auth Platform\" (OAuth-toestemmingsscherm), kies Extern en vul een app-naam en je e-mailadres in.",
+      "Zet bij Doelgroep de publicatiestatus op \"In productie\". Anders moet je elke 7 dagen opnieuw inloggen. Bij het inloggen zie je dan een melding dat de app niet geverifieerd is: kies Geavanceerd → Doorgaan.",
+      "Ga naar Clients → Client maken en kies als type \"TV's en apparaten met beperkte invoer\".",
+      "Plak de client-ID en het clientgeheim hieronder, klik op Opslaan en daarna op Inloggen."],
+    yt_e: { not_configured: "Vul eerst de client-ID en het clientgeheim in.", not_logged_in: "Je bent niet ingelogd.",
+      relogin: "Je bent uitgelogd bij YouTube (verlopen of ingetrokken). Log opnieuw in.", quota: "Het dagelijkse zoeklimiet van YouTube is op. Morgen kan het weer; je afspeellijsten werken nog wel.",
+      net: "YouTube is niet bereikbaar (internet?).", access_denied: "Inloggen geweigerd op je telefoon.", expired_token: "De code is verlopen. Probeer opnieuw.",
+      bad_client: "Dat lijkt geen goede client-ID (moet eindigen op .apps.googleusercontent.com).", invalid_client: "Client-ID of clientgeheim klopt niet.",
+      unauthorized_client: "Deze client mag dit niet. Kies bij het maken van de client het type \"TV's en apparaten met beperkte invoer\".",
+      accessNotConfigured: "De YouTube Data API v3 staat nog niet aan in je Google Cloud-project (stap 2).", forbidden: "YouTube weigert dit (geen toegang).",
+      playlistNotFound: "Deze afspeellijst is niet gevonden of privé.", invalid_scope: "Deze client mag geen YouTube-gegevens lezen." },
+    yt_e_other: "YouTube gaf een fout: {code}",
     set_pstats: "{games} · {wins}× gewonnen ({pct}) · {kills} afgegooid", set_pnone: "Nog geen potjes (sinds laatste reset)",
     q_delete: "{name} verwijderen? Zijn statistieken tellen dan niet meer mee.", q_reset: "Statistieken van {name} resetten?",
     err_failed: "Dat lukte niet",
@@ -4848,12 +4966,38 @@ window.AFGOOIEN_UI = {
     mu_prev: "Previous", mu_pp: "Play / pause", mu_next: "Next", mu_stop: "Stop", mu_shuffle: "Shuffle (playlist)",
     mu_vol: "Music", mu_cvol: "Commentator", mu_duck: "Lower the music while the commentator speaks",
     mu_favs: "Favourites", mu_favadd: "☆ Save current", mu_nofavs: "No favourites yet",
-    mu_none: "Nothing is playing. Paste a link above.", mu_playing: "Now playing: {t}", mu_paused: "Paused: {t}",
+    mu_none: "Nothing is playing. Search for a song or pick a playlist.", mu_playing: "Now playing: {t}", mu_paused: "Paused: {t}",
     mu_loading: "Loading…", mu_list: "playlist",
     mu_e101: "This track may not be played outside YouTube (skipped)", mu_e100: "Not found or private",
     mu_e2: "Invalid link", mu_e5: "Cannot play this", mu_eyt: "YouTube cannot be reached (internet?)",
     mu_hint: "Tip: in YouTube Music tap Share → Copy link on a song or playlist and paste it here (or on your phone). Playlists must be public or unlisted, not private. While music plays, a small YouTube player stays on screen; that is a YouTube rule.",
     mob_music: "Music",
+    mmu_full: "Search & my playlists", close: "Close", mu_t_search: "Search", mu_t_mine: "My music", mu_t_favs: "Favourites", mu_t_link: "Link", mu_t_vol: "Volume",
+    mu_q_ph: "Search for a song, artist or playlist", mu_songs: "Songs", mu_lists: "Playlists",
+    mu_mylists: "Your playlists", mu_refresh: "Refresh", mu_likes: "👍 Liked", mu_playall: "Play all", mu_shufall: "Shuffle",
+    mu_tracks_n: "{n} songs", mu_noresults: "Nothing found", mu_searching: "Searching…", mu_loadingl: "Loading…",
+    mu_needcfg: "First link your own YouTube account under Settings → YouTube Music account. Then you can search and pick your own playlists here.",
+    mu_tocfg: "Go to Settings", mu_needlogin: "Sign in with your YouTube account to search and see your own playlists.",
+    mu_loginbtn: "Sign in with YouTube", mu_code_t: "On your phone, go to {url} and enter this code:", mu_code_scan: "or scan:", mu_cancel: "Cancel",
+    mu_waiting: "Waiting for you to allow access on your phone…", mu_acct: "👤 {name}", mu_from: "from {name}",
+    yt_title: "YouTube Music account", yt_sub: "Sign in with your own YouTube account to search and pick your own playlists from the music button. Afgooien only gets read access and the keys stay on the Pi.",
+    yt_how: "How to set up your own link (once, ±10 minutes, free)", yt_cid: "Client ID", yt_secret: "Client secret",
+    yt_secret_saved: "saved (leave empty to keep)", yt_login: "Sign in", yt_logout: "Sign out", yt_notcfg: "not linked",
+    yt_cfg: "ready to sign in", yt_in: "signed in: {name}", yt_saved: "Saved.", yt_tip_phone: "Tip: open this screen on your phone (☰ Menu → Settings) to paste the long client ID.",
+    yt_steps: ["On a computer or your phone, go to console.cloud.google.com and create a new project, for example \"Afgooien\".",
+      "Search for \"YouTube Data API v3\" at the top and click Enable.",
+      "Open \"Google Auth Platform\" (OAuth consent screen), choose External and fill in an app name and your email address.",
+      "Under Audience, set the publishing status to \"In production\". Otherwise you have to sign in again every 7 days. When signing in you will then see that the app is not verified: choose Advanced → Continue.",
+      "Go to Clients → Create client and choose the type \"TVs and Limited Input devices\".",
+      "Paste the client ID and client secret below, click Save and then Sign in."],
+    yt_e: { not_configured: "First fill in the client ID and client secret.", not_logged_in: "You are not signed in.",
+      relogin: "You were signed out of YouTube (expired or revoked). Sign in again.", quota: "YouTube's daily search limit has been reached. It works again tomorrow; your playlists still work.",
+      net: "YouTube cannot be reached (internet?).", access_denied: "Sign-in was denied on your phone.", expired_token: "The code expired. Try again.",
+      bad_client: "That does not look like a valid client ID (it must end in .apps.googleusercontent.com).", invalid_client: "Client ID or client secret is wrong.",
+      unauthorized_client: "This client is not allowed to do this. Choose the type \"TVs and Limited Input devices\" when creating the client.",
+      accessNotConfigured: "The YouTube Data API v3 is not enabled in your Google Cloud project yet (step 2).", forbidden: "YouTube refuses this (no access).",
+      playlistNotFound: "This playlist was not found or is private.", invalid_scope: "This client may not read YouTube data." },
+    yt_e_other: "YouTube returned an error: {code}",
     set_pstats: "{games} · {wins}× won ({pct}) · {kills} knocked out", set_pnone: "No games yet (since last reset)",
     q_delete: "Delete {name}? Their stats will no longer count.", q_reset: "Reset {name}'s stats?",
     err_failed: "That didn't work",
@@ -5805,10 +5949,12 @@ function musDuck() {
 }
 function musReport() {
   const p = MUS.yt;
-  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list)) return;
+  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list || S.music.videos)) return;
   let st = -1, title = "";
   try { st = p.getPlayerState(); title = (p.getVideoData() || {}).title || ""; } catch (e) { /* */ }
-  const o = { playing: st === 1 || st === 3, title, err: MUS.err };
+  let vid = "";
+  try { vid = (p.getVideoData() || {}).video_id || ""; } catch (e) { /* */ }
+  const o = { playing: st === 1 || st === 3, title, err: MUS.err, vid };
   const k = JSON.stringify(o);
   if (k === MUS.rep) return;
   MUS.rep = k;
@@ -5832,13 +5978,13 @@ function musError(e) {
   const code = String(e.data);
   MUS.err = code === "150" ? "101" : code;
   const m = S && S.music;
-  if (m && m.list && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
+  if (m && (m.list || m.videos) && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
   musReport();
 }
 async function applyMusic() {
   if (!musicHere() || !S || !S.music) return;
   const m = S.music;
-  const has = !!(m.video || m.list);
+  const has = !!(m.video || m.list || m.videos);
   $("musicdock").classList.toggle("hidden", !has);
   if (has) placeDock();
   if (MUS.seq === m.seq) { musVolume(true); return; }
@@ -5853,7 +5999,11 @@ async function applyMusic() {
     if (op === "load") {
       MUS.err = null; MUS.errRun = 0; MUS.rep = "";
       const radio = m.list && /^RD/.test(m.list) && m.video;   // mixen: gewoon het nummer
-      if (m.list && !radio) {
+      if (m.videos) {
+        if (m.playing) p.loadPlaylist(m.videos, m.start || 0); else p.cuePlaylist(m.videos, m.start || 0);
+        MUS.needShuffle = !!m.shuffle && m.playing && !m.start;
+        try { p.setLoop(true); } catch (e) { /* */ }
+      } else if (m.list && !radio) {
         const o = { list: m.list, listType: "playlist", index: 0 };
         if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
         MUS.needShuffle = !!m.shuffle && m.playing;
@@ -5861,8 +6011,8 @@ async function applyMusic() {
       } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
     } else if (op === "play") p.playVideo();
     else if (op === "pause") p.pauseVideo();
-    else if (op === "next") { if (m.list) p.nextVideo(); else p.seekTo(0, true); }
-    else if (op === "prev") { if (m.list) p.previousVideo(); else p.seekTo(0, true); }
+    else if (op === "next") { if (m.list || m.videos) p.nextVideo(); else p.seekTo(0, true); }
+    else if (op === "prev") { if (m.list || m.videos) p.previousVideo(); else p.seekTo(0, true); }
     else if (op === "shuffle") { p.setShuffle(!!m.shuffle); }
   } catch (e) { /* speler nog niet klaar */ }
   MUS.vol = null;
@@ -5887,23 +6037,116 @@ function placeDock() {
   d.style.top = Math.round(y) + "px";
 }
 const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5", "yt": "mu_eyt" };
+const MUI = { tab: store.get("afgooien.muTab", "search"), sk: "video", pls: null, plsAt: 0, tracks: null, trTitle: "",
+  trFrom: "mine", results: null, busy: false };
+function ytErr(code) {
+  const m = (UI[LANG] || UI.nl).yt_e || {};
+  return m[code] || t("yt_e_other", { code });
+}
+// fout van de server ("YouTube: code") of van een /api/yt-aanroep
+function muErrText(e) {
+  const s = String(e || "");
+  const m = /^YouTube: (\S+)$/.exec(s);
+  return m ? ytErr(m[1]) : s;
+}
+function setMuTab(tab) {
+  MUI.tab = tab;
+  if (tab !== "tracks") store.set("afgooien.muTab", tab);
+  document.querySelectorAll("#musicpanel [data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab || (tab === "tracks" && b.dataset.tab === MUI.trFrom)));
+  document.querySelectorAll("#musicpanel [data-pane]").forEach((p) => p.classList.toggle("hidden", p.dataset.pane !== tab));
+  $("mu_err").textContent = "";
+  if (tab === "mine") loadPlaylists(false);
+  if (tab === "search") setTimeout(() => { if (!$("musicpanel").classList.contains("hidden")) $("mu_q").focus(); }, 30);
+  renderMusic();
+}
+async function ytGet(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  const j = await r.json().catch(() => ({ ok: false, error: "net" }));
+  if (!j.ok) throw new Error(j.error || "net");
+  return j.items;
+}
+const ytUser = () => (S && S.youtube) || {};
+function muRow(it, i, kind) {
+  const th = it.thumb ? `<img src="${esc(it.thumb)}" alt="" loading="lazy">` : `<span class="mu_noart">${kind === "pl" ? "≡" : "♪"}</span>`;
+  const sub = kind === "pl" ? (it.count != null ? t("mu_tracks_n", { n: it.count }) : "") : esc(it.artist || "");
+  return `<li><button class="mu_row" data-${kind}="${i}">${th}<span class="mu_rt"><b>${esc(it.title)}</b><small>${sub}</small></span></button></li>`;
+}
+function renderMuLists() {
+  const u = ytUser();
+  // zoeken
+  const gate = !u.logged_in ? `<p>${esc(t(u.configured ? "mu_needlogin" : "mu_needcfg"))}</p>` +
+    (u.configured ? `<button class="primary" data-golog>${esc(t("mu_loginbtn"))}</button>` : `<button class="ghost" data-gocfg>${esc(t("mu_tocfg"))}</button>`) : "";
+  $("mu_sgate").innerHTML = gate;
+  $("mu_sgate").classList.toggle("hidden", !gate);
+  $("mu_sform").classList.toggle("hidden", !!gate);
+  document.querySelectorAll("#musicpanel [data-sk]").forEach((b) => b.classList.toggle("on", b.dataset.sk === MUI.sk));
+  $("mu_results").innerHTML = MUI.results === "busy" ? `<li class="mu_info">${esc(t("mu_searching"))}</li>`
+    : Array.isArray(MUI.results) ? (MUI.results.length ? MUI.results.map((it, i) => muRow(it, i, MUI.sk === "playlist" ? "spl" : "sv")).join("")
+      : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  // mijn muziek
+  let lg = "";
+  if (!u.configured) lg = `<p>${esc(t("mu_needcfg"))}</p><button class="ghost" data-gocfg>${esc(t("mu_tocfg"))}</button>`;
+  else if (u.login) {
+    const url = u.login.url.replace(/^https?:\/\/(www\.)?/, "");
+    lg = `<p>${esc(t("mu_code_t", { url }))}</p><div class="mu_code">${esc(u.login.user_code)}</div>
+      <div class="mu_qr"><span>${esc(t("mu_code_scan"))}</span><img src="/api/yt/qr.svg?c=${encodeURIComponent(u.login.user_code)}" alt=""></div>
+      <p class="hint">${esc(t("mu_waiting"))}</p><button class="ghost small" data-logcancel>${esc(t("mu_cancel"))}</button>`;
+  } else if (!u.logged_in) lg = (u.error ? `<p class="mu_errl">${esc(ytErr(u.error))}</p>` : "") +
+    `<p>${esc(t("mu_needlogin"))}</p><button class="primary" data-golog>${esc(t("mu_loginbtn"))}</button>`;
+  $("mu_login").innerHTML = lg;
+  $("mu_login").classList.toggle("hidden", !lg);
+  $("mu_plhead").classList.toggle("hidden", !u.logged_in);
+  $("mu_pls").innerHTML = !u.logged_in ? "" : MUI.pls === "busy" || MUI.pls === null ? `<li class="mu_info">${esc(t("mu_loadingl"))}</li>`
+    : MUI.pls.map((p, i) => muRow(p.special === "likes" ? { ...p, title: t("mu_likes") } : p, i, "pl")).join("");
+  // nummers van een afspeellijst
+  $("mu_trtitle").textContent = MUI.trTitle;
+  $("mu_tracks").innerHTML = MUI.tracks === "busy" ? `<li class="mu_info">${esc(t("mu_loadingl"))}</li>`
+    : Array.isArray(MUI.tracks) ? (MUI.tracks.length ? MUI.tracks.map((it, i) => muRow(it, i, "tr")).join("") : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  $("mu_playall").disabled = $("mu_shufall").disabled = !(Array.isArray(MUI.tracks) && MUI.tracks.length);
+}
+async function loadPlaylists(force) {
+  const u = ytUser();
+  if (!u.logged_in) { MUI.pls = null; renderMuLists(); return; }
+  if (!force && Array.isArray(MUI.pls) && Date.now() - MUI.plsAt < 5 * 60000) return;
+  MUI.pls = "busy"; renderMuLists();
+  try { MUI.pls = await ytGet("/api/yt/playlists"); MUI.plsAt = Date.now(); }
+  catch (e) { MUI.pls = []; $("mu_err").textContent = ytErr(e.message); }
+  renderMuLists();
+}
+async function openTracks(id, title, from) {
+  MUI.tracks = "busy"; MUI.trTitle = title; MUI.trFrom = from; MUI.trId = id;
+  setMuTab("tracks");
+  try { MUI.tracks = await ytGet("/api/yt/items?list=" + encodeURIComponent(id)); }
+  catch (e) { MUI.tracks = []; $("mu_err").textContent = ytErr(e.message); }
+  renderMuLists();
+}
+async function playTracks(start, shuffle) {
+  if (!Array.isArray(MUI.tracks) || !MUI.tracks.length) return;
+  if (shuffle !== undefined && !!S.music.shuffle !== shuffle) await musicSend({ type: "music_set", shuffle });
+  musicSend({ type: "music_load", videos: MUI.tracks.map((x) => x.id), start, name: MUI.trTitle });
+}
 function renderMusic() {
   if (LOCAL) { $("musicbtn").classList.add("hidden"); return; }
   const m = (S && S.music) || null;
   if (!m) return;
-  const has = !!(m.video || m.list);
+  const has = !!(m.video || m.list || m.videos);
   $("musicbtn").classList.toggle("on", has && m.playing);
   const title = m.title || (has ? t("mu_loading") : "");
-  $("mu_now").innerHTML = !has ? esc(t("mu_none"))
-    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+  $("mu_now").innerHTML = !has ? esc(t("mu_none")) : `<b>${esc(title)}</b>`;
+  $("mu_sub").textContent = !has ? "" : (m.playing ? "▶ " : "⏸ ") + (m.name ? t("mu_from", { name: m.name }) : m.list || m.videos ? t("mu_list") : "");
+  const vid = m.vid || m.video;
+  $("mu_art").src = vid ? `https://i.ytimg.com/vi/${vid}/mqdefault.jpg` : "";
+  $("mu_art").classList.toggle("hidden", !vid);
   $("md_title").textContent = title;
+  const u = ytUser();
+  $("mu_acct").textContent = u.logged_in && u.account ? t("mu_acct", { name: u.account }) : "";
   const err = (musicHere() ? MUS.err : null) || m.err;
-  $("mu_err").textContent = err && MU_ERR[err] ? t(MU_ERR[err]) : "";
+  if (err && MU_ERR[err]) $("mu_err").textContent = t(MU_ERR[err]);
   $("mu_pp").textContent = m.playing ? "⏸" : "▶";
   $("md_pp").textContent = m.playing ? "⏸" : "▶";
   document.querySelectorAll("#musicpanel [data-mu]").forEach((b) => { b.disabled = !has; });
   $("mu_shuf").classList.toggle("on", !!m.shuffle);
-  $("mu_shuf").disabled = !m.list;
+  $("mu_shuf").disabled = !(m.list || m.videos);
   if (document.activeElement !== $("mu_vol")) $("mu_vol").value = m.volume;
   $("mu_vol_val").textContent = m.volume + "%";
   const cv = vset().volume ?? 1;
@@ -5917,29 +6160,63 @@ function renderMusic() {
     $("mu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
       <button class="ghost mu_fd" data-favdel="${i}" title="${esc(t("set_delete"))}">✕</button></li>`).join("");
   }
-  $("mu_favadd").disabled = !has;
+  $("mu_favadd").disabled = !(m.video || m.list);
+  // inlogstatus veranderd: lijsten bijwerken
+  const lk = JSON.stringify([u.configured, u.logged_in, u.login && u.login.user_code, u.error]);
+  if (MUI.lk !== lk) {
+    const wasIn = MUI.lk && JSON.parse(MUI.lk)[1];
+    MUI.lk = lk;
+    if (!u.logged_in) { MUI.pls = null; }
+    if (u.logged_in && !wasIn) { MUI.pls = null; if (MUI.tab === "mine") loadPlaylists(true); }
+    renderMuLists();
+  }
+  fillYtCard();
+}
+function fillYtCard() {
+  const u = S && S.youtube;
+  $("ytcard").classList.toggle("hidden", !u || LOCAL);
+  if (!u) return;
+  $("yt_state").textContent = u.logged_in ? t("yt_in", { name: u.account || "✓" }) : u.configured ? t("yt_cfg") : t("yt_notcfg");
+  $("yt_state").classList.toggle("ok", !!u.logged_in);
+  if (!$("yt_steps").children.length || $("yt_steps").dataset.l !== LANG) {
+    $("yt_steps").dataset.l = LANG;
+    $("yt_steps").innerHTML = ((UI[LANG] || UI.nl).yt_steps || []).map((x) => `<li>${esc(x)}</li>`).join("") + `<li class="hint">${esc(t("yt_tip_phone"))}</li>`;
+  }
+  if (document.activeElement !== $("yt_cid") && !$("yt_cid").dataset.dirty) $("yt_cid").value = u.client_id || "";
+  $("yt_secret").placeholder = u.has_secret ? t("yt_secret_saved") : "";
+  $("yt_loginbtn").classList.toggle("hidden", !u.configured || u.logged_in);
+  $("yt_logout").classList.toggle("hidden", !u.logged_in);
+  if (u.login) $("yt_msg").textContent = t("mu_code_t", { url: u.login.url.replace(/^https?:\/\/(www\.)?/, "") }) + " " + u.login.user_code;
+  else if (u.error) $("yt_msg").textContent = ytErr(u.error);
+  else if (/[A-Z]{4}-[A-Z]{4}|\.com\/device/.test($("yt_msg").textContent)) $("yt_msg").textContent = "";
 }
 async function musicSend(cmd) {
   $("mu_err").textContent = "";
   try {
     const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
     const j = await r.json();
-    if (!j.ok) { $("mu_err").textContent = j.error; return false; }
+    if (!j.ok) { $("mu_err").textContent = muErrText(j.error); return false; }
     render(j.state);
     return true;
   } catch (e) { $("mu_err").textContent = t("no_conn"); return false; }
 }
+function openMusic() {
+  $("voicepanel").classList.add("hidden");
+  $("adpanel").classList.add("hidden");
+  $("musicpanel").classList.remove("hidden");
+  setMuTab(MUI.tab === "tracks" ? MUI.trFrom : MUI.tab);
+}
 function bindMusic() {
   $("musicbtn").onclick = (e) => {
     e.stopPropagation();
-    $("voicepanel").classList.add("hidden");
-    $("adpanel").classList.add("hidden");
-    renderMusic();
-    $("musicpanel").classList.toggle("hidden");
-    if (!$("musicpanel").classList.contains("hidden") && !(S.music.video || S.music.list)) setTimeout(() => $("mu_url").focus(), 30);
+    if ($("musicpanel").classList.contains("hidden")) openMusic();
+    else $("musicpanel").classList.add("hidden");
   };
+  $("mu_close").onclick = () => $("musicpanel").classList.add("hidden");
   $("musicpanel").addEventListener("click", (e) => {
     e.stopPropagation();
+    const tb = e.target.closest("[data-tab]");
+    if (tb) { setMuTab(tb.dataset.tab); return; }
     const b = e.target.closest("[data-mu]");
     if (b && !b.disabled) {
       const a = b.dataset.mu, m = S.music;
@@ -5948,10 +6225,38 @@ function bindMusic() {
       else musicSend({ type: "music_ctl", action: a });
       return;
     }
+    const sk = e.target.closest("[data-sk]");
+    if (sk) { MUI.sk = sk.dataset.sk; MUI.results = null; renderMuLists(); if ($("mu_q").value.trim()) $("mu_sform").requestSubmit(); return; }
+    const row = e.target.closest(".mu_row");
+    if (row) {
+      const d = row.dataset;
+      if (d.sv !== undefined) { const it = MUI.results[+d.sv]; musicSend({ type: "music_load", video: it.id, title: it.title }); }
+      else if (d.spl !== undefined) { const it = MUI.results[+d.spl]; openTracks(it.id, it.title, "search"); }
+      else if (d.pl !== undefined) { const p = MUI.pls[+d.pl]; openTracks(p.id, p.special === "likes" ? t("mu_likes") : p.title, "mine"); }
+      else if (d.tr !== undefined) playTracks(+d.tr);
+      return;
+    }
+    if (e.target.closest("[data-golog]")) { musicSend({ type: "yt_login" }).then(() => setMuTab("mine")); return; }
+    if (e.target.closest("[data-logcancel]")) { musicSend({ type: "yt_login_cancel" }); return; }
+    if (e.target.closest("[data-gocfg]")) { $("musicpanel").classList.add("hidden"); setView("settings"); setTimeout(() => $("ytcard").scrollIntoView({ behavior: "smooth" }), 80); return; }
     const f = e.target.closest("[data-fav]");
     if (f) { musicSend({ type: "music_fav", action: "play", index: +f.dataset.fav }); return; }
     const fd = e.target.closest("[data-favdel]");
     if (fd) musicSend({ type: "music_fav", action: "del", index: +fd.dataset.favdel });
+  });
+  $("mu_back").onclick = () => setMuTab(MUI.trFrom);
+  $("mu_playall").onclick = () => playTracks(0, false);
+  $("mu_shufall").onclick = () => playTracks(0, true);
+  $("mu_plrefresh").onclick = () => loadPlaylists(true);
+  $("mu_sform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("mu_q").value.trim();
+    if (!q) return;
+    $("mu_err").textContent = "";
+    MUI.results = "busy"; renderMuLists();
+    try { MUI.results = await ytGet(`/api/yt/search?type=${MUI.sk}&q=${encodeURIComponent(q)}`); }
+    catch (err) { MUI.results = []; $("mu_err").textContent = ytErr(err.message); }
+    renderMuLists();
   });
   $("mu_form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -5967,8 +6272,19 @@ function bindMusic() {
   $("mu_favadd").onclick = () => musicSend({ type: "music_fav", action: "add" });
   $("md_pp").onclick = () => musicSend({ type: "music_ctl", action: S.music.playing ? "pause" : "play" });
   $("md_next").onclick = () => musicSend({ type: "music_ctl", action: "next" });
-  document.addEventListener("click", () => $("musicpanel").classList.add("hidden"));
+  // instellingen: YouTube-account
+  $("yt_cid").addEventListener("input", () => { $("yt_cid").dataset.dirty = "1"; });
+  $("yt_save").onclick = async () => {
+    $("yt_msg").textContent = "";
+    const ok = await musicSend({ type: "yt_client", client_id: $("yt_cid").value.trim(), client_secret: $("yt_secret").value.trim() });
+    if (ok) { $("yt_secret").value = ""; delete $("yt_cid").dataset.dirty; $("yt_msg").textContent = t("yt_saved"); }
+    else $("yt_msg").textContent = $("mu_err").textContent;
+  };
+  $("yt_loginbtn").onclick = async () => { if (!(await musicSend({ type: "yt_login" }))) $("yt_msg").textContent = $("mu_err").textContent; };
+  $("yt_logout").onclick = () => confirmDialog(t("yt_logout") + "?", () => musicSend({ type: "yt_logout" }));
+  document.addEventListener("click", (e) => { if (!e.target.closest("#confirm")) $("musicpanel").classList.add("hidden"); });
   addEventListener("resize", placeDock);
+  if (/[?&]music=1/.test(location.search)) setTimeout(openMusic, 400);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter

@@ -740,10 +740,12 @@ function musDuck() {
 }
 function musReport() {
   const p = MUS.yt;
-  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list)) return;
+  if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list || S.music.videos)) return;
   let st = -1, title = "";
   try { st = p.getPlayerState(); title = (p.getVideoData() || {}).title || ""; } catch (e) { /* */ }
-  const o = { playing: st === 1 || st === 3, title, err: MUS.err };
+  let vid = "";
+  try { vid = (p.getVideoData() || {}).video_id || ""; } catch (e) { /* */ }
+  const o = { playing: st === 1 || st === 3, title, err: MUS.err, vid };
   const k = JSON.stringify(o);
   if (k === MUS.rep) return;
   MUS.rep = k;
@@ -767,13 +769,13 @@ function musError(e) {
   const code = String(e.data);
   MUS.err = code === "150" ? "101" : code;
   const m = S && S.music;
-  if (m && m.list && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
+  if (m && (m.list || m.videos) && ++MUS.errRun < 8) { try { MUS.yt.nextVideo(); } catch (err) { /* */ } }
   musReport();
 }
 async function applyMusic() {
   if (!musicHere() || !S || !S.music) return;
   const m = S.music;
-  const has = !!(m.video || m.list);
+  const has = !!(m.video || m.list || m.videos);
   $("musicdock").classList.toggle("hidden", !has);
   if (has) placeDock();
   if (MUS.seq === m.seq) { musVolume(true); return; }
@@ -788,7 +790,11 @@ async function applyMusic() {
     if (op === "load") {
       MUS.err = null; MUS.errRun = 0; MUS.rep = "";
       const radio = m.list && /^RD/.test(m.list) && m.video;   // mixen: gewoon het nummer
-      if (m.list && !radio) {
+      if (m.videos) {
+        if (m.playing) p.loadPlaylist(m.videos, m.start || 0); else p.cuePlaylist(m.videos, m.start || 0);
+        MUS.needShuffle = !!m.shuffle && m.playing && !m.start;
+        try { p.setLoop(true); } catch (e) { /* */ }
+      } else if (m.list && !radio) {
         const o = { list: m.list, listType: "playlist", index: 0 };
         if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
         MUS.needShuffle = !!m.shuffle && m.playing;
@@ -796,8 +802,8 @@ async function applyMusic() {
       } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
     } else if (op === "play") p.playVideo();
     else if (op === "pause") p.pauseVideo();
-    else if (op === "next") { if (m.list) p.nextVideo(); else p.seekTo(0, true); }
-    else if (op === "prev") { if (m.list) p.previousVideo(); else p.seekTo(0, true); }
+    else if (op === "next") { if (m.list || m.videos) p.nextVideo(); else p.seekTo(0, true); }
+    else if (op === "prev") { if (m.list || m.videos) p.previousVideo(); else p.seekTo(0, true); }
     else if (op === "shuffle") { p.setShuffle(!!m.shuffle); }
   } catch (e) { /* speler nog niet klaar */ }
   MUS.vol = null;
@@ -822,23 +828,116 @@ function placeDock() {
   d.style.top = Math.round(y) + "px";
 }
 const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5", "yt": "mu_eyt" };
+const MUI = { tab: store.get("afgooien.muTab", "search"), sk: "video", pls: null, plsAt: 0, tracks: null, trTitle: "",
+  trFrom: "mine", results: null, busy: false };
+function ytErr(code) {
+  const m = (UI[LANG] || UI.nl).yt_e || {};
+  return m[code] || t("yt_e_other", { code });
+}
+// fout van de server ("YouTube: code") of van een /api/yt-aanroep
+function muErrText(e) {
+  const s = String(e || "");
+  const m = /^YouTube: (\S+)$/.exec(s);
+  return m ? ytErr(m[1]) : s;
+}
+function setMuTab(tab) {
+  MUI.tab = tab;
+  if (tab !== "tracks") store.set("afgooien.muTab", tab);
+  document.querySelectorAll("#musicpanel [data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab || (tab === "tracks" && b.dataset.tab === MUI.trFrom)));
+  document.querySelectorAll("#musicpanel [data-pane]").forEach((p) => p.classList.toggle("hidden", p.dataset.pane !== tab));
+  $("mu_err").textContent = "";
+  if (tab === "mine") loadPlaylists(false);
+  if (tab === "search") setTimeout(() => { if (!$("musicpanel").classList.contains("hidden")) $("mu_q").focus(); }, 30);
+  renderMusic();
+}
+async function ytGet(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  const j = await r.json().catch(() => ({ ok: false, error: "net" }));
+  if (!j.ok) throw new Error(j.error || "net");
+  return j.items;
+}
+const ytUser = () => (S && S.youtube) || {};
+function muRow(it, i, kind) {
+  const th = it.thumb ? `<img src="${esc(it.thumb)}" alt="" loading="lazy">` : `<span class="mu_noart">${kind === "pl" ? "≡" : "♪"}</span>`;
+  const sub = kind === "pl" ? (it.count != null ? t("mu_tracks_n", { n: it.count }) : "") : esc(it.artist || "");
+  return `<li><button class="mu_row" data-${kind}="${i}">${th}<span class="mu_rt"><b>${esc(it.title)}</b><small>${sub}</small></span></button></li>`;
+}
+function renderMuLists() {
+  const u = ytUser();
+  // zoeken
+  const gate = !u.logged_in ? `<p>${esc(t(u.configured ? "mu_needlogin" : "mu_needcfg"))}</p>` +
+    (u.configured ? `<button class="primary" data-golog>${esc(t("mu_loginbtn"))}</button>` : `<button class="ghost" data-gocfg>${esc(t("mu_tocfg"))}</button>`) : "";
+  $("mu_sgate").innerHTML = gate;
+  $("mu_sgate").classList.toggle("hidden", !gate);
+  $("mu_sform").classList.toggle("hidden", !!gate);
+  document.querySelectorAll("#musicpanel [data-sk]").forEach((b) => b.classList.toggle("on", b.dataset.sk === MUI.sk));
+  $("mu_results").innerHTML = MUI.results === "busy" ? `<li class="mu_info">${esc(t("mu_searching"))}</li>`
+    : Array.isArray(MUI.results) ? (MUI.results.length ? MUI.results.map((it, i) => muRow(it, i, MUI.sk === "playlist" ? "spl" : "sv")).join("")
+      : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  // mijn muziek
+  let lg = "";
+  if (!u.configured) lg = `<p>${esc(t("mu_needcfg"))}</p><button class="ghost" data-gocfg>${esc(t("mu_tocfg"))}</button>`;
+  else if (u.login) {
+    const url = u.login.url.replace(/^https?:\/\/(www\.)?/, "");
+    lg = `<p>${esc(t("mu_code_t", { url }))}</p><div class="mu_code">${esc(u.login.user_code)}</div>
+      <div class="mu_qr"><span>${esc(t("mu_code_scan"))}</span><img src="/api/yt/qr.svg?c=${encodeURIComponent(u.login.user_code)}" alt=""></div>
+      <p class="hint">${esc(t("mu_waiting"))}</p><button class="ghost small" data-logcancel>${esc(t("mu_cancel"))}</button>`;
+  } else if (!u.logged_in) lg = (u.error ? `<p class="mu_errl">${esc(ytErr(u.error))}</p>` : "") +
+    `<p>${esc(t("mu_needlogin"))}</p><button class="primary" data-golog>${esc(t("mu_loginbtn"))}</button>`;
+  $("mu_login").innerHTML = lg;
+  $("mu_login").classList.toggle("hidden", !lg);
+  $("mu_plhead").classList.toggle("hidden", !u.logged_in);
+  $("mu_pls").innerHTML = !u.logged_in ? "" : MUI.pls === "busy" || MUI.pls === null ? `<li class="mu_info">${esc(t("mu_loadingl"))}</li>`
+    : MUI.pls.map((p, i) => muRow(p.special === "likes" ? { ...p, title: t("mu_likes") } : p, i, "pl")).join("");
+  // nummers van een afspeellijst
+  $("mu_trtitle").textContent = MUI.trTitle;
+  $("mu_tracks").innerHTML = MUI.tracks === "busy" ? `<li class="mu_info">${esc(t("mu_loadingl"))}</li>`
+    : Array.isArray(MUI.tracks) ? (MUI.tracks.length ? MUI.tracks.map((it, i) => muRow(it, i, "tr")).join("") : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  $("mu_playall").disabled = $("mu_shufall").disabled = !(Array.isArray(MUI.tracks) && MUI.tracks.length);
+}
+async function loadPlaylists(force) {
+  const u = ytUser();
+  if (!u.logged_in) { MUI.pls = null; renderMuLists(); return; }
+  if (!force && Array.isArray(MUI.pls) && Date.now() - MUI.plsAt < 5 * 60000) return;
+  MUI.pls = "busy"; renderMuLists();
+  try { MUI.pls = await ytGet("/api/yt/playlists"); MUI.plsAt = Date.now(); }
+  catch (e) { MUI.pls = []; $("mu_err").textContent = ytErr(e.message); }
+  renderMuLists();
+}
+async function openTracks(id, title, from) {
+  MUI.tracks = "busy"; MUI.trTitle = title; MUI.trFrom = from; MUI.trId = id;
+  setMuTab("tracks");
+  try { MUI.tracks = await ytGet("/api/yt/items?list=" + encodeURIComponent(id)); }
+  catch (e) { MUI.tracks = []; $("mu_err").textContent = ytErr(e.message); }
+  renderMuLists();
+}
+async function playTracks(start, shuffle) {
+  if (!Array.isArray(MUI.tracks) || !MUI.tracks.length) return;
+  if (shuffle !== undefined && !!S.music.shuffle !== shuffle) await musicSend({ type: "music_set", shuffle });
+  musicSend({ type: "music_load", videos: MUI.tracks.map((x) => x.id), start, name: MUI.trTitle });
+}
 function renderMusic() {
   if (LOCAL) { $("musicbtn").classList.add("hidden"); return; }
   const m = (S && S.music) || null;
   if (!m) return;
-  const has = !!(m.video || m.list);
+  const has = !!(m.video || m.list || m.videos);
   $("musicbtn").classList.toggle("on", has && m.playing);
   const title = m.title || (has ? t("mu_loading") : "");
-  $("mu_now").innerHTML = !has ? esc(t("mu_none"))
-    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+  $("mu_now").innerHTML = !has ? esc(t("mu_none")) : `<b>${esc(title)}</b>`;
+  $("mu_sub").textContent = !has ? "" : (m.playing ? "▶ " : "⏸ ") + (m.name ? t("mu_from", { name: m.name }) : m.list || m.videos ? t("mu_list") : "");
+  const vid = m.vid || m.video;
+  $("mu_art").src = vid ? `https://i.ytimg.com/vi/${vid}/mqdefault.jpg` : "";
+  $("mu_art").classList.toggle("hidden", !vid);
   $("md_title").textContent = title;
+  const u = ytUser();
+  $("mu_acct").textContent = u.logged_in && u.account ? t("mu_acct", { name: u.account }) : "";
   const err = (musicHere() ? MUS.err : null) || m.err;
-  $("mu_err").textContent = err && MU_ERR[err] ? t(MU_ERR[err]) : "";
+  if (err && MU_ERR[err]) $("mu_err").textContent = t(MU_ERR[err]);
   $("mu_pp").textContent = m.playing ? "⏸" : "▶";
   $("md_pp").textContent = m.playing ? "⏸" : "▶";
   document.querySelectorAll("#musicpanel [data-mu]").forEach((b) => { b.disabled = !has; });
   $("mu_shuf").classList.toggle("on", !!m.shuffle);
-  $("mu_shuf").disabled = !m.list;
+  $("mu_shuf").disabled = !(m.list || m.videos);
   if (document.activeElement !== $("mu_vol")) $("mu_vol").value = m.volume;
   $("mu_vol_val").textContent = m.volume + "%";
   const cv = vset().volume ?? 1;
@@ -852,29 +951,63 @@ function renderMusic() {
     $("mu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
       <button class="ghost mu_fd" data-favdel="${i}" title="${esc(t("set_delete"))}">✕</button></li>`).join("");
   }
-  $("mu_favadd").disabled = !has;
+  $("mu_favadd").disabled = !(m.video || m.list);
+  // inlogstatus veranderd: lijsten bijwerken
+  const lk = JSON.stringify([u.configured, u.logged_in, u.login && u.login.user_code, u.error]);
+  if (MUI.lk !== lk) {
+    const wasIn = MUI.lk && JSON.parse(MUI.lk)[1];
+    MUI.lk = lk;
+    if (!u.logged_in) { MUI.pls = null; }
+    if (u.logged_in && !wasIn) { MUI.pls = null; if (MUI.tab === "mine") loadPlaylists(true); }
+    renderMuLists();
+  }
+  fillYtCard();
+}
+function fillYtCard() {
+  const u = S && S.youtube;
+  $("ytcard").classList.toggle("hidden", !u || LOCAL);
+  if (!u) return;
+  $("yt_state").textContent = u.logged_in ? t("yt_in", { name: u.account || "✓" }) : u.configured ? t("yt_cfg") : t("yt_notcfg");
+  $("yt_state").classList.toggle("ok", !!u.logged_in);
+  if (!$("yt_steps").children.length || $("yt_steps").dataset.l !== LANG) {
+    $("yt_steps").dataset.l = LANG;
+    $("yt_steps").innerHTML = ((UI[LANG] || UI.nl).yt_steps || []).map((x) => `<li>${esc(x)}</li>`).join("") + `<li class="hint">${esc(t("yt_tip_phone"))}</li>`;
+  }
+  if (document.activeElement !== $("yt_cid") && !$("yt_cid").dataset.dirty) $("yt_cid").value = u.client_id || "";
+  $("yt_secret").placeholder = u.has_secret ? t("yt_secret_saved") : "";
+  $("yt_loginbtn").classList.toggle("hidden", !u.configured || u.logged_in);
+  $("yt_logout").classList.toggle("hidden", !u.logged_in);
+  if (u.login) $("yt_msg").textContent = t("mu_code_t", { url: u.login.url.replace(/^https?:\/\/(www\.)?/, "") }) + " " + u.login.user_code;
+  else if (u.error) $("yt_msg").textContent = ytErr(u.error);
+  else if (/[A-Z]{4}-[A-Z]{4}|\.com\/device/.test($("yt_msg").textContent)) $("yt_msg").textContent = "";
 }
 async function musicSend(cmd) {
   $("mu_err").textContent = "";
   try {
     const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
     const j = await r.json();
-    if (!j.ok) { $("mu_err").textContent = j.error; return false; }
+    if (!j.ok) { $("mu_err").textContent = muErrText(j.error); return false; }
     render(j.state);
     return true;
   } catch (e) { $("mu_err").textContent = t("no_conn"); return false; }
 }
+function openMusic() {
+  $("voicepanel").classList.add("hidden");
+  $("adpanel").classList.add("hidden");
+  $("musicpanel").classList.remove("hidden");
+  setMuTab(MUI.tab === "tracks" ? MUI.trFrom : MUI.tab);
+}
 function bindMusic() {
   $("musicbtn").onclick = (e) => {
     e.stopPropagation();
-    $("voicepanel").classList.add("hidden");
-    $("adpanel").classList.add("hidden");
-    renderMusic();
-    $("musicpanel").classList.toggle("hidden");
-    if (!$("musicpanel").classList.contains("hidden") && !(S.music.video || S.music.list)) setTimeout(() => $("mu_url").focus(), 30);
+    if ($("musicpanel").classList.contains("hidden")) openMusic();
+    else $("musicpanel").classList.add("hidden");
   };
+  $("mu_close").onclick = () => $("musicpanel").classList.add("hidden");
   $("musicpanel").addEventListener("click", (e) => {
     e.stopPropagation();
+    const tb = e.target.closest("[data-tab]");
+    if (tb) { setMuTab(tb.dataset.tab); return; }
     const b = e.target.closest("[data-mu]");
     if (b && !b.disabled) {
       const a = b.dataset.mu, m = S.music;
@@ -883,10 +1016,38 @@ function bindMusic() {
       else musicSend({ type: "music_ctl", action: a });
       return;
     }
+    const sk = e.target.closest("[data-sk]");
+    if (sk) { MUI.sk = sk.dataset.sk; MUI.results = null; renderMuLists(); if ($("mu_q").value.trim()) $("mu_sform").requestSubmit(); return; }
+    const row = e.target.closest(".mu_row");
+    if (row) {
+      const d = row.dataset;
+      if (d.sv !== undefined) { const it = MUI.results[+d.sv]; musicSend({ type: "music_load", video: it.id, title: it.title }); }
+      else if (d.spl !== undefined) { const it = MUI.results[+d.spl]; openTracks(it.id, it.title, "search"); }
+      else if (d.pl !== undefined) { const p = MUI.pls[+d.pl]; openTracks(p.id, p.special === "likes" ? t("mu_likes") : p.title, "mine"); }
+      else if (d.tr !== undefined) playTracks(+d.tr);
+      return;
+    }
+    if (e.target.closest("[data-golog]")) { musicSend({ type: "yt_login" }).then(() => setMuTab("mine")); return; }
+    if (e.target.closest("[data-logcancel]")) { musicSend({ type: "yt_login_cancel" }); return; }
+    if (e.target.closest("[data-gocfg]")) { $("musicpanel").classList.add("hidden"); setView("settings"); setTimeout(() => $("ytcard").scrollIntoView({ behavior: "smooth" }), 80); return; }
     const f = e.target.closest("[data-fav]");
     if (f) { musicSend({ type: "music_fav", action: "play", index: +f.dataset.fav }); return; }
     const fd = e.target.closest("[data-favdel]");
     if (fd) musicSend({ type: "music_fav", action: "del", index: +fd.dataset.favdel });
+  });
+  $("mu_back").onclick = () => setMuTab(MUI.trFrom);
+  $("mu_playall").onclick = () => playTracks(0, false);
+  $("mu_shufall").onclick = () => playTracks(0, true);
+  $("mu_plrefresh").onclick = () => loadPlaylists(true);
+  $("mu_sform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("mu_q").value.trim();
+    if (!q) return;
+    $("mu_err").textContent = "";
+    MUI.results = "busy"; renderMuLists();
+    try { MUI.results = await ytGet(`/api/yt/search?type=${MUI.sk}&q=${encodeURIComponent(q)}`); }
+    catch (err) { MUI.results = []; $("mu_err").textContent = ytErr(err.message); }
+    renderMuLists();
   });
   $("mu_form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -902,8 +1063,19 @@ function bindMusic() {
   $("mu_favadd").onclick = () => musicSend({ type: "music_fav", action: "add" });
   $("md_pp").onclick = () => musicSend({ type: "music_ctl", action: S.music.playing ? "pause" : "play" });
   $("md_next").onclick = () => musicSend({ type: "music_ctl", action: "next" });
-  document.addEventListener("click", () => $("musicpanel").classList.add("hidden"));
+  // instellingen: YouTube-account
+  $("yt_cid").addEventListener("input", () => { $("yt_cid").dataset.dirty = "1"; });
+  $("yt_save").onclick = async () => {
+    $("yt_msg").textContent = "";
+    const ok = await musicSend({ type: "yt_client", client_id: $("yt_cid").value.trim(), client_secret: $("yt_secret").value.trim() });
+    if (ok) { $("yt_secret").value = ""; delete $("yt_cid").dataset.dirty; $("yt_msg").textContent = t("yt_saved"); }
+    else $("yt_msg").textContent = $("mu_err").textContent;
+  };
+  $("yt_loginbtn").onclick = async () => { if (!(await musicSend({ type: "yt_login" }))) $("yt_msg").textContent = $("mu_err").textContent; };
+  $("yt_logout").onclick = () => confirmDialog(t("yt_logout") + "?", () => musicSend({ type: "yt_logout" }));
+  document.addEventListener("click", (e) => { if (!e.target.closest("#confirm")) $("musicpanel").classList.add("hidden"); });
   addEventListener("resize", placeDock);
+  if (/[?&]music=1/.test(location.search)) setTimeout(openMusic, 400);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter

@@ -703,27 +703,66 @@ table.stats tr.me td { background: rgba(62,207,142,.12); font-weight: 700; }
 /* klok in de bovenbalk */
 .clock { font: 700 .85rem/1 var(--display, inherit); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; padding: 0 .2rem; white-space: nowrap; }
 /* muziek */
-.musicpanel { width: 340px; display: grid; gap: .55rem; }
-.musicpanel h3 { margin: 0; font: 900 italic 1.15rem/1 var(--display); }
+.musicpanel { width: min(470px, 96vw); display: grid; gap: .55rem; max-height: calc(100vh - 80px); grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+.mu_head { display: flex; align-items: center; gap: .6rem; }
+.mu_head h3 { margin: 0; font: 900 italic 1.2rem/1 var(--display); }
+.mu_acct { flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_head .small { padding: .25em .55em; }
+.mu_nowbar { display: flex; gap: .7rem; align-items: center; min-height: 3.2rem; }
+.mu_art { width: 5.4rem; height: 3.05rem; object-fit: cover; border-radius: 8px; flex: none; background: rgba(255,255,255,.06); }
+.mu_nowtxt { min-width: 0; flex: 1; }
+.mu_now { font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.mu_now b { color: var(--text); }
+.mu_sub { font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
+.mu_ctl button { min-width: 2.9rem; padding: .45em .6em; font-size: 1.05rem; }
+.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
+.mu_ctl button:disabled { opacity: .4; }
+.mu_tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); padding-bottom: .35rem; overflow-x: auto; }
+.mu_tabs button { flex: 1 1 auto; padding: .4em .35em; font-size: .8rem; background: transparent; border-color: transparent; white-space: nowrap; }
+.mu_tabs button.on { background: rgba(255,255,255,.08); border-color: var(--line2, rgba(255,255,255,.18)); }
+.mu_body { overflow: auto; min-height: 9rem; max-height: 46vh; padding-right: .15rem; }
+.mu_pane { display: grid; gap: .55rem; align-content: start; }
 .mu_form { display: flex; gap: .4rem; }
 .mu_form input { flex: 1; min-width: 0; padding: .5em .65em; }
 .mu_form button { padding: .45em .9em; }
+.mu_seg { display: flex; gap: .3rem; }
+.mu_seg button { flex: 1; padding: .35em .5em; font-size: .82rem; }
+.mu_seg button.on { border-color: var(--accent); color: var(--accent); }
 .mu_err { margin: 0; color: #ff9a92; font-size: .85rem; }
 .mu_err:empty { display: none; }
-.mu_now { font-size: .9rem; color: var(--muted); min-height: 1.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mu_now b { color: var(--text); }
-.mu_ctl { display: flex; gap: .35rem; justify-content: center; }
-.mu_ctl button { min-width: 2.7rem; padding: .45em .6em; font-size: 1.05rem; }
-.mu_ctl button.on { border-color: var(--accent); color: var(--accent); }
-.mu_ctl button:disabled { opacity: .4; }
+.mu_list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.mu_list .mu_info { color: var(--muted); font-size: .88rem; padding: .4rem .2rem; }
+.mu_row { display: flex; gap: .6rem; align-items: center; width: 100%; text-align: left; padding: .35rem .45rem; background: transparent;
+  border: 1px solid transparent; border-radius: 10px; }
+.mu_row:hover, .mu_row:focus-visible { background: rgba(255,255,255,.06); border-color: var(--line); }
+.mu_row img, .mu_noart { width: 3.6rem; height: 2.05rem; object-fit: cover; border-radius: 6px; flex: none; background: rgba(255,255,255,.07);
+  display: grid; place-items: center; color: var(--muted); }
+.mu_rt { display: grid; min-width: 0; line-height: 1.25; }
+.mu_rt b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_rt small { font-size: .76rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_gate { display: grid; gap: .5rem; justify-items: start; font-size: .9rem; }
+.mu_gate p { margin: 0; }
+.mu_errl { color: #ff9a92; }
+.mu_code { font: 900 2rem/1 var(--display); letter-spacing: .12em; padding: .5rem .8rem; border-radius: 12px; background: rgba(255,255,255,.07); }
+.mu_qr { display: flex; align-items: center; gap: .6rem; color: var(--muted); font-size: .85rem; }
+.mu_qr img { width: 96px; height: 96px; background: #fff; border-radius: 8px; padding: 4px; }
+.mu_plhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
+.mu_trhead { display: flex; align-items: center; gap: .5rem; }
+.mu_trhead b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu_trbtns { display: flex; gap: .4rem; }
+.mu_trbtns button { padding: .45em .8em; font-size: .88rem; }
 .mu_sl { display: grid; gap: .2rem; font-size: .88rem; }
 .mu_sl input { width: 100%; }
 .mu_favhead { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: .9rem; }
-.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; max-height: 9.5rem; overflow: auto; }
+.mu_favs { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
 .mu_favs li { display: flex; gap: .35rem; align-items: center; }
 .mu_favs li button.mu_fp { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .4em .6em; font-size: .88rem; }
 .mu_favs li button.mu_fd { padding: .4em .55em; font-size: .8rem; }
 .mu_favs:empty::after { content: attr(data-empty); color: var(--muted); font-size: .85rem; }
+.ytsteps summary { cursor: pointer; font-weight: 700; font-size: .9rem; }
+.ytsteps ol { margin: .5rem 0 .2rem 1.1rem; padding: 0; display: grid; gap: .35rem; font-size: .88rem; color: var(--muted); }
+html.remote .musicpanel { position: fixed; left: 2vw; right: 2vw; top: 64px; width: auto; transform: none; max-height: calc(100vh - 80px); }
 /* de YouTube-speler: klein maar zichtbaar (minimaal 200x200 volgens de regels van YouTube) */
 .musicdock { position: fixed; z-index: 4; width: 224px; background: rgba(10,14,30,.92); border: 1px solid var(--line2, rgba(255,255,255,.14));
   border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.45); }

@@ -17,6 +17,7 @@ YT_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.co
 VIDEO_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 LIST_RE = re.compile(r"^[A-Za-z0-9_-]{2,80}$")
 MAX_FAVS = 24
+MAX_QUEUE = 200
 CONTROLS = ("play", "pause", "next", "prev", "stop")
 
 
@@ -67,7 +68,8 @@ class Music:
         c.setdefault("shuffle", False)
         c.setdefault("favs", [])
         # wat er nu speelt (niet bewaard: na een herstart begint de muziek niet vanzelf)
-        self.now = {"video": None, "list": None, "op": None, "seq": 0, "playing": False, "title": "", "err": None}
+        self.now = {"video": None, "list": None, "videos": None, "start": 0, "op": None, "seq": 0, "playing": False,
+                    "title": "", "err": None, "name": "", "vid": None}
 
     @property
     def cfg(self) -> dict:
@@ -77,23 +79,50 @@ class Music:
         self.now["op"] = op
         self.now["seq"] += 1
 
-    def load(self, src: dict, title: str = "") -> None:
-        self.now.update({"video": src.get("video"), "list": src.get("list"), "playing": True, "title": title,
-                         "err": None})
+    def _has(self) -> bool:
+        return bool(self.now["video"] or self.now["list"] or self.now["videos"])
+
+    def load(self, src: dict, title: str = "", videos: list | None = None, start: int = 0, name: str = "") -> None:
+        self.now.update({"video": src.get("video"), "list": src.get("list"), "videos": videos or None,
+                         "start": start if videos else 0, "playing": True, "title": title, "err": None,
+                         "name": name or "", "vid": src.get("video")})
         self._op("load")
 
     def command(self, cmd: dict) -> None:
         t = cmd.get("type")
         if t == "music_load":
-            self.load(parse_link(cmd.get("url")))
+            if cmd.get("videos") is not None:          # een lijst nummers (bijv. je eigen afspeellijst)
+                vids = cmd.get("videos")
+                if not isinstance(vids, list) or not vids or not all(isinstance(v, str) and VIDEO_RE.match(v) for v in vids):
+                    raise GameError("err_music_link")
+                vids = vids[:MAX_QUEUE]
+                try:
+                    start = max(0, min(len(vids) - 1, int(cmd.get("start") or 0)))
+                except (TypeError, ValueError):
+                    start = 0
+                self.load({"video": None, "list": None}, videos=vids, start=start,
+                          name=str(cmd.get("name") or "")[:80])
+            elif cmd.get("video"):
+                v = str(cmd["video"])
+                if not VIDEO_RE.match(v):
+                    raise GameError("err_music_link")
+                self.load({"video": v, "list": None}, str(cmd.get("title") or "")[:120])
+            elif cmd.get("list"):
+                lst = str(cmd["list"])
+                if not LIST_RE.match(lst):
+                    raise GameError("err_music_link")
+                self.load({"video": None, "list": lst}, name=str(cmd.get("name") or "")[:80])
+            else:
+                self.load(parse_link(cmd.get("url")))
         elif t == "music_ctl":
             a = str(cmd.get("action") or "")
             if a not in CONTROLS:
                 raise GameError("err_unknown_cmd", cmd=a)
-            if not (self.now["video"] or self.now["list"]):
+            if not self._has():
                 raise GameError("err_music_none")
             if a == "stop":
-                self.now.update({"video": None, "list": None, "playing": False, "title": "", "err": None})
+                self.now.update({"video": None, "list": None, "videos": None, "start": 0, "playing": False, "title": "",
+                                 "err": None, "name": "", "vid": None})
             elif a in ("play", "pause"):
                 self.now["playing"] = a == "play"
             self._op(a)
@@ -108,7 +137,7 @@ class Music:
                 c["duck"] = bool(cmd["duck"])
             if "shuffle" in cmd:
                 c["shuffle"] = bool(cmd["shuffle"])
-                if self.now["list"]:
+                if self.now["list"] or self.now["videos"]:
                     self._op("shuffle")
             self._save()
         elif t == "music_fav":
@@ -124,7 +153,7 @@ class Music:
             if cmd.get("url"):
                 src = parse_link(cmd["url"])
             if not (src["video"] or src["list"]):
-                raise GameError("err_music_none")
+                raise GameError("err_music_nofav")      # eigen afspeellijsten staan al onder "Mijn muziek"
             title = str(cmd.get("title") or self.now["title"] or src["list"] or src["video"]).strip()[:80]
             favs[:] = [f for f in favs if not (f.get("video") == src["video"] and f.get("list") == src["list"])]
             favs.insert(0, {"title": title, **src})
@@ -145,10 +174,11 @@ class Music:
 
     def status(self, cmd: dict) -> bool:
         """Melding van het grote scherm over wat er echt speelt. Geeft True als er iets veranderde."""
-        if not (self.now["video"] or self.now["list"]):
+        if not self._has():
             return False
+        vid = str(cmd.get("vid") or "")
         new = {"playing": bool(cmd.get("playing")), "title": str(cmd.get("title") or "")[:120],
-               "err": (str(cmd["err"])[:40] if cmd.get("err") else None)}
+               "err": (str(cmd["err"])[:40] if cmd.get("err") else None), "vid": vid if VIDEO_RE.match(vid) else None}
         if all(self.now[k] == v for k, v in new.items()):
             return False
         self.now.update(new)

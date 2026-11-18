@@ -362,16 +362,16 @@ const MU_ERR = { "101": "mu_e101", "100": "mu_e100", "2": "mu_e2", "5": "mu_e5",
 function renderMusicM() {
   const m = S && S.music;
   if (!m) { $("mmusic").classList.add("hidden"); return; }
-  const has = !!(m.video || m.list);
+  const has = !!(m.video || m.list || m.videos);
   const title = m.title || (has ? t("mu_loading") : "");
   $("mmu_sum").textContent = has ? (m.playing ? "▶ " : "⏸ ") + title : "";
   $("mmu_now").innerHTML = !has ? esc(t("mu_none"))
-    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.list ? ` · ${esc(t("mu_list"))}` : "");
+    : t(m.playing ? "mu_playing" : "mu_paused", { t: `<b>${esc(title)}</b>` }) + (m.name ? ` · ${esc(t("mu_from", { name: m.name }))}` : m.list ? ` · ${esc(t("mu_list"))}` : "");
   $("mmu_err").textContent = m.err && MU_ERR[m.err] ? t(MU_ERR[m.err]) : "";
   $("mmu_pp").textContent = m.playing ? "⏸" : "▶";
   document.querySelectorAll("#mmusic [data-mu]").forEach((b) => { b.disabled = !has; });
   $("mmu_shuf").classList.toggle("on", !!m.shuffle);
-  $("mmu_shuf").disabled = !m.list;
+  $("mmu_shuf").disabled = !(m.list || m.videos);
   if (document.activeElement !== $("mmu_vol")) $("mmu_vol").value = m.volume;
   $("mmu_vol_val").textContent = m.volume + "%";
   const cv = S.tts && S.tts.volume != null ? S.tts.volume : 1;
@@ -385,7 +385,7 @@ function renderMusicM() {
     $("mmu_favs").innerHTML = m.favs.map((f, i) => `<li><button class="ghost mu_fp" data-fav="${i}">${f.list ? "≡ " : "♪ "}${esc(f.title)}</button>
       <button class="ghost mu_fd" data-favdel="${i}">✕</button></li>`).join("");
   }
-  $("mmu_favadd").disabled = !has;
+  $("mmu_favadd").disabled = !(m.video || m.list);
 }
 async function musicSendM(cmd) {
   $("mmu_err").textContent = "";
