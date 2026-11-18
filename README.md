@@ -259,6 +259,17 @@ Afgooien krijgt alleen leesrechten en de sleutels blijven op de Pi. De stappen s
 app op "In productie", anders moet je elke 7 dagen opnieuw inloggen. Zoeken kost YouTube-quotum: ongeveer
 100 zoekopdrachten per dag; je afspeellijsten openen kan veel vaker.
 
+### Walk-ons bij X01
+
+Net als bij echte wedstrijden kan elke speler een eigen opkomstnummer hebben. Stel het in bij
+**Instellingen → Spelers → 🎵 Walk-on**: zoek het nummer (met je YouTube-account) of plak een link,
+kies waar het begint (bijvoorbeeld het refrein; een link met "starten op" neemt dat tijdstip over) en hoe
+lang (5-30 seconden), en probeer het uit. Zet in de X01-lobby **Walk-on** aan. Bij de start komt elke
+speler (in gooivolgorde) op met zijn nummer, de commentator roept hem aan en je ziet een paar van zijn
+X01-stats: gemiddelde, beste gemiddelde, 180's, hoogste finish, beste leg, uitgooi%, de laatste vijf
+uitslagen en waar hij de beste in is. Met Enter ga je naar de volgende, met Esc sla je het over; zodra er
+gegooid wordt stopt het vanzelf. Muziek die al speelde gaat daarna verder waar hij was.
+
 ## Autodarts bedienen vanuit Afgooien
 
 Klik bovenin op de statuspil ("Autodarts verbonden · …"). Daar zet je de detectie **aan** of **uit**,
@@ -355,6 +366,7 @@ Na een update: nieuwe versie uitpakken (over de oude heen) en `sudo systemctl re
 
 Het versienummer staat linksonder in beeld (en in `afgooien/__init__.py`).
 
+- **1.43**: walk-ons bij X01: eigen opkomstnummer per speler (stukje van max. 30 s) met een intro en stats
 - **1.42**: inloggen met je YouTube-account in de muziekknop: zoeken, je eigen afspeellijsten (ook privé) en
   "Vind ik leuk", nummers per afspeellijst kiezen; muziekvenster met tabbladen
 - **1.41**: muziek tijdens het darten via YouTube Music / YouTube (🎵 rechtsboven en op de telefoon), met

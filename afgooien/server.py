@@ -134,6 +134,7 @@ class App:
             s["mail"] = self.mailer.info()
             s["music"] = self.music.info()
             s["youtube"] = self.yt.info()
+            s["game_id"] = self.game_id
             if self.extra_notice and not s["notice"]:
                 s["notice"] = tr(self.lang, *self.extra_notice)
             s["key"] = "%d.%d" % self.key()
@@ -253,6 +254,11 @@ class App:
             humans = [self._pname(i) for i in range(len(g.players)) if not self._pbot(i)]
             if self.players.ensure(humans):
                 self.history.version += 1
+        elif t == "player_walkon":
+            from .music import clean_walkon
+            wo = None if cmd.get("clear") else clean_walkon(cmd)
+            self.players.set_walkon(cmd.get("name"), wo)
+            self.history.version += 1
         elif t == "player_rename":
             self._rename_player(cmd.get("name"), cmd.get("new_name"))
         elif t in ("player_add", "player_delete", "player_reset"):

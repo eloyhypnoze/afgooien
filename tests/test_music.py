@@ -84,5 +84,34 @@ class MusicAppTests(unittest.TestCase):
                 app.command({"type": "music_load", "url": "https://open.spotify.com/track/x"})
 
 
+class WalkonTests(unittest.TestCase):
+    def test_walkon_saved_on_player_and_preview(self):
+        from afgooien.music import clean_walkon
+        self.assertEqual(clean_walkon({"url": "https://music.youtube.com/watch?v=dQw4w9WgXcQ&t=1m5s", "dur": 99}),
+                         {"video": "dQw4w9WgXcQ", "title": "", "start": 65, "dur": 30})
+        self.assertEqual(clean_walkon({"video": "dQw4w9WgXcQ", "start": 12, "dur": 2, "title": "X"})["dur"], 5)
+        with self.assertRaises(GameError):
+            clean_walkon({"url": "https://music.youtube.com/playlist?list=PLabc"})     # geen los nummer
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            app = App(WEB, d / "s.json", d / "h.json", None, d / "spelers.json", d)
+            app.command({"type": "player_add", "name": "Eloy"})
+            v = app.history.version
+            app.command({"type": "player_walkon", "name": "eloy", "video": "dQw4w9WgXcQ", "title": "Walk-on", "start": 43, "dur": 20})
+            self.assertGreater(app.history.version, v)
+            self.assertEqual(app.players.find("Eloy")["walkon"], {"video": "dQw4w9WgXcQ", "title": "Walk-on", "start": 43, "dur": 20})
+            app.command({"type": "player_rename", "name": "Eloy", "new_name": "Eloy V"})
+            self.assertEqual(app.players.find("Eloy V")["walkon"]["start"], 43)       # gaat mee met de naam
+            st = app.command({"type": "music_load", "video": "dQw4w9WgXcQ", "start": 43, "end": 63})
+            self.assertEqual((st["music"]["vstart"], st["music"]["vend"]), (43, 63))
+            st = app.command({"type": "music_load", "url": "https://youtu.be/dQw4w9WgXcQ"})
+            self.assertIsNone(st["music"]["vend"])
+            app.command({"type": "player_walkon", "name": "Eloy V", "clear": True})
+            self.assertNotIn("walkon", app.players.find("Eloy V"))
+            self.assertIn("game_id", st)
+            st = app.command({"type": "new_game", "mode": "x01", "players": ["Eloy V", "Kim"], "settings": {"walkon": "on"}})
+            self.assertEqual(st["settings"]["walkon"], "on")
+
+
 if __name__ == "__main__":
     unittest.main()

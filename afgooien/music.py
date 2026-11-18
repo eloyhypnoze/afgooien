@@ -55,7 +55,43 @@ def parse_link(text) -> dict:
         raise GameError("err_music_private")          # "Nummers die ik leuk vind" is altijd privé
     if not video and not lst:
         raise GameError("err_music_link")
-    return {"video": video, "list": lst}
+    out = {"video": video, "list": lst}
+    t = _seconds((q.get("t") or q.get("start") or [""])[0])
+    if t:
+        out["t"] = t                                     # "starten op 1:05" uit de deel-link
+    return out
+
+
+def _seconds(v: str) -> int:
+    """'65', '65s', '1m5s', '1h2m3s' -> seconden."""
+    v = str(v or "").strip().lower()
+    if v.isdigit():
+        return int(v)
+    m = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", v)
+    if not m or not v:
+        return 0
+    h, mi, s = (int(x or 0) for x in m.groups())
+    return h * 3600 + mi * 60 + s
+
+
+WALKON_MIN, WALKON_MAX = 5, 30
+
+
+def clean_walkon(cmd: dict) -> dict:
+    """Walk-on uit een opdracht: {video, title, start, dur} (dur 5-30 s)."""
+    src = {"video": cmd.get("video"), "list": None}
+    if cmd.get("url"):
+        src = parse_link(cmd["url"])
+    v = src.get("video")
+    if not v or not VIDEO_RE.match(str(v)):
+        raise GameError("err_walkon_link")
+    try:
+        start = int(cmd["start"]) if cmd.get("start") is not None else int(src.get("t") or 0)
+        dur = int(cmd.get("dur") or 20)
+    except (TypeError, ValueError):
+        raise GameError("err_settings")
+    return {"video": v, "title": str(cmd.get("title") or "").strip()[:120], "start": max(0, min(3600, start)),
+            "dur": max(WALKON_MIN, min(WALKON_MAX, dur))}
 
 
 class Music:
@@ -68,7 +104,7 @@ class Music:
         c.setdefault("shuffle", False)
         c.setdefault("favs", [])
         # wat er nu speelt (niet bewaard: na een herstart begint de muziek niet vanzelf)
-        self.now = {"video": None, "list": None, "videos": None, "start": 0, "op": None, "seq": 0, "playing": False,
+        self.now = {"vstart": None, "vend": None, "video": None, "list": None, "videos": None, "start": 0, "op": None, "seq": 0, "playing": False,
                     "title": "", "err": None, "name": "", "vid": None}
 
     @property
@@ -83,7 +119,7 @@ class Music:
         return bool(self.now["video"] or self.now["list"] or self.now["videos"])
 
     def load(self, src: dict, title: str = "", videos: list | None = None, start: int = 0, name: str = "") -> None:
-        self.now.update({"video": src.get("video"), "list": src.get("list"), "videos": videos or None,
+        self.now.update({"vstart": None, "vend": None, "video": src.get("video"), "list": src.get("list"), "videos": videos or None,
                          "start": start if videos else 0, "playing": True, "title": title, "err": None,
                          "name": name or "", "vid": src.get("video")})
         self._op("load")
@@ -107,6 +143,12 @@ class Music:
                 if not VIDEO_RE.match(v):
                     raise GameError("err_music_link")
                 self.load({"video": v, "list": None}, str(cmd.get("title") or "")[:120])
+                if cmd.get("end") is not None:               # stukje (bijv. een walk-on uitproberen)
+                    try:
+                        s0 = max(0, min(3600, int(cmd.get("start") or 0)))
+                        self.now.update({"vstart": s0, "vend": max(s0 + 1, min(s0 + 60, int(cmd["end"])))})
+                    except (TypeError, ValueError):
+                        raise GameError("err_settings")
             elif cmd.get("list"):
                 lst = str(cmd["list"])
                 if not LIST_RE.match(lst):

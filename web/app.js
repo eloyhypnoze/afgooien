@@ -222,6 +222,7 @@ function render(state) {
   refreshVoiceUi();
   renderMusic();
   applyMusic();
+  maybeIntro();
   if (view === "settings") { fillUpdate(); fillMail(); }
   const mk = JSON.stringify(S.mail || {});
   if (mk !== lastMailKey) { lastMailKey = mk; if (view === "players" && S.phase === "setup") renderPlayerMain(); }
@@ -709,7 +710,8 @@ async function ytPlayer() {
 function musTarget() {
   const m = S && S.music;
   if (!m) return 0;
-  return Math.round(m.volume * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
+  const base = INTRO.on ? Math.max(m.volume, 70) : m.volume;          // walk-ons iets harder
+  return Math.round(base * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
 }
 function musVolume(smooth) {
   const p = MUS.yt;
@@ -739,6 +741,7 @@ function musDuck() {
   return end;
 }
 function musReport() {
+  if (INTRO.on) return;
   const p = MUS.yt;
   if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list || S.music.videos)) return;
   let st = -1, title = "";
@@ -754,6 +757,7 @@ function musReport() {
 }
 function musState(e) {
   const p = MUS.yt;
+  if (INTRO.on) { if (e.data === 0) showIntro(INTRO.i + 1); else if (e.data === 1) musVolume(false); return; }
   if (e.data === 1) {
     MUS.errRun = 0;
     if (MUS.err && MUS.err !== "101") MUS.err = null;
@@ -766,6 +770,7 @@ function musState(e) {
   musReport();
 }
 function musError(e) {
+  if (INTRO.on) { clearTimeout(INTRO.timer); INTRO.timer = setTimeout(() => showIntro(INTRO.i + 1), 4000); return; }
   const code = String(e.data);
   MUS.err = code === "150" ? "101" : code;
   const m = S && S.music;
@@ -773,7 +778,7 @@ function musError(e) {
   musReport();
 }
 async function applyMusic() {
-  if (!musicHere() || !S || !S.music) return;
+  if (!musicHere() || !S || !S.music || INTRO.on) return;
   const m = S.music;
   const has = !!(m.video || m.list || m.videos);
   $("musicdock").classList.toggle("hidden", !has);
@@ -799,7 +804,11 @@ async function applyMusic() {
         if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
         MUS.needShuffle = !!m.shuffle && m.playing;
         try { p.setLoop(true); } catch (e) { /* */ }
-      } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
+      } else {
+        const o = { videoId: m.video };
+        if (m.vend) { o.startSeconds = m.vstart || 0; o.endSeconds = m.vend; }      // stukje (walk-on proberen)
+        if (m.playing) p.loadVideoById(o); else p.cueVideoById(o);
+      }
     } else if (op === "play") p.playVideo();
     else if (op === "pause") p.pauseVideo();
     else if (op === "next") { if (m.list || m.videos) p.nextVideo(); else p.seekTo(0, true); }
@@ -812,6 +821,13 @@ async function applyMusic() {
 function placeDock() {
   const d = $("musicdock");
   if (d.classList.contains("hidden")) return;
+  if (INTRO.on) {                                                  // walk-on: groot naast de spelerskaart
+    d.classList.remove("compact");
+    const W = d.offsetWidth || 448, H = d.offsetHeight || 252;
+    d.style.left = Math.round(Math.max(innerWidth * 0.6, innerWidth - W - innerWidth * 0.06)) + "px";
+    d.style.top = Math.round((innerHeight - H) / 2) + "px";
+    return;
+  }
   const inGame = !$("game").classList.contains("hidden");
   const a = inGame && document.querySelector("#game .dartbar"), b = inGame && document.querySelector("#game .statusrow");
   const ra = a && a.getBoundingClientRect(), rb = b && b.getBoundingClientRect();
@@ -1076,6 +1092,274 @@ function bindMusic() {
   document.addEventListener("click", (e) => { if (!e.target.closest("#confirm")) $("musicpanel").classList.add("hidden"); });
   addEventListener("resize", placeDock);
   if (/[?&]music=1/.test(location.search)) setTimeout(openMusic, 400);
+}
+
+// ------------------------------------------------------- walk-ons (X01): eigen nummer + stats bij de start
+const INTRO = { on: false, list: [], i: 0, timer: null, prev: null, gid: null };
+const fmtT = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+function introStats(name) {
+  const games = (H.games || []).filter((g) => gmode(g) === "x01");
+  const rows = aggregate(games, "x01").filter((r) => !r.bot);
+  const a = rows.find((r) => nkey(r.name) === nkey(name));
+  if (!a || !a.games) return null;
+  let bestAvg = 0;
+  const form = [];
+  const chron = games.slice().sort((x, y) => (x.ended < y.ended ? -1 : 1));
+  const since = (H.since || {})[nkey(name)];
+  for (const g of chron) {
+    if (since && g.ended < since) continue;
+    const p = g.players.find((q) => !q.bot && nkey(q.name) === nkey(name));
+    if (!p) continue;
+    bestAvg = Math.max(bestAvg, xavg(p));
+    form.push(p.place === 1);
+  }
+  const tags = [];
+  const peers = rows.filter((r) => r.games >= 3);
+  if (a.games >= 3 && peers.length >= 2) {
+    const M = [["wo_t_avg", (r) => r.avg], ["wo_t_co", (r) => r.coPct || 0], ["wo_t_180", (r) => r.n180 / r.games],
+      ["wo_t_f9", (r) => r.f9], ["wo_t_hico", (r) => r.hico], ["wo_t_win", (r) => r.winPct]];
+    for (const [k, f] of M) {
+      const top = Math.max(...peers.map(f));
+      if (top > 0 && f(a) === top) tags.push(t(k));
+    }
+  }
+  if (a.streak >= 2) tags.push(t("wo_t_streak", { n: a.streak }));
+  return { a, bestAvg, form: form.slice(-5), tags: tags.slice(0, 3) };
+}
+function introCard(it) {
+  const p = it.p;
+  const n = INTRO.list.length;
+  $("intro_count").textContent = n > 1 ? t("wo_count", { i: INTRO.i + 1, n }) : "";
+  const col = COLORS[(p.color || 0) % COLORS.length];
+  $("intro").style.setProperty("--pc", col);
+  $("musicdock").style.setProperty("--pc", col);
+  $("intro_name").textContent = p.name;
+  $("intro_song").innerHTML = it.wo ? `♪ ${esc(it.wo.title || "")}` : "";
+  const st = introStats(p.name);
+  if (!st) {
+    $("intro_games").textContent = t("wo_debut");
+    $("intro_stats").innerHTML = "";
+    $("intro_tags").innerHTML = "";
+    return;
+  }
+  const a = st.a;
+  $("intro_games").textContent = t("wo_games", { n: a.games, w: a.wins, p: pct(a.winPct) });
+  const tiles = [];
+  if (a.avg > 0) tiles.push([t("wo_avg"), fmt2(a.avg)]);
+  if (st.bestAvg > 0) tiles.push([t("wo_bestavg"), fmt2(st.bestAvg)]);
+  if (a.n180) tiles.push([t("wo_180"), a.n180]);
+  if (a.hico) tiles.push([t("wo_hico"), a.hico]);
+  if (a.bestLeg) tiles.push([t("wo_bestleg"), t("wo_legdarts", { n: a.bestLeg })]);
+  if (a.coPct) tiles.push([t("wo_co"), pct(a.coPct)]);
+  $("intro_stats").innerHTML = tiles.slice(0, 6).map(([k, v], i) =>
+    `<div class="itile" style="--d:${0.35 + i * 0.12}s"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join("");
+  const form = st.form.length ? `<span class="iform"><span>${esc(t("wo_form"))}</span>${st.form.map((w) => `<i class="${w ? "w" : "l"}"></i>`).join("")}</span>` : "";
+  $("intro_tags").innerHTML = st.tags.map((x) => `<span class="itag">${esc(x)}</span>`).join("") + form;
+}
+function maybeIntro() {
+  if (!musicHere() || !S || S.mode !== "x01" || !S.settings || S.settings.walkon !== "on" || !S.game_id) return;
+  if (INTRO.on && S.players.some((p) => p.darts > 0)) { endIntro(); return; }   // er wordt al gegooid
+  if (INTRO.gid === S.game_id) return;
+  if (!["play", "bulloff"].includes(S.phase)) return;
+  INTRO.gid = S.game_id;
+  if (S.players.some((p) => p.darts > 0) || store.get("afgooien.introDone", "") === S.game_id) return;
+  store.set("afgooien.introDone", S.game_id);
+  const reg = H.players || [];
+  const order = S.order && S.order.length ? S.order : S.players.map((p) => p.index);
+  INTRO.list = order.map((i) => S.players[i]).filter((p) => p && !p.bot)
+    .map((p) => ({ p, wo: (reg.find((r) => nkey(r.name) === nkey(p.name)) || {}).walkon || null }));
+  if (!INTRO.list.length) return;
+  INTRO.prev = null;
+  if (MUS.yt && MUS.ready) {
+    try { INTRO.prev = { idx: MUS.yt.getPlaylistIndex(), time: Math.floor(MUS.yt.getCurrentTime() || 0) }; } catch (e) { /* */ }
+  }
+  INTRO.on = true;
+  $("intro").classList.remove("hidden");
+  showIntro(0);
+}
+async function showIntro(i) {
+  clearTimeout(INTRO.timer);
+  if (!INTRO.on) return;
+  const it = INTRO.list[i];
+  if (!it) { endIntro(); return; }
+  INTRO.i = i;
+  introCard(it);
+  const box = $("introin");
+  box.classList.remove("go"); void box.offsetWidth; box.classList.add("go");
+  const dur = it.wo ? it.wo.dur : 6;
+  $("intro_prog").style.animationDuration = dur + "s";
+  INTRO.timer = setTimeout(() => showIntro(i + 1), dur * 1000 + 700);
+  sayPhrases([t("wo_call", { name: it.p.name })]);
+  const d = $("musicdock");
+  if (it.wo) {
+    try {
+      const p = await ytPlayer();
+      if (!INTRO.on || INTRO.i !== i) return;
+      d.classList.remove("hidden");
+      d.classList.add("wodock");
+      placeDock();
+      p.loadVideoById({ videoId: it.wo.video, startSeconds: it.wo.start, endSeconds: it.wo.start + it.wo.dur });
+      MUS.vol = null;
+      musVolume(false);
+    } catch (e) { /* geen YouTube: alleen de kaart */ }
+  } else {
+    if (MUS.yt && MUS.ready) try { MUS.yt.pauseVideo(); } catch (e) { /* */ }
+    d.classList.add("hidden");
+  }
+}
+function endIntro() {
+  if (!INTRO.on) return;
+  INTRO.on = false;
+  clearTimeout(INTRO.timer);
+  $("intro").classList.add("hidden");
+  $("musicdock").classList.remove("wodock");
+  musRestore(INTRO.prev || {});
+}
+function musRestore(prev) {
+  const m = S && S.music;
+  if (!m) return;
+  const has = !!(m.video || m.list || m.videos);
+  $("musicdock").classList.toggle("hidden", !has);
+  const p = MUS.yt;
+  if (!p || !MUS.ready) return;
+  if (!has) { try { p.stopVideo(); } catch (e) { /* */ } return; }
+  if (MUS.seq !== m.seq) { applyMusic(); return; }          // tijdens de intro iets anders gekozen
+  try {
+    const go = m.playing;
+    if (m.videos) go ? p.loadPlaylist(m.videos, prev.idx || 0, prev.time || 0) : p.cuePlaylist(m.videos, prev.idx || 0, prev.time || 0);
+    else if (m.list) {
+      const o = { list: m.list, listType: "playlist", index: prev.idx || 0, startSeconds: prev.time || 0 };
+      go ? p.loadPlaylist(o) : p.cuePlaylist(o);
+    } else {
+      const o = { videoId: m.video, startSeconds: prev.time || 0 };
+      go ? p.loadVideoById(o) : p.cueVideoById(o);
+    }
+  } catch (e) { /* */ }
+  MUS.vol = null;
+  musVolume(false);
+  placeDock();
+}
+
+// walk-on kiezen (Instellingen → Spelers)
+const WO = { name: null, cand: null, results: null };
+function parseYt(u) {
+  const s = String(u || "").trim();
+  const m = /(?:[?&]v=|youtu\.be\/|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/.exec(s) || /^([A-Za-z0-9_-]{11})$/.exec(s);
+  if (!m) return null;
+  let tt = 0;
+  const tm = /[?&](?:t|start)=([0-9hms]+)/.exec(s);
+  if (tm) {
+    if (/^\d+$/.test(tm[1])) tt = +tm[1];
+    else { const g = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(tm[1]) || []; tt = (+g[1] || 0) * 3600 + (+g[2] || 0) * 60 + (+g[3] || 0); }
+  }
+  return { video: m[1], t: tt };
+}
+function openWalkon(name) {
+  const reg = (H.players || []).find((p) => nkey(p.name) === nkey(name));
+  WO.name = name;
+  WO.cand = reg && reg.walkon ? { ...reg.walkon } : null;
+  WO.results = null;
+  $("wo_title").textContent = t("wo_title", { name });
+  $("wo_q").value = ""; $("wo_link").value = ""; $("wo_err").textContent = "";
+  $("wodlg").classList.remove("hidden");
+  renderWo();
+}
+function renderWo() {
+  const c = WO.cand;
+  if (c && !c.title && S && S.music && S.music.vid === c.video && S.music.title) c.title = S.music.title;
+  $("wo_cur").innerHTML = c
+    ? `<img src="https://i.ytimg.com/vi/${esc(c.video)}/mqdefault.jpg" alt=""><div><b>${esc(c.title || c.video)}</b><small>${esc(t("wo_from", { t: fmtT(c.start), d: c.dur }))}</small></div>`
+    : `<p class="hint">${esc(t("wo_none"))}</p>`;
+  document.querySelector("#wodlg .wo_time").classList.toggle("hidden", !c);
+  if (c) {
+    $("wo_start").textContent = fmtT(c.start);
+    if (document.activeElement !== $("wo_dur")) $("wo_dur").value = c.dur;
+    $("wo_dur_v").textContent = c.dur + " s";
+  }
+  const u = ytUser();
+  $("wo_sform").classList.toggle("hidden", !u.logged_in);
+  $("wo_gate").classList.toggle("hidden", !!u.logged_in);
+  $("wo_results").innerHTML = WO.results === "busy" ? `<li class="mu_info">${esc(t("mu_searching"))}</li>`
+    : Array.isArray(WO.results) ? (WO.results.length ? WO.results.map((it, i) => muRow(it, i, "wo")).join("") : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  const reg = (H.players || []).find((p) => nkey(p.name) === nkey(WO.name || ""));
+  $("wo_remove").classList.toggle("hidden", !(reg && reg.walkon));
+  $("wo_save").disabled = !c;
+}
+async function woSend(cmd) {
+  $("wo_err").textContent = "";
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+    const j = await r.json();
+    if (!j.ok) { $("wo_err").textContent = muErrText(j.error); return false; }
+    render(j.state);
+    return true;
+  } catch (e) { $("wo_err").textContent = t("no_conn"); return false; }
+}
+function bindWalkon() {
+  $("wo_close").onclick = () => $("wodlg").classList.add("hidden");
+  $("wodlg").addEventListener("click", (e) => {
+    if (e.target === $("wodlg")) { $("wodlg").classList.add("hidden"); return; }
+    const st = e.target.closest("[data-ws]");
+    if (st && WO.cand) { WO.cand.start = Math.max(0, WO.cand.start + +st.dataset.ws); renderWo(); return; }
+    const row = e.target.closest(".mu_row[data-wo]");
+    if (row) {
+      const it = WO.results[+row.dataset.wo];
+      WO.cand = { video: it.id, title: it.title, start: 45, dur: WO.cand ? WO.cand.dur : 20 };
+      renderWo();
+    }
+  });
+  $("wo_dur").addEventListener("input", () => { if (WO.cand) { WO.cand.dur = +$("wo_dur").value; $("wo_dur_v").textContent = WO.cand.dur + " s"; renderWo(); } });
+  $("wo_sform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("wo_q").value.trim();
+    if (!q) return;
+    WO.results = "busy"; renderWo();
+    try { WO.results = await ytGet(`/api/yt/search?type=video&q=${encodeURIComponent(q)}`); }
+    catch (err) { WO.results = []; $("wo_err").textContent = ytErr(err.message); }
+    renderWo();
+  });
+  $("wo_lform").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = parseYt($("wo_link").value);
+    if (!r) { $("wo_err").textContent = t("wo_badlink"); return; }
+    $("wo_err").textContent = "";
+    WO.cand = { video: r.video, title: "", start: r.t || 45, dur: WO.cand ? WO.cand.dur : 20 };
+    $("wo_link").value = "";
+    renderWo();
+  });
+  $("wo_try").onclick = () => {
+    const c = WO.cand;
+    if (c) woSend({ type: "music_load", video: c.video, title: c.title, start: c.start, end: c.start + c.dur });
+  };
+  $("wo_stop").onclick = () => woSend({ type: "music_ctl", action: "stop" });
+  $("wo_save").onclick = async () => {
+    const c = WO.cand;
+    if (!c) return;
+    if (!c.title && S.music && S.music.vid === c.video) c.title = S.music.title;
+    if (await woSend({ type: "player_walkon", name: WO.name, video: c.video, title: c.title, start: c.start, dur: c.dur })) {
+      $("wodlg").classList.add("hidden");
+      await loadHistory(true);
+      renderSettings();
+    }
+  };
+  $("wo_remove").onclick = async () => {
+    if (await woSend({ type: "player_walkon", name: WO.name, clear: true })) {
+      $("wodlg").classList.add("hidden");
+      await loadHistory(true);
+      renderSettings();
+    }
+  };
+  // intro bedienen
+  $("intro_next").onclick = () => showIntro(INTRO.i + 1);
+  $("intro_skip").onclick = () => endIntro();
+  document.addEventListener("keydown", (e) => {
+    if (!INTRO.on) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") showIntro(INTRO.i + 1);
+    else if (e.key === "Escape") endIntro();
+    else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter
@@ -2198,9 +2482,10 @@ function renderSettings() {
     const st = a ? t("set_pstats2", { games: t("games_n", { n: a.games }), wins: a.wins, pct: pct(a.winPct) }) : t("set_pnone");
     const c = COLORS[i % COLORS.length];
     return `<div class="preg"><div class="av" style="background:${c}">${esc(p.name.slice(0, 1).toUpperCase())}</div>
-      <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div></div>
+      <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div>${p.walkon ? `<div class="pwo">${esc(t("wo_row", { title: p.walkon.title || p.walkon.video }))}</div>` : ""}</div>
       <input class="pmail" type="email" data-name="${esc(p.name)}" value="${esc(p.email || "")}" placeholder="${esc(t("pl_email_ph"))}" spellcheck="false">
-      <div class="pa"><button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
+      <div class="pa">${LOCAL ? "" : `<button class="ghost" data-act="player_walkon" data-name="${esc(p.name)}">🎵 ${t("wo_btn")}</button>`}
+      <button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
       <button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
       <button class="ghost danger" data-act="player_delete" data-name="${esc(p.name)}">${t("set_delete")}</button></div></div>`;
   }).join("") : `<div class="statsempty">${t("set_noplayers")}</div>`;
@@ -2353,7 +2638,7 @@ function genClick(e) {
 }
 // Welk spel in de lobby staat (afgooien | x01 | countup) en de instellingen per spel.
 const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
-const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
+const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off", walkon: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "free", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
@@ -2378,6 +2663,7 @@ function x01Chips(st) {
   c.push(t("chip_in", { m: cap(st.in_mode) }), t("chip_out", { m: cap(st.out_mode) }));
   c.push(st.bulloff === "off" ? t("chip_nobull") : t("chip_bull", { m: st.bulloff.toUpperCase() }));
   if (st.shootout === "on") c.push(t("chip_so"));
+  if (st.walkon === "on") c.push(t("chip_wo"));
   return c;
 }
 function renderLobbyMode() {
@@ -2401,7 +2687,7 @@ function renderLobbyMode() {
     g.querySelectorAll("button").forEach((b) => b.classList.toggle("on", s[g.dataset.seg] === b.dataset.v)));
   $("x01chips").innerHTML = x01Chips(s).map((c) => `<span class="chipx">${esc(c)}</span>`).join("");
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
-    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
+    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "") + (s.walkon === "on" ? t("xh_wo") : "");
   $("cu_rounds").textContent = cuSet.rounds;
   $("cu_block").textContent = cuSet.block;
   $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
@@ -2648,6 +2934,7 @@ function bind() {
     if (!b) return;
     const name = b.dataset.name, act = b.dataset.act;
     if (act === "player_rename") { startRename(b.closest(".preg"), name); return; }
+    if (act === "player_walkon") { openWalkon(name); return; }
     const q = t(act === "player_delete" ? "q_delete" : "q_reset", { name });
     confirmDialog(q, () => playerAction(act, name));
   });
@@ -2797,6 +3084,7 @@ function bind() {
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
   bindMusic();
+  bindWalkon();
   $("src").onclick = (e) => {
     e.stopPropagation();
     const src = (S && S.source) || {};

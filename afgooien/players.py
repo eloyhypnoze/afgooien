@@ -99,6 +99,17 @@ class PlayerStore:
             p.pop("email", None)
         self._save()
 
+    def set_walkon(self, name: str, walkon: dict | None) -> None:
+        """Walk-on-nummer (YouTube-video, vanaf welk moment en hoe lang). None = weghalen."""
+        p = self.find(name)
+        if not p:
+            raise GameError("err_no_player")
+        if walkon:
+            p["walkon"] = walkon
+        else:
+            p.pop("walkon", None)
+        self._save()
+
     def rename(self, name: str, new_name: str) -> tuple[str, str]:
         """Geef een speler een andere naam. Geeft (oude naam, nieuwe naam)."""
         p = self.find(name)

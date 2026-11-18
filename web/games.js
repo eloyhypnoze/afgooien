@@ -270,7 +270,7 @@
   class X01Game extends BaseGame {
     get MODE() { return "x01"; }
     defaultSettings() {
-      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
+      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off", walkon: "off" };
     }
     cleanSettings(d) {
       d = d || {};
@@ -280,7 +280,7 @@
       s.sets = intOf(d, "sets", s.sets);
       for (const [k, opts] of [["match", ["off", "legs", "sets"]], ["in_mode", ["straight", "double", "master"]],
         ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]],
-        ["shootout", ["off", "on"]]]) {
+        ["shootout", ["off", "on"]], ["walkon", ["off", "on"]]]) {
         s[k] = pyStr(has(d, k) ? d[k] : s[k]);
         if (!opts.includes(s[k])) throw new GameError("err_settings");
       }

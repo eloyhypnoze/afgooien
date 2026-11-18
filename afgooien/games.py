@@ -374,7 +374,7 @@ class X01Game(BaseGame):
 
     def default_settings(self) -> dict:
         return {"start": 501, "match": "legs", "legs": 1, "sets": 1, "in_mode": "straight", "out_mode": "double",
-                "bulloff": "off", "shootout": "off"}
+                "bulloff": "off", "shootout": "off", "walkon": "off"}
 
     def clean_settings(self, d: dict | None) -> dict:
         d = d or {}
@@ -384,7 +384,7 @@ class X01Game(BaseGame):
         s["sets"] = _int(d, "sets", s["sets"])
         for k, opts in (("match", ("off", "legs", "sets")), ("in_mode", ("straight", "double", "master")),
                         ("out_mode", ("straight", "double", "master")), ("bulloff", ("off", "wdf", "pdc")),
-                        ("shootout", ("off", "on"))):
+                        ("shootout", ("off", "on")), ("walkon", ("off", "on"))):
             s[k] = str(d.get(k, s[k]))
             if s[k] not in opts:
                 raise GameError("err_settings")

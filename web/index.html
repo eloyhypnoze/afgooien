@@ -384,6 +384,8 @@
               <div class="seg" data-seg="bulloff"><button data-v="off" data-i18n="o_off"></button><button data-v="wdf">WDF</button><button data-v="pdc">PDC</button></div></div>
             <div class="xrow"><span class="xl" data-i18n="x_shootout"></span>
               <div class="seg" data-seg="shootout"><button data-v="off" data-i18n="o_off"></button><button data-v="on">Shoot-out</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_walkon"></span>
+              <div class="seg" data-seg="walkon"><button data-v="off" data-i18n="o_off"></button><button data-v="on" data-i18n="o_on"></button></div></div>
             <p class="sub small" id="x_help"></p>
           </div>
         </div>
@@ -585,6 +587,44 @@
     </div>
   </div>
 </div>
+<div id="wodlg" class="overlay hidden">
+  <div class="card wocard">
+    <div class="wohead"><h2 id="wo_title"></h2><button id="wo_close" class="ghost small">✕</button></div>
+    <div id="wo_cur" class="wo_cur"></div>
+    <div class="wo_time">
+      <div class="wo_tl"><span data-i18n="wo_start"></span>
+        <div class="wo_step"><button data-ws="-10">−10</button><button data-ws="-1">−1</button><b id="wo_start"></b><button data-ws="1">+1</button><button data-ws="10">+10</button></div></div>
+      <label class="wo_tl"><span><span data-i18n="wo_dur"></span> <b id="wo_dur_v"></b></span><input id="wo_dur" type="range" min="5" max="30" step="1"></label>
+      <div class="row left"><button id="wo_try" class="ghost" data-i18n="wo_try"></button><button id="wo_stop" class="ghost">⏹</button></div>
+      <p class="hint" data-i18n="wo_hint"></p>
+    </div>
+    <form id="wo_sform" class="mu_form"><input id="wo_q" autocomplete="off" spellcheck="false" data-i18n-ph="wo_search_ph"><button class="primary" type="submit">🔎</button></form>
+    <p id="wo_gate" class="hint hidden" data-i18n="wo_needlogin"></p>
+    <ul id="wo_results" class="mu_list wo_results"></ul>
+    <form id="wo_lform" class="mu_form"><input id="wo_link" autocomplete="off" spellcheck="false" data-i18n-ph="wo_link_ph"><button class="ghost" type="submit">＋</button></form>
+    <p id="wo_err" class="mu_err"></p>
+    <div class="row">
+      <button id="wo_remove" class="ghost danger" data-i18n="wo_remove"></button>
+      <button id="wo_save" class="primary" data-i18n="wo_save"></button>
+    </div>
+  </div>
+</div>
+
+<div id="intro" class="intro hidden">
+  <div class="introbg" aria-hidden="true"><span class="beam b1"></span><span class="beam b2"></span><span class="beam b3"></span><span class="glow"></span></div>
+  <div id="introin" class="introin">
+    <div class="intro_lbl"><span data-i18n="wo_lbl"></span> <span id="intro_count"></span></div>
+    <div id="intro_name" class="intro_name"></div>
+    <div id="intro_song" class="intro_song"></div>
+    <div id="intro_games" class="intro_games"></div>
+    <div id="intro_stats" class="intro_stats"></div>
+    <div id="intro_tags" class="intro_tags"></div>
+    <div class="intro_bar"><i id="intro_prog"></i></div>
+    <div class="intro_btns"><button id="intro_next" class="primary">⏭ <span data-i18n="wo_next"></span> <kbd>Enter</kbd></button>
+      <button id="intro_skip" class="ghost"><span data-i18n="wo_skip"></span> <kbd>Esc</kbd></button></div>
+  </div>
+</div>
+
 <div id="confirm" class="overlay hidden">
   <div class="card win">
     <h2 id="confirmtext"></h2>

@@ -811,6 +811,71 @@ button.pill:hover { border-color: var(--accent); }
 .musicpanel .check { display: flex; gap: .5rem; align-items: center; font-size: .88rem; }
 .musicpanel .check input { width: auto; margin: 0; }
 
+/* walk-on kiezen */
+.wocard { width: min(560px, 96vw); max-height: 92vh; overflow: auto; display: grid; gap: .65rem; text-align: left; }
+.wohead { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.wohead h2 { margin: 0; }
+.wo_cur { display: flex; gap: .8rem; align-items: center; }
+.wo_cur img { width: 7.5rem; height: 4.2rem; object-fit: cover; border-radius: 10px; }
+.wo_cur div { display: grid; min-width: 0; }
+.wo_cur b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wo_cur small { color: var(--muted); }
+.wo_cur p { margin: 0; }
+.wo_time { display: grid; gap: .5rem; padding: .6rem .7rem; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.wo_tl { display: grid; gap: .3rem; font-size: .9rem; }
+.wo_step { display: flex; align-items: center; gap: .35rem; }
+.wo_step button { padding: .35em .65em; font-size: .9rem; }
+.wo_step b { min-width: 4.2rem; text-align: center; font: 800 1.35rem/1 var(--display); }
+.wo_tl input[type=range] { width: 100%; }
+.wo_results { max-height: 15rem; overflow: auto; }
+.wocard .row { justify-content: space-between; }
+.preg .pwo { font-size: .8rem; color: var(--muted); margin-top: .1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 22rem; }
+
+/* walk-on intro */
+.intro { position: fixed; inset: 0; z-index: 20; overflow: hidden; --pc: var(--accent);
+  background: radial-gradient(ellipse at 30% 40%, color-mix(in srgb, var(--pc) 28%, #0a0e1c) 0%, #05070f 70%); }
+.introbg .beam { position: absolute; top: -30%; width: 18vw; height: 160%; background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 45%, transparent), transparent 70%);
+  filter: blur(18px); opacity: .45; transform-origin: 50% 0; animation: beam 6s ease-in-out infinite alternate; }
+.introbg .b1 { left: 12%; } .introbg .b2 { left: 45%; animation-delay: -2s; opacity: .3; } .introbg .b3 { left: 75%; animation-delay: -4s; }
+.introbg .glow { position: absolute; inset: auto -10% -30% -10%; height: 55%; background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--pc) 40%, transparent), transparent 70%); }
+@keyframes beam { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+.introin { position: absolute; left: 6vw; top: 50%; transform: translateY(-50%); width: min(54vw, 860px); display: grid; gap: 1rem; }
+.intro_lbl { font: 900 italic 1.1rem/1 var(--display); letter-spacing: .3em; color: color-mix(in srgb, var(--pc) 70%, #fff); }
+.intro_lbl #intro_count { letter-spacing: .05em; opacity: .6; margin-left: .6rem; }
+.intro_name { font: 900 italic clamp(3.2rem, 8.5vw, 7.5rem)/.95 var(--display); text-transform: uppercase; letter-spacing: -.01em;
+  text-shadow: 0 0 40px color-mix(in srgb, var(--pc) 60%, transparent); border-bottom: .12em solid var(--pc); padding-bottom: .12em; justify-self: start; }
+.intro_song { font-size: 1.25rem; color: #fff; opacity: .9; }
+.intro_song:empty { display: none; }
+.intro_games { font-size: 1.05rem; color: var(--muted); }
+.intro_stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.itile { padding: .8rem 1rem; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); display: grid; gap: .2rem; }
+.itile b { font: 900 2rem/1 var(--display); }
+.itile span { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.intro_tags { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.itag { padding: .4rem .8rem; border-radius: 999px; background: color-mix(in srgb, var(--pc) 30%, transparent); border: 1px solid color-mix(in srgb, var(--pc) 60%, transparent); font-weight: 800; }
+.iform { display: inline-flex; gap: .3rem; align-items: center; color: var(--muted); font-size: .85rem; margin-left: .3rem; }
+.iform i { width: .8rem; height: .8rem; border-radius: 50%; display: inline-block; }
+.iform i.w { background: #3ee08f; } .iform i.l { background: #f05252; }
+.intro_bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+.intro_bar i { display: block; height: 100%; width: 0; background: var(--pc); }
+.intro_btns { display: flex; gap: .6rem; }
+.introin.go .intro_lbl { animation: inUp .5s both; }
+.introin.go .intro_name { animation: inName .7s cubic-bezier(.2, .9, .2, 1.1) .1s both; }
+.introin.go .intro_song, .introin.go .intro_games { animation: inUp .6s .3s both; }
+.introin.go .itile { animation: inPop .5s var(--d, .4s) both; }
+.introin.go .intro_tags { animation: inUp .6s 1s both; }
+.introin.go .intro_bar i { animation-name: prog; animation-timing-function: linear; animation-fill-mode: both; }
+@keyframes inName { from { opacity: 0; transform: translateX(-12vw) skewX(-12deg); } to { opacity: 1; transform: none; } }
+@keyframes inUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes inPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+@keyframes prog { from { width: 0; } to { width: 100%; } }
+.musicdock.wodock { z-index: 21; width: 448px; border-color: var(--pc, var(--accent)); box-shadow: 0 0 60px rgba(0,0,0,.6); }
+.musicdock.wodock iframe, .musicdock.wodock #ytplayer { width: 448px; height: 252px; }
+.musicdock.wodock .mdbar { display: none; }
+@media (max-width: 1100px) { .introin { width: 88vw; } .intro_stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wo_time .row button { width: auto; flex: 0 0 auto; padding: .45em .9em; }
+.wocard .row button { width: auto; flex: 0 0 auto; }
+
 </style>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 </head>
@@ -1190,6 +1255,8 @@ button.pill:hover { border-color: var(--accent); }
               <div class="seg" data-seg="bulloff"><button data-v="off" data-i18n="o_off"></button><button data-v="wdf">WDF</button><button data-v="pdc">PDC</button></div></div>
             <div class="xrow"><span class="xl" data-i18n="x_shootout"></span>
               <div class="seg" data-seg="shootout"><button data-v="off" data-i18n="o_off"></button><button data-v="on">Shoot-out</button></div></div>
+            <div class="xrow"><span class="xl" data-i18n="x_walkon"></span>
+              <div class="seg" data-seg="walkon"><button data-v="off" data-i18n="o_off"></button><button data-v="on" data-i18n="o_on"></button></div></div>
             <p class="sub small" id="x_help"></p>
           </div>
         </div>
@@ -1391,6 +1458,44 @@ button.pill:hover { border-color: var(--accent); }
     </div>
   </div>
 </div>
+<div id="wodlg" class="overlay hidden">
+  <div class="card wocard">
+    <div class="wohead"><h2 id="wo_title"></h2><button id="wo_close" class="ghost small">✕</button></div>
+    <div id="wo_cur" class="wo_cur"></div>
+    <div class="wo_time">
+      <div class="wo_tl"><span data-i18n="wo_start"></span>
+        <div class="wo_step"><button data-ws="-10">−10</button><button data-ws="-1">−1</button><b id="wo_start"></b><button data-ws="1">+1</button><button data-ws="10">+10</button></div></div>
+      <label class="wo_tl"><span><span data-i18n="wo_dur"></span> <b id="wo_dur_v"></b></span><input id="wo_dur" type="range" min="5" max="30" step="1"></label>
+      <div class="row left"><button id="wo_try" class="ghost" data-i18n="wo_try"></button><button id="wo_stop" class="ghost">⏹</button></div>
+      <p class="hint" data-i18n="wo_hint"></p>
+    </div>
+    <form id="wo_sform" class="mu_form"><input id="wo_q" autocomplete="off" spellcheck="false" data-i18n-ph="wo_search_ph"><button class="primary" type="submit">🔎</button></form>
+    <p id="wo_gate" class="hint hidden" data-i18n="wo_needlogin"></p>
+    <ul id="wo_results" class="mu_list wo_results"></ul>
+    <form id="wo_lform" class="mu_form"><input id="wo_link" autocomplete="off" spellcheck="false" data-i18n-ph="wo_link_ph"><button class="ghost" type="submit">＋</button></form>
+    <p id="wo_err" class="mu_err"></p>
+    <div class="row">
+      <button id="wo_remove" class="ghost danger" data-i18n="wo_remove"></button>
+      <button id="wo_save" class="primary" data-i18n="wo_save"></button>
+    </div>
+  </div>
+</div>
+
+<div id="intro" class="intro hidden">
+  <div class="introbg" aria-hidden="true"><span class="beam b1"></span><span class="beam b2"></span><span class="beam b3"></span><span class="glow"></span></div>
+  <div id="introin" class="introin">
+    <div class="intro_lbl"><span data-i18n="wo_lbl"></span> <span id="intro_count"></span></div>
+    <div id="intro_name" class="intro_name"></div>
+    <div id="intro_song" class="intro_song"></div>
+    <div id="intro_games" class="intro_games"></div>
+    <div id="intro_stats" class="intro_stats"></div>
+    <div id="intro_tags" class="intro_tags"></div>
+    <div class="intro_bar"><i id="intro_prog"></i></div>
+    <div class="intro_btns"><button id="intro_next" class="primary">⏭ <span data-i18n="wo_next"></span> <kbd>Enter</kbd></button>
+      <button id="intro_skip" class="ghost"><span data-i18n="wo_skip"></span> <kbd>Esc</kbd></button></div>
+  </div>
+</div>
+
 <div id="confirm" class="overlay hidden">
   <div class="card win">
     <h2 id="confirmtext"></h2>
@@ -1698,7 +1803,8 @@ window.AFGOOIEN_MESSAGES = {
     "err_music_private": "'Nummers die ik leuk vind' is altijd privé. Maak er een openbare of verborgen afspeellijst van.",
     "err_music_none": "Er speelt nu geen muziek",
     "err_music_nofav": "Alleen links kun je als favoriet bewaren; je eigen afspeellijsten staan al onder Mijn muziek",
-    "err_yt": "YouTube: {code}"
+    "err_yt": "YouTube: {code}",
+    "err_walkon_link": "Kies een los nummer (geen afspeellijst) als walk-on"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -1989,7 +2095,8 @@ window.AFGOOIEN_MESSAGES = {
     "err_music_private": "'Liked music' is always private. Make a public or unlisted playlist instead.",
     "err_music_none": "No music is playing right now",
     "err_music_nofav": "Only links can be saved as favourites; your own playlists are already under My music",
-    "err_yt": "YouTube: {code}"
+    "err_yt": "YouTube: {code}",
+    "err_walkon_link": "Pick a single song (not a playlist) as walk-on"
   }
 }
 ;
@@ -2950,7 +3057,7 @@ window.AFGOOIEN_MESSAGES = {
   class X01Game extends BaseGame {
     get MODE() { return "x01"; }
     defaultSettings() {
-      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
+      return { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off", walkon: "off" };
     }
     cleanSettings(d) {
       d = d || {};
@@ -2960,7 +3067,7 @@ window.AFGOOIEN_MESSAGES = {
       s.sets = intOf(d, "sets", s.sets);
       for (const [k, opts] of [["match", ["off", "legs", "sets"]], ["in_mode", ["straight", "double", "master"]],
         ["out_mode", ["straight", "double", "master"]], ["bulloff", ["off", "wdf", "pdc"]],
-        ["shootout", ["off", "on"]]]) {
+        ["shootout", ["off", "on"]], ["walkon", ["off", "on"]]]) {
         s[k] = pyStr(has(d, k) ? d[k] : s[k]);
         if (!opts.includes(s[k])) throw new GameError("err_settings");
       }
@@ -4566,7 +4673,7 @@ window.AFGOOIEN_LOCAL = (function () {
     const s = g.state(lang);
     if (extraNotice && !s.notice) s.notice = tr(lang, extraNotice);
     s.source = { enabled: false, mode: "test" };
-    s.app_version = "1.42";
+    s.app_version = "1.43";
     s.history_version = hver;
     s.key = g.version + "." + (n++);
     return s;
@@ -4690,7 +4797,20 @@ window.AFGOOIEN_UI = {
     mu_e2: "Ongeldige link", mu_e5: "Kan dit niet afspelen", mu_eyt: "YouTube is niet bereikbaar (internet?)",
     mu_hint: "Tip: in YouTube Music bij een nummer of afspeellijst op Delen → Link kopiëren tikken en hier (of op je telefoon) plakken. Afspeellijsten moeten openbaar of verborgen zijn, niet privé. Zolang er muziek speelt, staat er een klein YouTube-spelertje in beeld; dat is een regel van YouTube.",
     mob_music: "Muziek",
-    mmu_full: "Zoeken & mijn afspeellijsten", close: "Sluiten", mu_t_search: "Zoeken", mu_t_mine: "Mijn muziek", mu_t_favs: "Favorieten", mu_t_link: "Link", mu_t_vol: "Volume",
+    mmu_full: "Zoeken & mijn afspeellijsten",
+    x_walkon: "Walk-on", chip_wo: "Walk-ons", xh_wo: " Walk-on: aan het begin komt elke speler op met zijn eigen nummer (in te stellen bij Spelers) en een paar van zijn beste stats.",
+    wo_btn: "Walk-on", wo_title: "Walk-on: {name}", wo_none: "Nog geen walk-on gekozen. Zoek hieronder een nummer of plak een link.",
+    wo_from: "vanaf {t} · {d} sec", wo_start: "Begint bij", wo_dur: "Lengte", wo_try: "▶ Probeer", wo_save: "Opslaan", wo_remove: "Geen walk-on",
+    wo_hint: "Tip: kies het refrein of het bekendste stukje, maximaal 30 seconden. Een link met \"starten op\" neemt het tijdstip over.",
+    wo_search_ph: "Zoek het nummer of de artiest", wo_link_ph: "of plak een link van YouTube (Music)",
+    wo_needlogin: "Zoeken kan na inloggen bij Instellingen → YouTube Music-account. Een link plakken kan altijd.",
+    wo_badlink: "Dat is geen link naar een los nummer op YouTube.", wo_row: "🎵 {title}",
+    wo_lbl: "WALK-ON", wo_count: "{i} / {n}", wo_call: "Dames en heren... {name}!", wo_next: "Volgende", wo_skip: "Overslaan",
+    wo_debut: "Debuut in X01 — succes!", wo_games: "{n} potjes X01 · {w} gewonnen ({p})",
+    wo_avg: "Gemiddelde", wo_bestavg: "Beste gemiddelde", wo_180: "180's", wo_hico: "Hoogste finish", wo_bestleg: "Beste leg", wo_co: "Uitgooi%",
+    wo_legdarts: "{n} pijlen", wo_form: "Vorm",
+    wo_t_avg: "🏆 Hoogste gemiddelde", wo_t_co: "🎯 Beste finisher", wo_t_180: "💯 180-machine", wo_t_f9: "⚡ Snelle starter",
+    wo_t_hico: "💥 Grote finishes", wo_t_win: "👑 Wint het vaakst", wo_t_streak: "🔥 {n} op rij gewonnen", close: "Sluiten", mu_t_search: "Zoeken", mu_t_mine: "Mijn muziek", mu_t_favs: "Favorieten", mu_t_link: "Link", mu_t_vol: "Volume",
     mu_q_ph: "Zoek een nummer, artiest of afspeellijst", mu_songs: "Nummers", mu_lists: "Afspeellijsten",
     mu_mylists: "Je afspeellijsten", mu_refresh: "Vernieuwen", mu_likes: "👍 Vind ik leuk", mu_playall: "Alles afspelen", mu_shufall: "Shuffle",
     mu_tracks_n: "{n} nummers", mu_noresults: "Niets gevonden", mu_searching: "Zoeken…", mu_loadingl: "Laden…",
@@ -4972,7 +5092,20 @@ window.AFGOOIEN_UI = {
     mu_e2: "Invalid link", mu_e5: "Cannot play this", mu_eyt: "YouTube cannot be reached (internet?)",
     mu_hint: "Tip: in YouTube Music tap Share → Copy link on a song or playlist and paste it here (or on your phone). Playlists must be public or unlisted, not private. While music plays, a small YouTube player stays on screen; that is a YouTube rule.",
     mob_music: "Music",
-    mmu_full: "Search & my playlists", close: "Close", mu_t_search: "Search", mu_t_mine: "My music", mu_t_favs: "Favourites", mu_t_link: "Link", mu_t_vol: "Volume",
+    mmu_full: "Search & my playlists",
+    x_walkon: "Walk-on", chip_wo: "Walk-ons", xh_wo: " Walk-on: at the start every player walks on to their own song (set under Players) with a few of their best stats.",
+    wo_btn: "Walk-on", wo_title: "Walk-on: {name}", wo_none: "No walk-on chosen yet. Search for a song below or paste a link.",
+    wo_from: "from {t} · {d} sec", wo_start: "Starts at", wo_dur: "Length", wo_try: "▶ Try", wo_save: "Save", wo_remove: "No walk-on",
+    wo_hint: "Tip: pick the chorus or the best-known part, 30 seconds at most. A link with \"start at\" takes over the time.",
+    wo_search_ph: "Search for the song or artist", wo_link_ph: "or paste a YouTube (Music) link",
+    wo_needlogin: "Searching works after signing in under Settings → YouTube Music account. Pasting a link always works.",
+    wo_badlink: "That is not a link to a single song on YouTube.", wo_row: "🎵 {title}",
+    wo_lbl: "WALK-ON", wo_count: "{i} / {n}", wo_call: "Ladies and gentlemen... {name}!", wo_next: "Next", wo_skip: "Skip",
+    wo_debut: "X01 debut — good luck!", wo_games: "{n} X01 games · {w} won ({p})",
+    wo_avg: "Average", wo_bestavg: "Best average", wo_180: "180s", wo_hico: "Highest checkout", wo_bestleg: "Best leg", wo_co: "Checkout %",
+    wo_legdarts: "{n} darts", wo_form: "Form",
+    wo_t_avg: "🏆 Highest average", wo_t_co: "🎯 Best finisher", wo_t_180: "💯 180 machine", wo_t_f9: "⚡ Fast starter",
+    wo_t_hico: "💥 Big finishes", wo_t_win: "👑 Wins most often", wo_t_streak: "🔥 {n} wins in a row", close: "Close", mu_t_search: "Search", mu_t_mine: "My music", mu_t_favs: "Favourites", mu_t_link: "Link", mu_t_vol: "Volume",
     mu_q_ph: "Search for a song, artist or playlist", mu_songs: "Songs", mu_lists: "Playlists",
     mu_mylists: "Your playlists", mu_refresh: "Refresh", mu_likes: "👍 Liked", mu_playall: "Play all", mu_shufall: "Shuffle",
     mu_tracks_n: "{n} songs", mu_noresults: "Nothing found", mu_searching: "Searching…", mu_loadingl: "Loading…",
@@ -5431,6 +5564,7 @@ function render(state) {
   refreshVoiceUi();
   renderMusic();
   applyMusic();
+  maybeIntro();
   if (view === "settings") { fillUpdate(); fillMail(); }
   const mk = JSON.stringify(S.mail || {});
   if (mk !== lastMailKey) { lastMailKey = mk; if (view === "players" && S.phase === "setup") renderPlayerMain(); }
@@ -5918,7 +6052,8 @@ async function ytPlayer() {
 function musTarget() {
   const m = S && S.music;
   if (!m) return 0;
-  return Math.round(m.volume * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
+  const base = INTRO.on ? Math.max(m.volume, 70) : m.volume;          // walk-ons iets harder
+  return Math.round(base * (MUS.duckN > 0 && m.duck ? 0.3 : 1));
 }
 function musVolume(smooth) {
   const p = MUS.yt;
@@ -5948,6 +6083,7 @@ function musDuck() {
   return end;
 }
 function musReport() {
+  if (INTRO.on) return;
   const p = MUS.yt;
   if (!p || !MUS.ready || !S || !S.music || !(S.music.video || S.music.list || S.music.videos)) return;
   let st = -1, title = "";
@@ -5963,6 +6099,7 @@ function musReport() {
 }
 function musState(e) {
   const p = MUS.yt;
+  if (INTRO.on) { if (e.data === 0) showIntro(INTRO.i + 1); else if (e.data === 1) musVolume(false); return; }
   if (e.data === 1) {
     MUS.errRun = 0;
     if (MUS.err && MUS.err !== "101") MUS.err = null;
@@ -5975,6 +6112,7 @@ function musState(e) {
   musReport();
 }
 function musError(e) {
+  if (INTRO.on) { clearTimeout(INTRO.timer); INTRO.timer = setTimeout(() => showIntro(INTRO.i + 1), 4000); return; }
   const code = String(e.data);
   MUS.err = code === "150" ? "101" : code;
   const m = S && S.music;
@@ -5982,7 +6120,7 @@ function musError(e) {
   musReport();
 }
 async function applyMusic() {
-  if (!musicHere() || !S || !S.music) return;
+  if (!musicHere() || !S || !S.music || INTRO.on) return;
   const m = S.music;
   const has = !!(m.video || m.list || m.videos);
   $("musicdock").classList.toggle("hidden", !has);
@@ -6008,7 +6146,11 @@ async function applyMusic() {
         if (m.playing) p.loadPlaylist(o); else p.cuePlaylist(o);
         MUS.needShuffle = !!m.shuffle && m.playing;
         try { p.setLoop(true); } catch (e) { /* */ }
-      } else if (m.playing) p.loadVideoById(m.video); else p.cueVideoById(m.video);
+      } else {
+        const o = { videoId: m.video };
+        if (m.vend) { o.startSeconds = m.vstart || 0; o.endSeconds = m.vend; }      // stukje (walk-on proberen)
+        if (m.playing) p.loadVideoById(o); else p.cueVideoById(o);
+      }
     } else if (op === "play") p.playVideo();
     else if (op === "pause") p.pauseVideo();
     else if (op === "next") { if (m.list || m.videos) p.nextVideo(); else p.seekTo(0, true); }
@@ -6021,6 +6163,13 @@ async function applyMusic() {
 function placeDock() {
   const d = $("musicdock");
   if (d.classList.contains("hidden")) return;
+  if (INTRO.on) {                                                  // walk-on: groot naast de spelerskaart
+    d.classList.remove("compact");
+    const W = d.offsetWidth || 448, H = d.offsetHeight || 252;
+    d.style.left = Math.round(Math.max(innerWidth * 0.6, innerWidth - W - innerWidth * 0.06)) + "px";
+    d.style.top = Math.round((innerHeight - H) / 2) + "px";
+    return;
+  }
   const inGame = !$("game").classList.contains("hidden");
   const a = inGame && document.querySelector("#game .dartbar"), b = inGame && document.querySelector("#game .statusrow");
   const ra = a && a.getBoundingClientRect(), rb = b && b.getBoundingClientRect();
@@ -6285,6 +6434,274 @@ function bindMusic() {
   document.addEventListener("click", (e) => { if (!e.target.closest("#confirm")) $("musicpanel").classList.add("hidden"); });
   addEventListener("resize", placeDock);
   if (/[?&]music=1/.test(location.search)) setTimeout(openMusic, 400);
+}
+
+// ------------------------------------------------------- walk-ons (X01): eigen nummer + stats bij de start
+const INTRO = { on: false, list: [], i: 0, timer: null, prev: null, gid: null };
+const fmtT = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+function introStats(name) {
+  const games = (H.games || []).filter((g) => gmode(g) === "x01");
+  const rows = aggregate(games, "x01").filter((r) => !r.bot);
+  const a = rows.find((r) => nkey(r.name) === nkey(name));
+  if (!a || !a.games) return null;
+  let bestAvg = 0;
+  const form = [];
+  const chron = games.slice().sort((x, y) => (x.ended < y.ended ? -1 : 1));
+  const since = (H.since || {})[nkey(name)];
+  for (const g of chron) {
+    if (since && g.ended < since) continue;
+    const p = g.players.find((q) => !q.bot && nkey(q.name) === nkey(name));
+    if (!p) continue;
+    bestAvg = Math.max(bestAvg, xavg(p));
+    form.push(p.place === 1);
+  }
+  const tags = [];
+  const peers = rows.filter((r) => r.games >= 3);
+  if (a.games >= 3 && peers.length >= 2) {
+    const M = [["wo_t_avg", (r) => r.avg], ["wo_t_co", (r) => r.coPct || 0], ["wo_t_180", (r) => r.n180 / r.games],
+      ["wo_t_f9", (r) => r.f9], ["wo_t_hico", (r) => r.hico], ["wo_t_win", (r) => r.winPct]];
+    for (const [k, f] of M) {
+      const top = Math.max(...peers.map(f));
+      if (top > 0 && f(a) === top) tags.push(t(k));
+    }
+  }
+  if (a.streak >= 2) tags.push(t("wo_t_streak", { n: a.streak }));
+  return { a, bestAvg, form: form.slice(-5), tags: tags.slice(0, 3) };
+}
+function introCard(it) {
+  const p = it.p;
+  const n = INTRO.list.length;
+  $("intro_count").textContent = n > 1 ? t("wo_count", { i: INTRO.i + 1, n }) : "";
+  const col = COLORS[(p.color || 0) % COLORS.length];
+  $("intro").style.setProperty("--pc", col);
+  $("musicdock").style.setProperty("--pc", col);
+  $("intro_name").textContent = p.name;
+  $("intro_song").innerHTML = it.wo ? `♪ ${esc(it.wo.title || "")}` : "";
+  const st = introStats(p.name);
+  if (!st) {
+    $("intro_games").textContent = t("wo_debut");
+    $("intro_stats").innerHTML = "";
+    $("intro_tags").innerHTML = "";
+    return;
+  }
+  const a = st.a;
+  $("intro_games").textContent = t("wo_games", { n: a.games, w: a.wins, p: pct(a.winPct) });
+  const tiles = [];
+  if (a.avg > 0) tiles.push([t("wo_avg"), fmt2(a.avg)]);
+  if (st.bestAvg > 0) tiles.push([t("wo_bestavg"), fmt2(st.bestAvg)]);
+  if (a.n180) tiles.push([t("wo_180"), a.n180]);
+  if (a.hico) tiles.push([t("wo_hico"), a.hico]);
+  if (a.bestLeg) tiles.push([t("wo_bestleg"), t("wo_legdarts", { n: a.bestLeg })]);
+  if (a.coPct) tiles.push([t("wo_co"), pct(a.coPct)]);
+  $("intro_stats").innerHTML = tiles.slice(0, 6).map(([k, v], i) =>
+    `<div class="itile" style="--d:${0.35 + i * 0.12}s"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join("");
+  const form = st.form.length ? `<span class="iform"><span>${esc(t("wo_form"))}</span>${st.form.map((w) => `<i class="${w ? "w" : "l"}"></i>`).join("")}</span>` : "";
+  $("intro_tags").innerHTML = st.tags.map((x) => `<span class="itag">${esc(x)}</span>`).join("") + form;
+}
+function maybeIntro() {
+  if (!musicHere() || !S || S.mode !== "x01" || !S.settings || S.settings.walkon !== "on" || !S.game_id) return;
+  if (INTRO.on && S.players.some((p) => p.darts > 0)) { endIntro(); return; }   // er wordt al gegooid
+  if (INTRO.gid === S.game_id) return;
+  if (!["play", "bulloff"].includes(S.phase)) return;
+  INTRO.gid = S.game_id;
+  if (S.players.some((p) => p.darts > 0) || store.get("afgooien.introDone", "") === S.game_id) return;
+  store.set("afgooien.introDone", S.game_id);
+  const reg = H.players || [];
+  const order = S.order && S.order.length ? S.order : S.players.map((p) => p.index);
+  INTRO.list = order.map((i) => S.players[i]).filter((p) => p && !p.bot)
+    .map((p) => ({ p, wo: (reg.find((r) => nkey(r.name) === nkey(p.name)) || {}).walkon || null }));
+  if (!INTRO.list.length) return;
+  INTRO.prev = null;
+  if (MUS.yt && MUS.ready) {
+    try { INTRO.prev = { idx: MUS.yt.getPlaylistIndex(), time: Math.floor(MUS.yt.getCurrentTime() || 0) }; } catch (e) { /* */ }
+  }
+  INTRO.on = true;
+  $("intro").classList.remove("hidden");
+  showIntro(0);
+}
+async function showIntro(i) {
+  clearTimeout(INTRO.timer);
+  if (!INTRO.on) return;
+  const it = INTRO.list[i];
+  if (!it) { endIntro(); return; }
+  INTRO.i = i;
+  introCard(it);
+  const box = $("introin");
+  box.classList.remove("go"); void box.offsetWidth; box.classList.add("go");
+  const dur = it.wo ? it.wo.dur : 6;
+  $("intro_prog").style.animationDuration = dur + "s";
+  INTRO.timer = setTimeout(() => showIntro(i + 1), dur * 1000 + 700);
+  sayPhrases([t("wo_call", { name: it.p.name })]);
+  const d = $("musicdock");
+  if (it.wo) {
+    try {
+      const p = await ytPlayer();
+      if (!INTRO.on || INTRO.i !== i) return;
+      d.classList.remove("hidden");
+      d.classList.add("wodock");
+      placeDock();
+      p.loadVideoById({ videoId: it.wo.video, startSeconds: it.wo.start, endSeconds: it.wo.start + it.wo.dur });
+      MUS.vol = null;
+      musVolume(false);
+    } catch (e) { /* geen YouTube: alleen de kaart */ }
+  } else {
+    if (MUS.yt && MUS.ready) try { MUS.yt.pauseVideo(); } catch (e) { /* */ }
+    d.classList.add("hidden");
+  }
+}
+function endIntro() {
+  if (!INTRO.on) return;
+  INTRO.on = false;
+  clearTimeout(INTRO.timer);
+  $("intro").classList.add("hidden");
+  $("musicdock").classList.remove("wodock");
+  musRestore(INTRO.prev || {});
+}
+function musRestore(prev) {
+  const m = S && S.music;
+  if (!m) return;
+  const has = !!(m.video || m.list || m.videos);
+  $("musicdock").classList.toggle("hidden", !has);
+  const p = MUS.yt;
+  if (!p || !MUS.ready) return;
+  if (!has) { try { p.stopVideo(); } catch (e) { /* */ } return; }
+  if (MUS.seq !== m.seq) { applyMusic(); return; }          // tijdens de intro iets anders gekozen
+  try {
+    const go = m.playing;
+    if (m.videos) go ? p.loadPlaylist(m.videos, prev.idx || 0, prev.time || 0) : p.cuePlaylist(m.videos, prev.idx || 0, prev.time || 0);
+    else if (m.list) {
+      const o = { list: m.list, listType: "playlist", index: prev.idx || 0, startSeconds: prev.time || 0 };
+      go ? p.loadPlaylist(o) : p.cuePlaylist(o);
+    } else {
+      const o = { videoId: m.video, startSeconds: prev.time || 0 };
+      go ? p.loadVideoById(o) : p.cueVideoById(o);
+    }
+  } catch (e) { /* */ }
+  MUS.vol = null;
+  musVolume(false);
+  placeDock();
+}
+
+// walk-on kiezen (Instellingen → Spelers)
+const WO = { name: null, cand: null, results: null };
+function parseYt(u) {
+  const s = String(u || "").trim();
+  const m = /(?:[?&]v=|youtu\.be\/|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/.exec(s) || /^([A-Za-z0-9_-]{11})$/.exec(s);
+  if (!m) return null;
+  let tt = 0;
+  const tm = /[?&](?:t|start)=([0-9hms]+)/.exec(s);
+  if (tm) {
+    if (/^\d+$/.test(tm[1])) tt = +tm[1];
+    else { const g = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(tm[1]) || []; tt = (+g[1] || 0) * 3600 + (+g[2] || 0) * 60 + (+g[3] || 0); }
+  }
+  return { video: m[1], t: tt };
+}
+function openWalkon(name) {
+  const reg = (H.players || []).find((p) => nkey(p.name) === nkey(name));
+  WO.name = name;
+  WO.cand = reg && reg.walkon ? { ...reg.walkon } : null;
+  WO.results = null;
+  $("wo_title").textContent = t("wo_title", { name });
+  $("wo_q").value = ""; $("wo_link").value = ""; $("wo_err").textContent = "";
+  $("wodlg").classList.remove("hidden");
+  renderWo();
+}
+function renderWo() {
+  const c = WO.cand;
+  if (c && !c.title && S && S.music && S.music.vid === c.video && S.music.title) c.title = S.music.title;
+  $("wo_cur").innerHTML = c
+    ? `<img src="https://i.ytimg.com/vi/${esc(c.video)}/mqdefault.jpg" alt=""><div><b>${esc(c.title || c.video)}</b><small>${esc(t("wo_from", { t: fmtT(c.start), d: c.dur }))}</small></div>`
+    : `<p class="hint">${esc(t("wo_none"))}</p>`;
+  document.querySelector("#wodlg .wo_time").classList.toggle("hidden", !c);
+  if (c) {
+    $("wo_start").textContent = fmtT(c.start);
+    if (document.activeElement !== $("wo_dur")) $("wo_dur").value = c.dur;
+    $("wo_dur_v").textContent = c.dur + " s";
+  }
+  const u = ytUser();
+  $("wo_sform").classList.toggle("hidden", !u.logged_in);
+  $("wo_gate").classList.toggle("hidden", !!u.logged_in);
+  $("wo_results").innerHTML = WO.results === "busy" ? `<li class="mu_info">${esc(t("mu_searching"))}</li>`
+    : Array.isArray(WO.results) ? (WO.results.length ? WO.results.map((it, i) => muRow(it, i, "wo")).join("") : `<li class="mu_info">${esc(t("mu_noresults"))}</li>`) : "";
+  const reg = (H.players || []).find((p) => nkey(p.name) === nkey(WO.name || ""));
+  $("wo_remove").classList.toggle("hidden", !(reg && reg.walkon));
+  $("wo_save").disabled = !c;
+}
+async function woSend(cmd) {
+  $("wo_err").textContent = "";
+  try {
+    const r = await fetch("/api/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+    const j = await r.json();
+    if (!j.ok) { $("wo_err").textContent = muErrText(j.error); return false; }
+    render(j.state);
+    return true;
+  } catch (e) { $("wo_err").textContent = t("no_conn"); return false; }
+}
+function bindWalkon() {
+  $("wo_close").onclick = () => $("wodlg").classList.add("hidden");
+  $("wodlg").addEventListener("click", (e) => {
+    if (e.target === $("wodlg")) { $("wodlg").classList.add("hidden"); return; }
+    const st = e.target.closest("[data-ws]");
+    if (st && WO.cand) { WO.cand.start = Math.max(0, WO.cand.start + +st.dataset.ws); renderWo(); return; }
+    const row = e.target.closest(".mu_row[data-wo]");
+    if (row) {
+      const it = WO.results[+row.dataset.wo];
+      WO.cand = { video: it.id, title: it.title, start: 45, dur: WO.cand ? WO.cand.dur : 20 };
+      renderWo();
+    }
+  });
+  $("wo_dur").addEventListener("input", () => { if (WO.cand) { WO.cand.dur = +$("wo_dur").value; $("wo_dur_v").textContent = WO.cand.dur + " s"; renderWo(); } });
+  $("wo_sform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = $("wo_q").value.trim();
+    if (!q) return;
+    WO.results = "busy"; renderWo();
+    try { WO.results = await ytGet(`/api/yt/search?type=video&q=${encodeURIComponent(q)}`); }
+    catch (err) { WO.results = []; $("wo_err").textContent = ytErr(err.message); }
+    renderWo();
+  });
+  $("wo_lform").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = parseYt($("wo_link").value);
+    if (!r) { $("wo_err").textContent = t("wo_badlink"); return; }
+    $("wo_err").textContent = "";
+    WO.cand = { video: r.video, title: "", start: r.t || 45, dur: WO.cand ? WO.cand.dur : 20 };
+    $("wo_link").value = "";
+    renderWo();
+  });
+  $("wo_try").onclick = () => {
+    const c = WO.cand;
+    if (c) woSend({ type: "music_load", video: c.video, title: c.title, start: c.start, end: c.start + c.dur });
+  };
+  $("wo_stop").onclick = () => woSend({ type: "music_ctl", action: "stop" });
+  $("wo_save").onclick = async () => {
+    const c = WO.cand;
+    if (!c) return;
+    if (!c.title && S.music && S.music.vid === c.video) c.title = S.music.title;
+    if (await woSend({ type: "player_walkon", name: WO.name, video: c.video, title: c.title, start: c.start, dur: c.dur })) {
+      $("wodlg").classList.add("hidden");
+      await loadHistory(true);
+      renderSettings();
+    }
+  };
+  $("wo_remove").onclick = async () => {
+    if (await woSend({ type: "player_walkon", name: WO.name, clear: true })) {
+      $("wodlg").classList.add("hidden");
+      await loadHistory(true);
+      renderSettings();
+    }
+  };
+  // intro bedienen
+  $("intro_next").onclick = () => showIntro(INTRO.i + 1);
+  $("intro_skip").onclick = () => endIntro();
+  document.addEventListener("keydown", (e) => {
+    if (!INTRO.on) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") showIntro(INTRO.i + 1);
+    else if (e.key === "Escape") endIntro();
+    else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
 }
 
 // ---- commentaar: korte uitroepen zoals een sportcommentator, bovenop de scheidsrechter
@@ -7407,9 +7824,10 @@ function renderSettings() {
     const st = a ? t("set_pstats2", { games: t("games_n", { n: a.games }), wins: a.wins, pct: pct(a.winPct) }) : t("set_pnone");
     const c = COLORS[i % COLORS.length];
     return `<div class="preg"><div class="av" style="background:${c}">${esc(p.name.slice(0, 1).toUpperCase())}</div>
-      <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div></div>
+      <div><div class="pn">${esc(p.name)}</div><div class="ps">${st}</div>${p.walkon ? `<div class="pwo">${esc(t("wo_row", { title: p.walkon.title || p.walkon.video }))}</div>` : ""}</div>
       <input class="pmail" type="email" data-name="${esc(p.name)}" value="${esc(p.email || "")}" placeholder="${esc(t("pl_email_ph"))}" spellcheck="false">
-      <div class="pa"><button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
+      <div class="pa">${LOCAL ? "" : `<button class="ghost" data-act="player_walkon" data-name="${esc(p.name)}">🎵 ${t("wo_btn")}</button>`}
+      <button class="ghost" data-act="player_rename" data-name="${esc(p.name)}">✎ ${t("set_rename")}</button>
       <button class="ghost" data-act="player_reset" data-name="${esc(p.name)}">${t("set_reset")}</button>
       <button class="ghost danger" data-act="player_delete" data-name="${esc(p.name)}">${t("set_delete")}</button></div></div>`;
   }).join("") : `<div class="statsempty">${t("set_noplayers")}</div>`;
@@ -7562,7 +7980,7 @@ function genClick(e) {
 }
 // Welk spel in de lobby staat (afgooien | x01 | countup) en de instellingen per spel.
 const X01_SCORES = [101, 170, 201, 301, 401, 501, 601, 701, 801, 901, 1001];
-const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off" };
+const X01_DEF = { start: 501, match: "legs", legs: 1, sets: 1, in_mode: "straight", out_mode: "double", bulloff: "off", shootout: "off", walkon: "off" };
 const X01_AVG = { 1: 25, 2: 35, 3: 45, 4: 55, 5: 65, 6: 80 };
 let lobbyMode = store.get("afgooien.mode", "afgooien");
 if (!["afgooien", "x01", "countup", "free", "atc", "shanghai", "bobs27", "halveit", "cricket", "bulls", "doubles", "checkout", "killer", "golf", "gotcha"].includes(lobbyMode)) lobbyMode = "afgooien";
@@ -7587,6 +8005,7 @@ function x01Chips(st) {
   c.push(t("chip_in", { m: cap(st.in_mode) }), t("chip_out", { m: cap(st.out_mode) }));
   c.push(st.bulloff === "off" ? t("chip_nobull") : t("chip_bull", { m: st.bulloff.toUpperCase() }));
   if (st.shootout === "on") c.push(t("chip_so"));
+  if (st.walkon === "on") c.push(t("chip_wo"));
   return c;
 }
 function renderLobbyMode() {
@@ -7610,7 +8029,7 @@ function renderLobbyMode() {
     g.querySelectorAll("button").forEach((b) => b.classList.toggle("on", s[g.dataset.seg] === b.dataset.v)));
   $("x01chips").innerHTML = x01Chips(s).map((c) => `<span class="chipx">${esc(c)}</span>`).join("");
   $("x_help").textContent = t("xh_" + s.out_mode) + (s.in_mode !== "straight" ? t("xh_in_" + s.in_mode) : "") +
-    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "");
+    (s.bulloff !== "off" ? t("xh_" + s.bulloff) : "") + (s.shootout === "on" ? t("xh_so") : "") + (s.walkon === "on" ? t("xh_wo") : "");
   $("cu_rounds").textContent = cuSet.rounds;
   $("cu_block").textContent = cuSet.block;
   $("cu_roundsrow").classList.toggle("hidden", cuSet.elim > 0);
@@ -7857,6 +8276,7 @@ function bind() {
     if (!b) return;
     const name = b.dataset.name, act = b.dataset.act;
     if (act === "player_rename") { startRename(b.closest(".preg"), name); return; }
+    if (act === "player_walkon") { openWalkon(name); return; }
     const q = t(act === "player_delete" ? "q_delete" : "q_reset", { name });
     confirmDialog(q, () => playerAction(act, name));
   });
@@ -8006,6 +8426,7 @@ function bind() {
   };
   $("voicepanel").addEventListener("click", (e) => e.stopPropagation());
   bindMusic();
+  bindWalkon();
   $("src").onclick = (e) => {
     e.stopPropagation();
     const src = (S && S.source) || {};

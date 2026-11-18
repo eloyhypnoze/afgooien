@@ -98,7 +98,7 @@ def random_cmd_other(rng: random.Random, g, mode: str) -> dict:
                         "sets": rng.choice([1, 2]), "in_mode": rng.choice(["straight", "straight", "double", "master"]),
                         "out_mode": rng.choice(["double", "double", "straight", "master"]),
                         "bulloff": rng.choice(["off", "off", "wdf", "pdc"]),
-                        "shootout": rng.choice(["off", "on", "on"])}
+                        "shootout": rng.choice(["off", "on", "on"]), "walkon": rng.choice(["off", "on"])}
             if rng.random() < 0.03:
                 settings["start"] = 500                  # ongeldig
         elif mode == "free":

@@ -288,7 +288,8 @@
     "err_music_private": "'Nummers die ik leuk vind' is altijd privé. Maak er een openbare of verborgen afspeellijst van.",
     "err_music_none": "Er speelt nu geen muziek",
     "err_music_nofav": "Alleen links kun je als favoriet bewaren; je eigen afspeellijsten staan al onder Mijn muziek",
-    "err_yt": "YouTube: {code}"
+    "err_yt": "YouTube: {code}",
+    "err_walkon_link": "Kies een los nummer (geen afspeellijst) als walk-on"
   },
   "en": {
     "lbl_miss": "Miss",
@@ -579,6 +580,7 @@
     "err_music_private": "'Liked music' is always private. Make a public or unlisted playlist instead.",
     "err_music_none": "No music is playing right now",
     "err_music_nofav": "Only links can be saved as favourites; your own playlists are already under My music",
-    "err_yt": "YouTube: {code}"
+    "err_yt": "YouTube: {code}",
+    "err_walkon_link": "Pick a single song (not a playlist) as walk-on"
   }
 }
